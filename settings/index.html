@@ -1,0 +1,84 @@
+<html>
+  <head>
+    <script type="text/javascript" src="/homey.js" data-origin="settings"></script>
+  </head>
+  <body>
+
+    <!-- no internationalization yet -->
+    <h1>Crownstone configuration</h1>
+    <p>The Crownstone app does not known which BLE devices are actually your Crownstones.
+    For the initial setup process it will need to query the Crownstone servers for this information.
+    Currently we are just asking your email address and password (an OATH procedure would be the long-term solution).</p>
+
+    <h2>Sphere id</h2>
+    <p>
+    This implementation is beta. The way multiple homes or home and office are supported is through multiple spheres. Per sphere different encryption keys are used. To make use of the Homey you will need the sphere id. This sphere id can be obtained through the Crownstone cloud:
+    <ul>
+      <li>Login at <a href="https://my.crownstone.rocks">https://my.crownstone.rocks</a> and copy your token.</li>
+      <li>Navigate to <a href="https://my.crownstone.rocks/explorer/#!/user/user_me">https://my.crownstone.rocks/explorer/#!/user/user_me</a>, use the token and press "Try it out!"</li>
+      <li>Copy from the response body the "id" value.</li>
+      <li>Navigate to <a href="https://my.crownstone.rocks/explorer/#!/user/user_spheres">https://my.crownstone.rocks/explorer/#!/user/user_spheres</a>, and fill in the "id" of the particular sphere you want to control.</li>
+    </ul>
+    </p>
+    <fieldset>
+      <legend>Crownstone cloud settings</legend>
+      <div class="field row">
+        <label for="email">Email address</label>
+        <input id="email" type="text" value="">
+      </div>
+      <div class="field row">
+        <label for="password">Password</label>
+        <input id="password" type="password" value="">
+      </div>
+      <div class="field row">
+        <label for="sphere">Sphere identifier</label>
+        <input id="sphere" type="text" value="">
+      </div>
+    </fieldset>
+
+    <button id="save" class="right">Save changes</button>
+
+      <script type="text/javascript">
+        function onHomeyReady(Homey) {
+          Homey.ready();
+
+	  var emailElement = document.getElementById('email');
+	  var passwordElement = document.getElementById('password');
+	  var sphereElement = document.getElementById('sphere');
+	  var saveElement = document.getElementById('save');
+
+	  Homey.get('email', function( err, email ) {
+	     if( err ) return Homey.alert( err );
+	     emailElement.value = email;
+	  });
+
+	  Homey.get('password', function( err, password ) {
+	     if( err ) return Homey.alert( err );
+	     passwordElement.value = password;
+	  });
+	  
+	  Homey.get('sphere', function( err, sphere ) {
+	     if( err ) return Homey.alert( err );
+	     sphereElement.value = sphere;
+	  });
+
+
+	  saveElement.addEventListener('click', function(e) {
+
+	      Homey.set('email', emailElement.value, function( err ){
+		  if( err ) return Homey.alert( err );
+	      });
+	      Homey.set('password', passwordElement.value, function( err ){
+		  if( err ) return Homey.alert( err );
+	      });
+	      Homey.set('sphere', sphereElement.value, function( err ){
+		  if( err ) return Homey.alert( err );
+	      });
+
+              Homey.alert("Thanks! We have stored your account information on your Homey!.");
+
+	  });
+        }
+      </script>
+  </body>
+</html>
