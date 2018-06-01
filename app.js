@@ -3,6 +3,8 @@
 const Homey = require('homey');
 const BluenetLib = require('./ble/index');
 
+const cloudAPI = require('./ble/cloud/cloudAPI.js').CLOUD;
+
 class MyApp extends Homey.App {
 
 
@@ -22,7 +24,24 @@ class MyApp extends Homey.App {
       "sphereId": this.sphere
     }
 
-    this.bluenet.linkCloud(userData);
+    this.bluenet.linkCloud(userData)
+      .then(() => {
+	console.log("Successfully connected to the Crownstone cloud");
+	console.log(this.bluenet.settings);
+	console.log("Get stones in sphere");
+	cloudAPI.forSphere(this.sphere).getStonesInSphere()
+	  .then((data) => {
+
+	  })
+	  .catch((err) => { 
+	    console.log("Error: No stones", err); 
+	  })
+	console.log(cloud);
+	/*
+	this.bluenet.cloud.getStonesInSphere();
+	console.log("Done!");*/
+      })
+      .catch((err) => { console.log("Error! Some error...", err); })
 
     this.startBle()
   }
@@ -31,10 +50,9 @@ class MyApp extends Homey.App {
     let BleManager = Homey.ManagerBLE;
     console.log("Start Scanning")
     BleManager.discover([], 5*1000, (err, advertisements) => {
-      console.log('err)',err)
       console.log('advertisements)')
       advertisements.forEach((adv) => {
-	console.log(adv, adv.rssi)
+//	console.log(adv, adv.rssi)
       })
     })
   }
