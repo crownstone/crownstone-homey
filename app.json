@@ -1,0 +1,24 @@
+{
+  "id": "rocks.crownstone",
+  "version": "0.0.0",
+  "compatibility": ">=1.5.0",
+  "sdk": 2,
+  "name": {
+    "en": "Crownstone"
+  },
+  "description": {
+    "en": "Crownstone"
+  },
+  "category": [
+    "localization"
+  ],
+  "permissions": [],
+  "images": {
+    "large": "/assets/images/large.png",
+    "small": "/assets/images/small.png"
+  },
+  "author": {
+    "name": "Alex de Mulder",
+    "email": "alexdemulder@gmail.com"
+  }
+}
