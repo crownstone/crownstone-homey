@@ -5,12 +5,14 @@ const BluenetLib = require('./ble/index');
 
 const cloudAPI = require('./ble/cloud/cloudAPI.js').CLOUD;
 
+const Log = require('homey-log').Log;
+
 class MyApp extends Homey.App {
 
-
   onInit() {
-    this.log('Crownstone is running...');
-    this.log('BluenetLib')
+    this.log('Crownstone!');
+    this.log(`${Homey.app.manifest.id} is running...`);
+    this.log('Load bluenet library')
 
     this.bluenet = new BluenetLib.Bluenet()
 
@@ -24,35 +26,59 @@ class MyApp extends Homey.App {
       "sphereId": this.sphere
     }
 
+    
+    /*
     this.bluenet.linkCloud(userData)
       .then(() => {
-	console.log("Successfully connected to the Crownstone cloud");
-	console.log(this.bluenet.settings);
-	console.log("Get stones in sphere");
+	this.log("Successfully connected to the Crownstone cloud");
+	//this.log(this.bluenet.settings);
+	this.log("Get stones in sphere");
 	cloudAPI.forSphere(this.sphere).getStonesInSphere()
 	  .then((data) => {
 
 	  })
 	  .catch((err) => { 
-	    console.log("Error: No stones", err); 
+	    this.log("Error: No stones", err); 
 	  })
-	console.log(cloud);
-	/*
-	this.bluenet.cloud.getStonesInSphere();
-	console.log("Done!");*/
       })
-      .catch((err) => { console.log("Error! Some error...", err); })
+      .catch((err) => { this.log("Error! Some error...", err); })
+    */
 
-    this.startBle()
+    this.setupHomey();
+
+//    this.startBle()
+  }
+    
+  setupHomey() {
+    this.log("Setup Homey");
+
+    Homey.ManagerSpeechOutput.say('Anneh, I love you!')
+      .then( this.log("Said something...") )
+      .catch( this.error("Can't say anything" ));
+    this.log("Speech input");
+
+    Homey.ManagerSpeechInput.on('speechEval', function( speech, callback ) {
+      this.log("SpeechEval");
+      this.log(speech);
+      let match = speech.matches.importantProperty.length > 3;
+      callback( null, match );
+    });
+
+    Homey.ManagerSpeechInput.on('speechMatch', function( speech, onSpeechEvalData ) {
+      this.log("SpeechMatch");
+          // onSpeechData is whatever you returned in the onSpeech callback
+      //     // process and execute the user phrase here
+       speech.say( Homey.__('Thanks, will do!') );
+      });
   }
 
   startBle() {
     let BleManager = Homey.ManagerBLE;
-    console.log("Start Scanning")
+    this.log("Start Scanning")
     BleManager.discover([], 5*1000, (err, advertisements) => {
-      console.log('advertisements)')
+      //this.log('advertisements)')
       advertisements.forEach((adv) => {
-//	console.log(adv, adv.rssi)
+//	this.log(adv, adv.rssi)
       })
     })
   }

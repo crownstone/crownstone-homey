@@ -1,24 +1,71 @@
 {
   "id": "rocks.crownstone",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "compatibility": ">=1.5.0",
   "sdk": 2,
   "name": {
     "en": "Crownstone"
   },
   "description": {
-    "en": "Crownstone"
+    "en": "Control Crownstones, switch, dim, measure power consumption, or localize yourself"
   },
   "category": [
-    "localization"
+    "localization", 
+    "appliances",
+    "lights"
   ],
-  "permissions": [],
+  "permissions": [
+    "homey:manager:speech-output",
+    "homey:manager:ledring"
+  ],
   "images": {
     "large": "/assets/images/large.png",
     "small": "/assets/images/small.png"
   },
   "author": {
-    "name": "Alex de Mulder",
-    "email": "alexdemulder@gmail.com"
-  }
+    "name": "Crownstone",
+    "email": "team@crownstone.rocks"
+  },
+  "contributor": {
+    "developers": [
+      {
+        "name": "Alex de Mulder",
+        "email": "alex@crownstone.rocks"
+      },
+      {
+        "name": "Anne van Rossum",
+        "email": "anne@crownstone.rocks"
+      }
+    ]
+  },
+  "drivers": [
+    {
+      "id": "crownstone",
+      "name": {
+        "en": "Crownstone"
+      },
+      "class": "socket",
+      "capabilities": [ "onoff", "dim" ],
+      "capabilitiesOptions": {
+        "onoff": {
+          "title": {
+            "en": "My custom Title"
+          }
+        }
+      },      
+      "pair": [
+        {
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
+          }
+        },
+        {
+          "id": "add_devices",
+          "template": "add_devices"
+        }
+      ]
+    }
+  ]
 }
