@@ -85,17 +85,17 @@ exports.Util = {
                 return false;
             else if (A[0] > B[0])
                 return true;
-            else {
+            else { // A[0] == B[0]
                 if (A[1] < B[1])
                     return false;
                 else if (A[1] > B[1])
                     return true;
-                else {
+                else { // A[1] == B[1]
                     if (A[2] < B[2])
                         return false;
                     else if (A[2] > B[2])
                         return true;
-                    else {
+                    else { // A[2] == B[2]
                         if (versionRc === null && compareWithVersionRc === null) {
                             return false;
                         }
