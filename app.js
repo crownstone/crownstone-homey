@@ -23,6 +23,7 @@ class MyApp extends Homey.App {
       "password": this.password,
       "sphereId": this.sphere
     }
+    this.log(`Use sphereId: ${this.sphere}`)
 
     this.availableCrownstones = {};
     this.addressIdMap = {};
@@ -87,8 +88,10 @@ class MyApp extends Homey.App {
         this.log("Scan completed, parsing results...")
         homeyAdvertisementArray.forEach((homeyAdvertisement) => {
           if (this.addressIdMap[homeyAdvertisement.address.toLowerCase()]) {
-            this.log(homeyAdvertisement, homeyAdvertisement.rssi)
-            this.discoveredCrownstones[this.addressIdMap[adv.address.toLowerCase()]] = homeyAdvertisement;
+            if (homeyAdvertisement.connectable && homeyAdvertisement.localName === 'Crown') {
+              this.log(homeyAdvertisement, homeyAdvertisement.rssi)
+              this.discoveredCrownstones[this.addressIdMap[homeyAdvertisement.address.toLowerCase()]] = homeyAdvertisement;
+            }
           }
         })
       })
@@ -96,8 +99,8 @@ class MyApp extends Homey.App {
         let discoveredIds = Object.keys(this.discoveredCrownstones);
         if (discoveredIds.length > 0) {
           this.log("Discovered Crownstones with the following Ids:", discoveredIds)
-          this.log("Doing the thing with the first Crownstone we discovered: ", cids[0], " with the address:", this.discoveredCrownstones[cids[0]].address);
-          this.doTheThing(this.discoveredCrownstones[cids[0]])
+          this.log("Doing the thing with the first Crownstone we discovered: ", discoveredIds[0], " with the address:", this.discoveredCrownstones[discoveredIds[0]].address);
+          this.doTheThing(this.discoveredCrownstones[discoveredIds[0]])
         }
         else {
           this.log("No Crownstones found in scan...")
@@ -116,7 +119,7 @@ class MyApp extends Homey.App {
       .then((homeyAdvertisement) => {
         if (homeyAdvertisement) {
           this.log("Found it!")
-          this.discoveredCrownstones[this.addressIdMap[adv.address.toLowerCase()]] = homeyAdvertisement;
+          this.discoveredCrownstones[this.addressIdMap[homeyAdvertisement.address.toLowerCase()]] = homeyAdvertisement;
           return homeyAdvertisement;
         }
         else {
