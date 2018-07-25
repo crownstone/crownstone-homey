@@ -5,7 +5,7 @@ const BluenetLib = require('./ble/index');
 
 const cloudAPI = require('./ble/cloud/cloudAPI.js').CLOUD;
 
-class MyApp extends Homey.App {
+class CrownstoneApp extends Homey.App {
 
   onInit() {
     this.log('Crownstone!');
@@ -18,68 +18,34 @@ class MyApp extends Homey.App {
     this.password = Homey.ManagerSettings.get("password");
     this.sphere = Homey.ManagerSettings.get("sphere");
     
-    let userData = {
+    this.userData = {
       "email": this.email,
       "password": this.password,
       "sphereId": this.sphere
     }
     this.log(`Use sphereId: ${this.sphere}`)
-
-    this.availableCrownstones = {};
-    this.addressIdMap = {};
-    this.discoveredCrownstones = {};
-
-    this.bluenet.linkCloud(userData)
+        
+    this.bluenet.linkCloud(this.userData)
       .then(() => {
-        this.log("Successfully connected to the Crownstone cloud");
-        //this.log(this.bluenet.settings);
-        this.log("Get stones in sphere");
-        return cloudAPI.forSphere(this.sphere).getStonesInSphere()
-	    })
-      .then((stones) => {
-        if (stones && Array.isArray(stones)) {
-          stones.forEach((stone) => {
-            if (stone.type === 'PLUG' || stone.type === 'BUILT-IN') {
-              this.availableCrownstones[stone.uid] = stone;
-              this.addressIdMap[stone.address.toLowerCase()] = stone.uid;
-            }
-          })
-        }
-	    })
-      .then(() => {
-        this.startBle()
+        this.log("Connected to the cloud");
       })
       .catch((err) => {
-        this.log("Error: No stones", err);
+        this.log("Error: could not connect to cloud", err);
       })
+  }
 
-    this.setupHomey();
+  getBluenet() {
+    return this.bluenet;
+  }
 
+  getUserData() {
+    return this.userData;
+  }
+
+  getCloudAPI() {
+    return cloudAPI;
   }
     
-  setupHomey() {
-    this.log("Setup Homey");
-
-    // Homey.ManagerSpeechOutput.say('Anneh, I love you!')
-    //   .then( this.log("Said something...") )
-    //   .catch( this.error("Can't say anything" ));
-    // this.log("Speech input");
-    //
-    // Homey.ManagerSpeechInput.on('speechEval', function( speech, callback ) {
-    //   this.log("SpeechEval");
-    //   this.log(speech);
-    //   let match = speech.matches.importantProperty.length > 3;
-    //   callback( null, match );
-    // });
-    //
-    // Homey.ManagerSpeechInput.on('speechMatch', function( speech, onSpeechEvalData ) {
-    //   this.log("SpeechMatch");
-    //       // onSpeechData is whatever you returned in thediscoveredCrownstones onSpeech callback
-    //   //     // process and execute the user phrase here
-    //    speech.say( Homey.__('Thanks, will do!') );
-    //   });
-  }
-
   startBle() {
     let BleManager = Homey.ManagerBLE;
     this.log("Start Scanning")
@@ -188,4 +154,4 @@ class MyApp extends Homey.App {
   }
 }
 
-module.exports = MyApp;
+module.exports = CrownstoneApp;

@@ -45,11 +45,11 @@
         "en": "Crownstone"
       },
       "class": "socket",
-      "capabilities": [ "onoff", "dim" ],
+      "capabilities": [ "onoff" ],
       "capabilitiesOptions": {
         "onoff": {
           "title": {
-            "en": "My custom Title"
+            "en": "Crownstone switch or dimmer"
           }
         }
       },      
