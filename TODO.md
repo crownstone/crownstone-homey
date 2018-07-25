@@ -14,4 +14,24 @@
 ## Work-around
 
 * I have reconfigured the Crownstone such that it emits nonconnectable advertisements using a different MAC address. 
-* However, I can't upload it to the Crownstone because now the DFU is complaining that the binary is too large.
+* However, I can't upload it to the Crownstone because now the DFU is complaining that the binary is too large. Okay, used online config file and seems fine now.
+* Mmm... Now I apparently didn't do it correctly yet. There are still connectable and nonconnectable messages.
+* I thought I created a connectable even message: &= 0xFE and an nonconnectable odd message: |= 0x01. 
+
+In this case DA:52:37:CB:06:5A is the even message.
+In this case DA:52:37:CB:06:5B is the odd message.
+
+Check through scanning using a whitelist:
+
+    sudo hcitool lewladd --random DA:52:37:CB:06:5A
+    sudo hcitool lescan --duplicates --passive --whitelist
+
+In another shell:
+
+    sudo hcidump --raw
+
+You see the 6th value change from 00 to 03.
+
+The default for this device is 5B. So, apparently so now and then an nonconnectable message is sent with the wrong MAC. Then I'll have to adjust the code in the firmware to make sure setting the MAC address is tightly done with restarting the advertisement.
+
+First `sd_ble_gap_adv_stop`, then `sd_ble_gap_address_set` and then starting again.
