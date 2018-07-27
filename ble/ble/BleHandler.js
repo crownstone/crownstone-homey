@@ -31,7 +31,7 @@ class BleHandler {
     _connect(peripheral) {
         if (this.connectedPeripheral !== null) {
             if (peripheral.uuid === this.connectedPeripheral.peripheral.uuid) {
-                return peripheral;
+                return new Promise((resolve, reject) => { resolve(peripheral); });
             }
             throw new BluenetError_1.BluenetError(BluenetError_1.BluenetErrorType.ALREADY_CONNECTED_TO_SOMETHING_ELSE, "Bluenet is already connected to another Crownstone.");
         }
@@ -45,7 +45,7 @@ class BleHandler {
                     }
                     else {
                         console.log("Connected successfully!");
-                        this._setConnectedPeriphral(homeyPeripheral);
+                        this._setConnectedPeripheral(homeyPeripheral);
                         resolve(homeyPeripheral);
                     }
                 });
@@ -99,7 +99,7 @@ class BleHandler {
             });
         });
     }
-    _setConnectedPeriphral(peripheral) {
+    _setConnectedPeripheral(peripheral) {
         peripheral.once("disconnect", () => {
             console.log("Disconnected from Device, cleaning up...");
             this.connectedPeripheral = null;
@@ -113,6 +113,7 @@ class BleHandler {
                     if (err) {
                         return reject(err);
                     }
+                    this.connectedPeripheral = null;
                     resolve();
                 });
             }

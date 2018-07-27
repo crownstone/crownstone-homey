@@ -35,7 +35,15 @@ class ControlHandler {
     }
     disconnect() {
         let packet = ControlPackets_1.ControlPacketsGenerator.getDisconnectPacket();
-        return this._writeControlPacket(packet);
+        return this._writeControlPacket(packet)
+            .then(() => {
+            setTimeout(() => {
+                console.log("Forcing cleanup after disconnect command");
+                if (this.ble.connectedPeripheral !== null) {
+                    this.ble.connectedPeripheral = null;
+                }
+            }, 4000);
+        });
     }
     _writeControlPacket(packet) {
         return this.ble.writeToCharacteristic(Services_1.CSServices.CrownstoneService, Characteristics_1.CrownstoneCharacteristics.Control, packet);
