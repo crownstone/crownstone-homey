@@ -4,9 +4,11 @@ const EncryptionHandler_1 = require("../util/EncryptionHandler");
 const NotificationMerger_1 = require("../util/NotificationMerger");
 const BluenetTypes_1 = require("../protocol/BluenetTypes");
 const BluenetError_1 = require("../BluenetError");
+const Util_1 = require("../util/Util");
 class BleHandler {
     constructor(settings) {
         this.connectedPeripheral = null;
+        this.connectionSessionId = null;
         this.settings = settings;
     }
     /**
@@ -104,6 +106,7 @@ class BleHandler {
             console.log("Disconnected from Device, cleaning up...");
             this.connectedPeripheral = null;
         });
+        this.connectionSessionId = Util_1.Util.getUUID();
         this.connectedPeripheral = { peripheral: peripheral, services: {}, characteristics: {} };
     }
     disconnect() {

@@ -3,6 +3,7 @@ import { BluenetSettings } from "../BluenetSettings";
 export declare class BleHandler {
     settings: BluenetSettings;
     connectedPeripheral: any;
+    connectionSessionId: any;
     constructor(settings: any);
     /**
      * Connect is either a handle or a peripheral object

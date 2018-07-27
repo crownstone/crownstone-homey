@@ -37,12 +37,15 @@ class ControlHandler {
         let packet = ControlPackets_1.ControlPacketsGenerator.getDisconnectPacket();
         return this._writeControlPacket(packet)
             .then(() => {
+            let sessionId = this.ble.connectionSessionId;
             setTimeout(() => {
-                console.log("Forcing cleanup after disconnect command");
-                if (this.ble.connectedPeripheral !== null) {
-                    this.ble.connectedPeripheral = null;
+                if (sessionId === this.ble.connectionSessionId) {
+                    console.log("Forcing cleanup after disconnect command");
+                    if (this.ble.connectedPeripheral !== null) {
+                        this.ble.connectedPeripheral = null;
+                    }
                 }
-            }, 4000);
+            }, 2000);
         });
     }
     _writeControlPacket(packet) {
