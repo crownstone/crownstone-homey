@@ -77,23 +77,19 @@ class CrownstoneDevice extends Homey.Device {
                 this.log("Scan completed, parsing results...", advArray)
                 let tempAdv = null;
                 advArray.forEach((adv) => {
-            //        if (this.addressIdMap[adv.address.toLowerCase()]) {
-                        
-                        if (adv.connectable && adv.localName === 'Crown') {
-                            //this.log(adv, adv.rssi)
-                            this.log("Found:", adv.address);
-                            this.discoveredCrownstones[this.addressIdMap[adv.address.toLowerCase()]] = adv;
-                            if (adv.uuid == uuid) {
-                                this.log("Found Crownstone!");
-                                tempAdv = adv;
-                            }
-                        } else {
-                            if (adv.uuid == uuid) {
-                                this.log("Found unconnectable Crownstone, continue discovery...");
- //                               tempAdv = adv;
-                            }
+                    if (adv.connectable) {
+                        //this.log(adv, adv.rssi)
+                        this.log("Found:", adv.address);
+                        this.discoveredCrownstones[this.addressIdMap[adv.address.toLowerCase()]] = adv;
+                        if (adv.uuid == uuid) {
+                            this.log("Found Crownstone!");
+                            tempAdv = adv;
                         }
-              //      }
+                    } else {
+                        if (adv.uuid == uuid) {
+                            this.log("Found unconnectable Crownstone, continue discovery...");
+                        }
+                    }
                 })
                 return tempAdv;
 //                return Promise.reject( new Error('Cannot find this stone!') );
