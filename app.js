@@ -16,16 +16,18 @@ class CrownstoneApp extends Homey.App {
 
     this.email = Homey.ManagerSettings.get("email");
     this.password = Homey.ManagerSettings.get("password");
-    this.sphere = Homey.ManagerSettings.get("sphere");
+//    this.sphere = Homey.ManagerSettings.get("sphere");
     
     this.userData = {
       "email": this.email,
       "password": this.password,
-      "sphereId": this.sphere
+      "sphereId": null
+  //    "sphereId": this.sphere
     }
-    this.log(`Use sphereId: ${this.sphere}`)
-        
-    this.bluenet.linkCloud(this.userData)
+  //  this.log(`Use sphereId: ${this.sphere}`)
+       
+    this.bluenet.cloud.login(this.userData)
+//    this.bluenet.linkCloud(this.userData)
       .then(() => {
         this.log("Connected to the cloud");
       })

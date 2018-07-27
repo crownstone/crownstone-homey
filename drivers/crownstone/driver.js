@@ -7,26 +7,35 @@ class CrownstoneDriver extends Homey.Driver {
     onInit() {
         super.onInit();
         this.log("Init Crownstone driver");
-//        this.bluenet = Homey.app.getBluenet();
         this.userData = Homey.app.getUserData();
         this.cloudAPI = Homey.app.getCloudAPI();
     }
 
-    onPairListDevices( data, callback ){
+    onPairListDevices( data, callback ) {
 
         this.log("Discover Crownstones in cloud");
         
         let devices = [];
 
-        // Todo: test if properly linked before (should be done in app.js)
-        //this.bluenet.linkCloud(this.userData)
-        //    .then(() => {
-        //        this.log("Connected to the cloud");
-        //        this.log("Get current sphere (not yet implemented)");
-        //        this.log("Get stones in current sphere");
-        //        return 
-        this.log("Get stones in current sphere");
-        this.cloudAPI.forSphere(this.userData.sphereId).getStonesInSphere()
+        this.log("Get current sphere");
+        this.cloudAPI.forSphere(this.userData.userId).getDevices()
+            .then((devices) => {
+                this.log("Found smartphones");
+                let sphereId = null;
+                // Just assume one smartphone for now and then it knows where it is
+                if (devices.length > 0) {
+                    sphereId = devices[0].currentSphereId;
+                    this.log("Smartphone in sphere", sphereId);
+                }
+                return sphereId; 
+            })
+            .then((sphereId) => {
+                if (sphereId) {
+                    return this.cloudAPI.forSphere(sphereId).getStonesInSphere();
+                } else {
+                    return Promise.reject( new Error('Cannot find the current sphere...') );
+                }
+            })
             .then((stones) => {
                 if (stones && Array.isArray(stones)) {
                     stones.forEach((stone) => {

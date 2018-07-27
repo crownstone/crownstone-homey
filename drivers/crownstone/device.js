@@ -2,6 +2,8 @@
 
 const Homey = require('homey');
 
+//const cloudAPI = require('../../ble/cloud/cloudAPI.js').CLOUD;
+
 class CrownstoneDevice extends Homey.Device {
 
     // this method is called when the Device is inited
@@ -9,25 +11,57 @@ class CrownstoneDevice extends Homey.Device {
         this.log('Init Crownstone device');
         this.log('name:', this.getName());
         this.log('class:', this.getClass());
-        //this.log('data:', this.getData());
         
         this.bluenet = Homey.app.getBluenet();
+        this.userData = Homey.app.getUserData();
+        this.cloudAPI = Homey.app.getCloudAPI();
 
         // register a capability listener
         this.registerCapabilityListener('onoff', this.onCapabilityOnoff.bind(this))
 
-        this.addressIdMap = {};
-        this.discoveredCrownstones = {};
+        //this.addressIdMap = {};
+        //this.discoveredCrownstones = {};
     }
 
     // this method is called when the Device is added
     onAdded() {
         this.log('Crownstone added');
+        // todo register a capability listener for dimming if the Crownstone can be dimmed (use this.getData())
     }
 
     // this method is called when the Device is deleted
     onDeleted() {
         this.log('Crownstone deleted');
+    }
+
+    obtainSphereId() {
+        if (this.userData.sphereId !== null) {
+            return new Promise((resolve,reject) => { resolve(this.userData.sphereId) });
+        }
+        return this.cloudAPI.getDevices()
+            .then((devices) => {
+                this.log("Found smartphones");
+                let sphereId = null;
+                // Just assume one smartphone for now and then it knows where it is
+                if (devices.length > 0) {
+                    sphereId = devices[0].currentSphereId;
+                    this.log("Smartphone in sphere", sphereId);
+                }
+                return sphereId; 
+            })
+            .then((sphereId) => {
+                this.log("Sphere id obtained");
+                this.userData.sphereId = sphereId;
+                return this.bluenet.cloud.getKeys(sphereId);
+            })
+            .then((keys) => {
+                this.log("Load keys", keys);
+                this.bluenet.settings.loadKeys(true, keys.admin, keys.member, keys.guest, "CloudData")
+            })
+            .catch((err) => {
+                this.log("Catch and reject", err);
+                throw err;
+            })
     }
 
     // this method is called when the Device has requested a state change (turned on or off)
@@ -39,13 +73,16 @@ class CrownstoneDevice extends Homey.Device {
         if (value == true) {
             this.state = 1;
         }
-
         if (!this.getData()) {
             return Promise.reject( new Error('Could not find this device') );
         }
-        let result = true;
+        
         this.address = this.getData().address;
-        return this.searchForSpecificStone(this.address)
+        return this.obtainSphereId() 
+            .then(() => {
+                this.log("Connect to address", this.address);
+                return this.searchForSpecificStone(this.address)
+            })
             .then((homeyAdvertisement) => {
                 if (homeyAdvertisement) {
                     this.log('Switch crownstone');
