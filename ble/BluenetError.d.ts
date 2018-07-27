@@ -3,6 +3,7 @@ export declare const BluenetErrorType: {
     COULD_NOT_VALIDATE_SESSION_NONCE: string;
     INCOMPATIBLE_FIRMWARE: string;
     NO_ENCRYPTION_KEYS: string;
+    ALREADY_CONNECTING_TO_SOMETHING_ELSE: string;
     ALREADY_CONNECTED_TO_SOMETHING_ELSE: string;
     INVALID_PERIPHERAL: string;
 };

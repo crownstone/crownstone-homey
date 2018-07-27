@@ -43,6 +43,7 @@ class ControlHandler {
                     console.log("Forcing cleanup after disconnect command");
                     if (this.ble.connectedPeripheral !== null) {
                         this.ble.connectedPeripheral = null;
+                        this.ble.connectionPending = null;
                     }
                 }
             }, 2000);

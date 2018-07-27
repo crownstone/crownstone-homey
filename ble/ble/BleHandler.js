@@ -9,6 +9,7 @@ class BleHandler {
     constructor(settings) {
         this.connectedPeripheral = null;
         this.connectionSessionId = null;
+        this.connectionPending = false;
         this.settings = settings;
     }
     /**
@@ -40,20 +41,28 @@ class BleHandler {
         // connecting run
         return new Promise((resolve, reject) => {
             // if this has the connect method implemented....
-            if (peripheral.connect) {
-                peripheral.connect((err, homeyPeripheral) => {
-                    if (err) {
-                        reject(err);
-                    }
-                    else {
-                        console.log("Connected successfully!");
-                        this._setConnectedPeripheral(homeyPeripheral);
-                        resolve(homeyPeripheral);
-                    }
-                });
+            if (this.connectionPending === true) {
+                reject(new BluenetError_1.BluenetError(BluenetError_1.BluenetErrorType.ALREADY_CONNECTING_TO_SOMETHING_ELSE, "We're already trying to connect to something else. Aborting connection request."));
             }
             else {
-                reject(new BluenetError_1.BluenetError(BluenetError_1.BluenetErrorType.INVALID_PERIPHERAL, "Invalid peripheral to connect to."));
+                if (peripheral.connect) {
+                    this.connectionPending = true;
+                    peripheral.connect((err, homeyPeripheral) => {
+                        if (err) {
+                            this.connectionPending = false;
+                            reject(err);
+                        }
+                        else {
+                            console.log("Connected successfully!");
+                            this.connectionPending = false;
+                            this._setConnectedPeripheral(homeyPeripheral);
+                            resolve(homeyPeripheral);
+                        }
+                    });
+                }
+                else {
+                    reject(new BluenetError_1.BluenetError(BluenetError_1.BluenetErrorType.INVALID_PERIPHERAL, "Invalid peripheral to connect to."));
+                }
             }
         });
     }
@@ -120,6 +129,7 @@ class BleHandler {
                         return reject(err);
                     }
                     console.log("BleHandler: Disconnected successfully.");
+                    this.connectionPending = false;
                     this.connectedPeripheral = null;
                     resolve();
                 });

@@ -4,6 +4,7 @@ export declare class BleHandler {
     settings: BluenetSettings;
     connectedPeripheral: any;
     connectionSessionId: any;
+    connectionPending: boolean;
     constructor(settings: any);
     /**
      * Connect is either a handle or a peripheral object
