@@ -52,6 +52,13 @@ exports.user = {
         return this._setupRequest('GET', '/users/userId', { background });
     },
     /**
+     *  CLOUD.forUser(userId).getUserLocation().then((data) => { ... use data })
+     * @returns {*}
+     */
+    getUserLocation: function (background = true) {
+        return this._setupRequest('GET', '/users/{id}/currentLocation', { background });
+    },
+    /**
   
     /**
      *
