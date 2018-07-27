@@ -19,15 +19,15 @@ class BleHandler {
     connect(connectData) {
         return this._connect(connectData)
             .then((peripheral) => {
-            console.log("Getting Services...");
+            console.log("BleHandler: Getting Services...");
             return this._getServices(peripheral);
         })
             .then((services) => {
-            console.log("Getting Characteristics...");
+            console.log("BleHandler: Getting Characteristics...");
             return this._getCharacteristics(services);
         })
             .then(() => {
-            console.log("Connection process complete.");
+            console.log("BleHandler: Connection process complete.");
         })
             .catch((err) => { console.log(err); throw err; });
     }
@@ -47,13 +47,14 @@ class BleHandler {
             else {
                 if (peripheral.connect) {
                     this.connectionPending = true;
+                    console.log("BleHandler: Call now peripheral.connect");
                     peripheral.connect((err, homeyPeripheral) => {
                         if (err) {
                             this.connectionPending = false;
                             reject(err);
                         }
                         else {
-                            console.log("Connected successfully!");
+                            console.log("BleHandler: Connected successfully!");
                             this.connectionPending = false;
                             this._setConnectedPeripheral(homeyPeripheral);
                             resolve(homeyPeripheral);
@@ -112,7 +113,7 @@ class BleHandler {
     }
     _setConnectedPeripheral(peripheral) {
         peripheral.once("disconnect", () => {
-            console.log("Disconnected from Device, cleaning up...");
+            console.log("BleHandler: Disconnected from Device, cleaning up...");
             this.connectedPeripheral = null;
         });
         this.connectionSessionId = Util_1.Util.getUUID();

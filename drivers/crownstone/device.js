@@ -67,6 +67,7 @@ class CrownstoneDevice extends Homey.Device {
         //return Promise.reject( new Error('Switching the device failed!') );
     }
 
+    /*
     searchForSpecificStone(macAddress) {
         let uuid = macAddress.toLowerCase().replace(/(:)/g,'')
         this.log("Search for", uuid)
@@ -95,8 +96,9 @@ class CrownstoneDevice extends Homey.Device {
 //                return Promise.reject( new Error('Cannot find this stone!') );
             })
     }
+    */
 
-    searchForSpecificStoneWithFindDoesNotWork(macAddress) {
+    searchForSpecificStone(macAddress) {
         let uuid = macAddress.toLowerCase().replace(/(:)/g,'')
         this.log("Search for", uuid)
         let BleManager = Homey.ManagerBLE;
