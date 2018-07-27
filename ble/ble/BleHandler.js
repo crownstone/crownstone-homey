@@ -107,17 +107,22 @@ class BleHandler {
         this.connectedPeripheral = { peripheral: peripheral, services: {}, characteristics: {} };
     }
     disconnect() {
+        console.log("BleHandler: starting disconnect.....");
         return new Promise((resolve, reject) => {
-            if (this.connectedPeripheral) {
+            if (this.connectedPeripheral !== null) {
+                console.log("BleHandler: Disconnecting from peripheral.....");
                 this.connectedPeripheral.peripheral.disconnect((err) => {
                     if (err) {
+                        console.log("BleHandler: Disconnecting Failed...");
                         return reject(err);
                     }
+                    console.log("BleHandler: Disconnected successfully.");
                     this.connectedPeripheral = null;
                     resolve();
                 });
             }
             else {
+                console.log("BleHandler: Not connected in the first place. Success!");
                 resolve();
             }
         });
