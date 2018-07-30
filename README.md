@@ -1,6 +1,6 @@
-# crownstone-homey
+# Homey Crownstone App
 
-Integration with Homey
+A Crownstone app to integrate with the Homey.
 
 First, find the `HOMEY_IP` address. Use e.g. `sudo arp-scan -l` and search for a device with manufacturer name
 `Azurewave Technologies, Inc.`.
@@ -10,10 +10,13 @@ is run from your Homey device.
 
 At the Athom [documentation](https://developer.athom.com/docs/apps/tutorial-Getting%20Started.html) you have a
 getting started manual. It tells you to install the `athom` utility through npm. It is similar in operation to for
-example the `heroku` utility. After setting up keys etc. as indicated over there, go to the root directory of 
-this repository:
+example the `heroku` utility. After setting up keys etc. as indicated over there, get the code and run it.
 
+    git clone https://github.com/crownstone/crownstone-homey
+    npm install 
     athom app run
+
+Note that `npm install` is required (athom does not use the package.json file so dependencies have to be included).
 
 In the GUI a Crownstone application appears.
 
