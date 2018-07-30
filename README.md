@@ -23,16 +23,10 @@ If you click at the `Crownstone` text at the bottom left, you see a new dialog a
 
 ![Configuration of Crownstone in the Homey GUI](doc/homey-gui-crownstone-app-config.png)
 
-The `sphere id` can be found through using the [Crownstone cloud API](https://cloud.crownstone.rocks). Get first
-your access token by logging in, find your `user id` by the `/users/me` endpoint and then do the proper REST call to
-get all your spheres:
+## sphere id
 
-    access_token=XXXXXXXXXXXXXXX
-	user_id=XXXXXXXXXXXX
-    curl -s -X GET "https://cloud.crownstone.rocks/api/users/$user_id/spheres?access_token=$access_token"
+The `sphere id` that will be used behind the scenes is the one where the user is located. This is obtained automatically via the [Crownstone cloud API](https://cloud.crownstone.rocks). 
 
-Check <https://github.com/mrquincle/crownstone-bash> for utility functions that do this automatically. You can do
-also perform this all in the web interface. This is also described in the Homey GUI.
 
 After running you will see something like:
 
@@ -62,10 +56,40 @@ After running you will see something like:
 
 We are hiring as well. :-)
 
-# Current implementation
+# The process
 
-The current implementation scans for Crownstones (makes sure that they are visible from the Homey!), picks the first
-one and sends it a series of commands.
+## Sphere
+
+The sphere is automatically obtained from the first smartphone device that is found in the Crownstone cloud. That device is situated in a particular home (sphere). The keys that belong to that sphere will be used to encrypt/decrypt messages towards the Crownstones from the Homey hub.
+
+## Add Crownstones
+
+It is necessary to add a Crownstone manually. Although the Crownstone code supports automatic discovery, in the setup at Homey the user manually selects a Crownstone from the list
+
+![Homey: Add Crownstone type](doc/homey-gui-devices-zones.png)
+![Homey: Add Crownstone](doc/homey-gui-add-device.png)
+![Homey: Select Crownstone from list](doc/homey-gui-select-device.png)
+![Homey: Crownstone added](doc/homey-gui-device-added.png)
+
+## Control Crownstone
+
+It is fairly simple to control the Crownstone.
+
+![Crownstone add Device](doc/homey-gui-control-device.png)
+
+Of course you can also say something like: "Okay Homey, turn on coffee machine" or in Dutch "Oke Homey, zet het koffieapparaat aan".
+
+## On problems
+
+There is almost nothing for you to check if the Crownstone app works. There is no logging etc. If you want to see logging, you have to install this app from github and run it from the command line with `homey app run`.
+
+Bluetooth problems are at times resolved by restarting the Homey (from the System menu):
+
+![Reset Homey](doc/homey-gui-restarting.png)
+
+## Console
+
+Switching a Crownstone on the console with `athom app run` will show something like this:
 
 ```
 ✓ Running `rocks.crownstone`, press CTRL+C to quit
@@ -80,74 +104,6 @@ one and sends it a series of commands.
 2018-07-24 15:42:47 [log] [MyApp] Get stones in sphere
 2018-07-24 15:42:48 [log] [MyApp] Start Scanning
 2018-07-24 15:42:53 [log] [MyApp] Scan completed, parsing results...
-2018-07-24 15:42:53 [log] [MyApp] BleAdvertisement {
-  domain: null,
-  _events: {},
-  _eventsCount: 0,
-  _maxListeners: undefined,
-  id: 'e4b22c85a934',
-  uuid: 'e4b22c85a934',
-  address: 'e4:b2:2c:85:a9:34',
-  addressType: 'random',
-  connectable: true,
-  localName: 'Crown',
-  manufacturerData: <Buffer 4c 00 02 15 e2 e1 0a 19 68 80 45 01 ab 90 cc 6f 8f a8 f5 a8 35 59 37 48 c4>,
-  serviceData: [],
-  serviceUuids: [],
-  rssi: -78,
-  connect: [Function: bound connect],
-  printInfo: [Function: bound printInfo] } -78
-2018-07-24 15:42:53 [log] [MyApp] BleAdvertisement {
-  domain: null,
-  _events: {},
-  _eventsCount: 0,
-  _maxListeners: undefined,
-  id: 'f34fc7ab2737',
-  uuid: 'f34fc7ab2737',
-  address: 'f3:4f:c7:ab:27:37',
-  addressType: 'random',
-  connectable: true,
-  localName: 'Crown',
-  manufacturerData: <Buffer 4c 00 02 15 e2 e1 0a 19 68 80 45 01 ab 90 cc 6f 8f a8 f5 a8 8f 7c 8d 65 c4>,
-  serviceData: [],
-  serviceUuids: [],
-  rssi: -82,
-  connect: [Function: bound connect],
-  printInfo: [Function: bound printInfo] } -82
-2018-07-24 15:42:53 [log] [MyApp] BleAdvertisement {
-  domain: null,
-  _events: {},
-  _eventsCount: 0,
-  _maxListeners: undefined,
-  id: 'da5237cb065b',
-  uuid: 'da5237cb065b',
-  address: 'da:52:37:cb:06:5b',
-  addressType: 'random',
-  connectable: true,
-  localName: 'Crown',
-  manufacturerData: <Buffer 4c 00 02 15 e2 e1 0a 19 68 80 45 01 ab 90 cc 6f 8f a8 f5 a8 dc 86 cc ab c4>,
-  serviceData: [],
-  serviceUuids: [],
-  rssi: -75,
-  connect: [Function: bound connect],
-  printInfo: [Function: bound printInfo] } -75
-2018-07-24 15:42:53 [log] [MyApp] BleAdvertisement {
-  domain: null,
-  _events: {},
-  _eventsCount: 0,
-  _maxListeners: undefined,
-  id: 'e95fdbb9aff1',
-  uuid: 'e95fdbb9aff1',
-  address: 'e9:5f:db:b9:af:f1',
-  addressType: 'random',
-  connectable: true,
-  localName: 'bart',
-  manufacturerData: <Buffer 4c 00 02 15 e2 e1 0a 19 68 80 45 01 ab 90 cc 6f 8f a8 f5 a8 77 57 4f 68 c4>,
-  serviceData: [],
-  serviceUuids: [],
-  rssi: -89,
-  connect: [Function: bound connect],
-  printInfo: [Function: bound printInfo] } -89
 2018-07-24 15:42:53 [log] [MyApp] Discovered Crownstones with the following Ids: [ '4', '10', '11', '13' ]
 2018-07-24 15:42:53 [log] [MyApp] Doing the thing with the first Crownstone we discovered:  4  with the address: e9:5f:db:b9:af:f1
 2018-07-24 15:42:53 [log] [MyApp] Doing the thing! Connecting...
@@ -172,3 +128,5 @@ Session Nonce Processed.
 2018-07-24 15:43:03 [log] [MyApp] Disconnecting...
 2018-07-24 15:43:14 [log] [MyApp] Done!
 ```
+
+
