@@ -13,10 +13,9 @@ getting started manual. It tells you to install the `athom` utility through npm.
 example the `heroku` utility. After setting up keys etc. as indicated over there, get the code and run it.
 
     git clone https://github.com/crownstone/crownstone-homey
-    npm install 
     athom app run
 
-Note that `npm install` is required (athom does not use the package.json file so dependencies have to be included).
+Note that a normal setup would use a lock file for the dependencies and run `npm install` itself. Homey does not do this and henceforth the `node_modules` directory has to be checked into the code repository. 
 
 In the GUI a Crownstone application appears.
 
