@@ -45,6 +45,10 @@
       "name": {
         "en": "Crownstone"
       },
+      "images": {
+        "large": "/assets/images/large-square.png",
+        "small": "/assets/images/very-small-square.png"
+      },
       "class": "socket",
       "capabilities": [ "onoff" ],
       "capabilitiesOptions": {
