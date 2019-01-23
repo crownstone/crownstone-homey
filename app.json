@@ -16,7 +16,8 @@
   ],
   "permissions": [
     "homey:manager:speech-output",
-    "homey:manager:ledring"
+    "homey:manager:ledring",
+    "homey:wireless:ble"
   ],
   "images": {
     "large": "/assets/images/large.png",
