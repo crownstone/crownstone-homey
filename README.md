@@ -5,8 +5,10 @@ A Crownstone app to integrate with the Homey.
 First, find the `HOMEY_IP` address. Use e.g. `sudo arp-scan -l` and search for a device with manufacturer name
 `Azurewave Technologies, Inc.`.
 
-Navigate to <http://$HOMEY_IP/manager/settings/#homey:manager:apps> to operate the graphical user interface that
-is run from your Homey device.
+Go to https://developer.athom.com/
+
+#Navigate to <http://$HOMEY_IP/manager/settings/#homey:manager:apps> to operate the graphical user interface that
+#is run from your Homey device.
 
 At the Athom [documentation](https://developer.athom.com/docs/apps/tutorial-Getting%20Started.html) you have a
 getting started manual. It tells you to install the `athom` utility through npm. It is similar in operation to for
@@ -130,5 +132,29 @@ Session Nonce Processed.
 2018-07-24 15:43:03 [log] [MyApp] Disconnecting...
 2018-07-24 15:43:14 [log] [MyApp] Done!
 ```
+
+# Crownstone Cloud Problems
+
+The Crownstone Cloud is not documented. There are endpoints with information that are not updated. For example,
+you might think that you get the last information about a position from the array of smart devices that are being
+tracked, hence from
+
+    GET /users/{id}/devices
+
+This is not the case, the field `currentSphereId` in the json returned is never updated. It is only there for legacy
+reasons. The proper way to get the current location of a person is through:
+
+    GET /users/{id}/currentLocation
+
+This is updated in the cloud when there is an enter or exit sphere event from the device that is being tracked.
+
+
+# BLE on the Homey
+
+The Peripheral object is constructed on a [BleAdvertisement.connect](https://apps.developer.athom.com/BlePeripheral.html) call.
+
+The connect call does not seem to return. The last point in our code is in the app at `ble/ble/BleHandler.js` in 
+function `_connect` and well `peripheral.connect`.
+
 
 

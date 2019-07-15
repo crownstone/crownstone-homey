@@ -45,11 +45,13 @@ class BleHandler {
                 reject(new BluenetError_1.BluenetError(BluenetError_1.BluenetErrorType.ALREADY_CONNECTING_TO_SOMETHING_ELSE, "We're already trying to connect to something else. Aborting connection request."));
             }
             else {
+                console.log("Peripheral", peripheral);
                 if (peripheral.connect) {
                     this.connectionPending = true;
                     console.log("BleHandler: Call now peripheral.connect");
                     peripheral.connect((err, homeyPeripheral) => {
                         if (err) {
+                            console.log("BleHandler: No connection made!");
                             this.connectionPending = false;
                             reject(err);
                         }

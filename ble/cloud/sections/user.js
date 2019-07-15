@@ -56,7 +56,7 @@ exports.user = {
      * @returns {*}
      */
     getUserLocation: function (background = true) {
-        return this._setupRequest('GET', '/users/{id}/currentLocation', { background });
+        return this._setupRequest('GET', '/users/{id}/currentLocation', { background: background });
     },
     /**
   

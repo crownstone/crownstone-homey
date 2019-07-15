@@ -18,14 +18,21 @@ class CrownstoneDriver extends Homey.Driver {
         let devices = [];
 
         this.log("Get current sphere");
-        this.cloudAPI.forSphere(this.userData.userId).getDevices()
-            .then((devices) => {
-                this.log("Found smartphones");
+
+        this.cloudAPI.getUserLocation()
+            .then((userLocations) => {
                 let sphereId = null;
-                // Just assume one smartphone for now and then it knows where it is
-                if (devices.length > 0) {
-                    sphereId = devices[0].currentSphereId;
-                    this.log("Smartphone in sphere", sphereId);
+                if (userLocations && Array.isArray(userLocations) && userLocations.length > 0) {
+                    let spheres = userLocations[0].inSpheres;
+                    // Just assume one sphere per physical location now
+                    if (spheres && Array.isArray(spheres) && spheres.length > 0) {
+                        sphereId = spheres[0].sphereId;
+                        this.log("Smartphone in sphere", sphereId);
+                    } else {
+                        this.log("No sphere found");
+                    }
+                } else {
+                    this.log("No array of user locations")
                 }
                 return sphereId; 
             })
@@ -39,7 +46,7 @@ class CrownstoneDriver extends Homey.Driver {
             .then((stones) => {
                 if (stones && Array.isArray(stones)) {
                     stones.forEach((stone) => {
-                        if (stone.type === 'PLUG' || stone.type === 'BUILT-IN') {
+                        if (stone.type === 'PLUG' || stone.type === 'BUILTIN') {
                             let device = {};
                             device["name"] = stone.name;
                             device["data"] = stone;

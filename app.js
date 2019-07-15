@@ -4,36 +4,39 @@ const Homey = require('homey');
 const BluenetLib = require('./ble/index');
 
 const cloudAPI = require('./ble/cloud/cloudAPI.js').CLOUD;
+const sha1 = require('sha-1');  
 
 class CrownstoneApp extends Homey.App {
 
   onInit() {
     this.log('Crownstone!');
-    this.log(`${Homey.app.manifest.id} is running...`);
+    this.log(`App ${Homey.app.manifest.id} is running...`);
     this.log('Load bluenet library')
 
     this.bluenet = new BluenetLib.Bluenet()
 
+    // get email and password from settings
     this.email = Homey.ManagerSettings.get("email");
     this.password = Homey.ManagerSettings.get("password");
-//    this.sphere = Homey.ManagerSettings.get("sphere");
-    
+   
+    // user
     this.userData = {
       "email": this.email,
-      "password": this.password,
-      "sphereId": null
-  //    "sphereId": this.sphere
+      "sha1Password": sha1(this.password),
+      "userId": "undefined here, in cloudAPI",
+      "token": "undefined here, in cloudAPI"
     }
-  //  this.log(`Use sphereId: ${this.sphere}`)
-       
+
+    // obtain tokens through utility function, this stores them in the cloudAPI object referenced above
     this.bluenet.cloud.login(this.userData)
-//    this.bluenet.linkCloud(this.userData)
       .then(() => {
         this.log("Connected to the cloud");
+        // copy results back to the struct here if it is gonna be used
       })
       .catch((err) => {
         this.log("Error: could not connect to cloud", err);
       })
+
   }
 
   getBluenet() {

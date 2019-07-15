@@ -2,8 +2,6 @@
 
 const Homey = require('homey');
 
-//const cloudAPI = require('../../ble/cloud/cloudAPI.js').CLOUD;
-
 class CrownstoneDevice extends Homey.Device {
 
     // this method is called when the Device is inited
@@ -38,14 +36,21 @@ class CrownstoneDevice extends Homey.Device {
         if (this.userData.sphereId !== null) {
             return new Promise((resolve,reject) => { resolve(this.userData.sphereId) });
         }
-        return this.cloudAPI.getDevices()
-            .then((devices) => {
-                this.log("Found smartphones");
+
+        return this.cloudAPI.getUserLocation()
+            .then((userLocations) => {
                 let sphereId = null;
-                // Just assume one smartphone for now and then it knows where it is
-                if (devices.length > 0) {
-                    sphereId = devices[0].currentSphereId;
-                    this.log("Smartphone in sphere", sphereId);
+                if (userLocations && Array.isArray(userLocations) && userLocations.length > 0) {
+                    let spheres = userLocations[0].inSpheres;
+                    // Just assume one sphere per physical location now
+                    if (spheres && Array.isArray(spheres) && spheres.length > 0) {
+                        sphereId = spheres[0].sphereId;
+                        this.log("Smartphone in sphere", sphereId);
+                    } else {
+                        this.log("No sphere found");
+                    }
+                } else {
+                    this.log("No array of user locations")
                 }
                 return sphereId; 
             })
@@ -70,6 +75,8 @@ class CrownstoneDevice extends Homey.Device {
         // ... set value to real device
         this.log('Set on/off:', value);
         this.state = 0;
+
+
         if (value == true) {
             this.state = 1;
         }
@@ -142,7 +149,7 @@ class CrownstoneDevice extends Homey.Device {
         return BleManager.find(uuid, 10000)
             .then((homeyAdvertisement) => {
                 if (homeyAdvertisement) {
-                    this.log("Found Crownstone!")
+                    this.log("Found Crownstone:", homeyAdvertisement)
                     return homeyAdvertisement;
                 }
                 else {

@@ -4,10 +4,12 @@
   "compatibility": ">=1.5.0",
   "sdk": 2,
   "name": {
-    "en": "Crownstone"
+    "en": "Crownstone",
+    "nl": "Crownstone"
   },
   "description": {
-    "en": "Control Crownstones, switch, dim, measure power consumption, or localize yourself"
+    "en": "Control Crownstones, switch, dim, measure power consumption, or localize yourself",
+    "nl": "Crownstones schakelen, dimmen, meten en kunnen direct op je locatie in hus reageren."
   },
   "category": [
     "localization", 
@@ -43,7 +45,8 @@
     {
       "id": "crownstone",
       "name": {
-        "en": "Crownstone"
+        "en": "Crownstone Zero",
+        "nl": "Crownstone Zero"
       },
       "images": {
         "large": "/assets/images/large-square.png",
@@ -54,7 +57,8 @@
       "capabilitiesOptions": {
         "onoff": {
           "title": {
-            "en": "Crownstone switch or dimmer"
+            "en": "Crownstone switch or dimmer",
+            "en": "Crownstone schakelaar/dimmer"
           }
         }
       },      

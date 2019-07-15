@@ -10,26 +10,26 @@ class CloudHandler {
     login(userData) {
         return this._login(userData)
             .then((result) => {
-            cloudAPI_1.CLOUD.setAccess(result.id);
-            cloudAPI_1.CLOUD.setUserId(result.userId);
-            this.token = result.id;
-            this.userId = result.userId;
+                cloudAPI_1.CLOUD.setAccess(result.id);
+                cloudAPI_1.CLOUD.setUserId(result.userId);
+                this.token = result.id;
+                this.userId = result.userId;
         });
     }
     getKeys(sphereId) {
         return cloudAPI_1.CLOUD.forUser(this.userId).getKeys()
             .then((results) => {
-            if (sphereId) {
-                for (let i = 0; i < results.length; i++) {
-                    if (results[i].sphereId === sphereId) {
-                        return results[i].keys;
+                if (sphereId) {
+                    for (let i = 0; i < results.length; i++) {
+                        if (results[i].sphereId === sphereId) {
+                            return results[i].keys;
+                        }
                     }
+                    throw ("Unknown SphereId Provided");
                 }
-                throw ("Unknown SphereId Provided");
-            }
-            else {
-                throw ("No SphereId Provided");
-            }
+                else {
+                    throw ("No SphereId Provided");
+                }
         });
     }
     _login(userData) {

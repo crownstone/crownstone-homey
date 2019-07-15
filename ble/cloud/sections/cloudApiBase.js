@@ -116,7 +116,7 @@ exports.cloudApiBase = {
 };
 function _getId(url, obj) {
     let usersLocation = url.indexOf('users');
-    if (usersLocation !== -1 && usersLocation < 3)
+    if (usersLocation !== -1 && usersLocation < 3) 
         return obj._userId;
     let devicesLocation = url.indexOf('Devices');
     if (devicesLocation !== -1 && devicesLocation < 3)

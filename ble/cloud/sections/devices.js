@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.devices = {
-    getDevices: function (background) {
+    getDevices: function (background = true) {
         return this._setupRequest('GET', '/users/{id}/devices', { background: background, data: { filter: { "include": "installations" } } });
     },
     createDevice: function (data, background = true) {
