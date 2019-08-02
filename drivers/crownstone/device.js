@@ -2,9 +2,19 @@
 
 const Homey = require('homey');
 
+/**
+ * Current we have implemented this through the BLE chip on board of the Homey. This has the advantage that we can
+ * directly send a command to the Crownstone itself. Henceforth, it should be faster than a round-trip through the
+ * cloud. However, in this way it is only possible to set up a connection to a Crownstone that is in the 
+ * neighbourhood of the Homey. The Crownstone app knows how to send messages into the mesh. The Homey does not. It
+ * only is able to send a request to a device that is broadcasting BLE advertisements in its neighbourhood.
+ *
+ * It might make sense to have a toggle that defines this behavior. It can define if we should go through the 
+ * Crownstone app (but then the particular phone has to be present) or directly with the Crownstones in its vicinity.
+ */
 class CrownstoneDevice extends Homey.Device {
 
-    // this method is called when the Device is inited
+    // This method is called when the Device is initialized. It does not necessarily do any scanning itself. 
     onInit() {
         this.log('Init Crownstone device');
         this.log('name:', this.getName());
@@ -16,9 +26,6 @@ class CrownstoneDevice extends Homey.Device {
 
         // register a capability listener
         this.registerCapabilityListener('onoff', this.onCapabilityOnoff.bind(this))
-
-        //this.addressIdMap = {};
-        //this.discoveredCrownstones = {};
     }
 
     // this method is called when the Device is added
@@ -32,14 +39,13 @@ class CrownstoneDevice extends Homey.Device {
         this.log('Crownstone deleted');
     }
 
-    obtainSphereId() {
-        if (this.userData.sphereId !== null) {
-            return new Promise((resolve,reject) => { resolve(this.userData.sphereId) });
-        }
-
+    getSphereId() {
+        //return this.userData.sphereId;
         return this.cloudAPI.getUserLocation()
             .then((userLocations) => {
+
                 let sphereId = null;
+
                 if (userLocations && Array.isArray(userLocations) && userLocations.length > 0) {
                     let spheres = userLocations[0].inSpheres;
                     // Just assume one sphere per physical location now
@@ -54,22 +60,60 @@ class CrownstoneDevice extends Homey.Device {
                 }
                 return sphereId; 
             })
-            .then((sphereId) => {
-                this.log("Sphere id obtained");
-                this.userData.sphereId = sphereId;
-                return this.bluenet.cloud.getKeys(sphereId);
-            })
-            .then((keys) => {
-                this.log("Load keys", keys);
-                this.bluenet.settings.loadKeys(true, keys.admin, keys.member, keys.guest, "CloudData")
-            })
             .catch((err) => {
-                this.log("Catch and reject", err);
-                throw err;
+                this.log("Error getting user location from cloud:", err);
             })
     }
 
-    // this method is called when the Device has requested a state change (turned on or off)
+    keysExist() {
+        return (this.bluenet.settings.memberKey !== null &&
+            this.bluenet.settings.memberKey !== null &&
+            this.bluenet.settings.adminKey !== null);
+
+    }
+
+    sphereExists() {
+        return (this.userData.sphereId && this.userData.sphereId !== null);
+    }
+
+    /**
+     * This function is called on every on/off event. It obtains sphere and if necessary the keys.
+     *
+     * Implementation: we promisify the synchronous if statement 
+     */
+    getSphere() {
+
+        return new Promise((resolve, reject) => {
+                if (this.sphereExists()) {
+                    return this.userData.sphereId;
+                }
+                return this.getSphereId();
+            })
+            .then((sphereId) => {
+                if (this.keysExist()) {
+                    this.log("Keys already there");
+                    return null;
+                }
+                return this.bluenet.cloud.getKeys(this.userData.sphereId);
+            })
+            .then((keys) => {
+                if (keys !== null) {
+                    this.log("Load keys from cloud");
+                    this.bluenet.settings.loadKeys(true, keys.admin, keys.member, keys.guest, "CloudData")
+                }
+            })
+            .then(() => {
+                resolve();
+            })
+            .catch((err) => {
+                this.log("Error loading sphere", err);
+                reject(err);
+            })
+    }
+
+    /**
+     * Called when the device has requested a state change (turned on or off).
+     */
     onCapabilityOnoff( value, opts, callback ) {
 
         // ... set value to real device
@@ -85,7 +129,7 @@ class CrownstoneDevice extends Homey.Device {
         }
         
         this.address = this.getData().address;
-        return this.obtainSphereId() 
+        return this.getSphere() 
             .then(() => {
                 this.log("Connect to address", this.address);
                 return this.searchForSpecificStone(this.address)
@@ -107,41 +151,13 @@ class CrownstoneDevice extends Homey.Device {
                 this.log("Catch and reject", err);
                 throw err;
             })
-
-        //return Promise.reject( new Error('Switching the device failed!') );
     }
 
-    /*
-    searchForSpecificStone(macAddress) {
-        let uuid = macAddress.toLowerCase().replace(/(:)/g,'')
-        this.log("Search for", uuid)
-        let BleManager = Homey.ManagerBLE;
-        // search for 5 seconds
-        return BleManager.discover([], 10000)
-            .then((advArray) => {
-                this.log("Scan completed, parsing results...", advArray)
-                let tempAdv = null;
-                advArray.forEach((adv) => {
-                    if (adv.connectable) {
-                        //this.log(adv, adv.rssi)
-                        this.log("Found:", adv.address);
-                        this.discoveredCrownstones[this.addressIdMap[adv.address.toLowerCase()]] = adv;
-                        if (adv.uuid == uuid) {
-                            this.log("Found Crownstone!");
-                            tempAdv = adv;
-                        }
-                    } else {
-                        if (adv.uuid == uuid) {
-                            this.log("Found unconnectable Crownstone, continue discovery...");
-                        }
-                    }
-                })
-                return tempAdv;
-//                return Promise.reject( new Error('Cannot find this stone!') );
-            })
-    }
-    */
-
+    /**
+     * We search for a particular MAC address (which is called a UUID here). The Homey BLE manager is (indirectly)
+     * asked to scan for advertisements from this address. When it is found, the data in the advertisement is used to 
+     * connect to it.
+     */
     searchForSpecificStone(macAddress) {
         let uuid = macAddress.toLowerCase().replace(/(:)/g,'')
         this.log("Search for", uuid)
@@ -149,7 +165,7 @@ class CrownstoneDevice extends Homey.Device {
         return BleManager.find(uuid, 10000)
             .then((homeyAdvertisement) => {
                 if (homeyAdvertisement) {
-                    this.log("Found Crownstone:", homeyAdvertisement)
+                    this.log("Found Crownstone (through unique advertisement)");
                     return homeyAdvertisement;
                 }
                 else {
@@ -162,7 +178,12 @@ class CrownstoneDevice extends Homey.Device {
                 throw err;
             })
     }
-  
+ 
+    /**
+     * After an advertisement from the given device has been obtained, we can subsequently switch that particular
+     * Crownstone. We do this by setting up a connection to the same MAC address, then we send a command over BLE
+     * and we disconnect (at both sides).
+     */
     switchCrownstone(homeyAdvertisement, state) {
         this.log("Connect to Crownstone");
         return this.bluenet.connect(homeyAdvertisement)

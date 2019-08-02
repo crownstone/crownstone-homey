@@ -2,11 +2,15 @@
   "name": "rocks.crownstone",
   "version": "0.0.1",
   "license": "MIT",
+  "repository": {
+      "type": "git",
+      "url": "https://github.com/crownstone/crownstone-homey"
+    },  
   "dependencies": {
-    "aes-js": "^3.1.1",
+    "aes-js": "^3.1.2",
     "homey": "^0.1.0-beta.13",
-    "node-fetch": "^2.1.2",
-    "sha-1": "^0.1.1",
-    "homey-log": "git+https://github.com/athombv/node-homey-log.git"
+    "homey-log": "git+https://github.com/athombv/node-homey-log.git",
+    "node-fetch": "^2.6.0",
+    "sha-1": "^0.1.1"
   }
 }

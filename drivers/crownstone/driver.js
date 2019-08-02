@@ -2,6 +2,20 @@
 
 const Homey = require('homey');
 
+/**
+ * The deriver is called to list the devices when a user starts to use the app for the first time. It will query
+ * the cloud for a list of Crownstone devices. For that it will get a particular sphere (indicated by the location
+ * of the user's smartphone). 
+ *
+ * Note that a connection to the Crownstone server is still required after several events:
+ *   + A reboot of the Homey device means that all encryption keys are lost.
+ *   + When an encryption key is changed.  
+ *
+ * Normally, it would make sense to do this only once after a reboot (and retrieve a push message when the keys are
+ * rotated). However, in this case that doesn't seem to be an option. Hence, to do this, we will make a connection
+ * to the cloud to retrieve keys on every request from the user (if the keys are not set!). The location of this
+ * is in the CrownstoneDevice rather than the CrownstoneDriver.
+ */
 class CrownstoneDriver extends Homey.Driver {
 
     onInit() {

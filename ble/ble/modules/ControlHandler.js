@@ -9,19 +9,26 @@ class ControlHandler {
     constructor(ble) {
         this.ble = ble;
     }
+
+    setApp(app) {
+        this.app = app;
+        this.app.log("Set reference to Homey app in control handler");
+    }
+
     getAndSetSessionNonce() {
         return this.ble.readCharacteristicWithoutEncryption(Services_1.CSServices.CrownstoneService, Characteristics_1.CrownstoneCharacteristics.SessionNonce)
             .then((rawNonce) => {
-            console.log("Got Nonce!");
-            let decryptedNonce = EncryptionHandler_1.EncryptionHandler.decryptSessionNonce(rawNonce, this.ble.settings.guestKey);
-            console.log("Decrypted Nonce", decryptedNonce);
-            this.ble.settings.setSessionNonce(decryptedNonce);
-            console.log("Set Nonce");
+                this.app.log("Got nonce!");
+                let decryptedNonce = EncryptionHandler_1.EncryptionHandler.decryptSessionNonce(rawNonce, this.ble.settings.guestKey);
+                this.app.log("Decrypted nonce", decryptedNonce);
+                this.ble.settings.setSessionNonce(decryptedNonce);
+                this.app.log("Set nonce");
         })
             .catch((err) => {
-            if (err.type == BluenetError_1.BluenetErrorType.COULD_NOT_VALIDATE_SESSION_NONCE) {
-                throw err;
-            }
+                this.app.log("Could not validate session nonce");
+//                if (err.type == BluenetError_1.BluenetErrorType.COULD_NOT_VALIDATE_SESSION_NONCE) {
+                    throw err;
+  //              }
         });
     }
     setSwitchState(state) {
@@ -40,7 +47,7 @@ class ControlHandler {
             let sessionId = this.ble.connectionSessionId;
             setTimeout(() => {
                 if (sessionId === this.ble.connectionSessionId) {
-                    console.log("Forcing cleanup after disconnect command");
+                    this.app.log("Forcing cleanup after disconnect command (just in case)");
                     if (this.ble.connectedPeripheral !== null) {
                         this.ble.connectedPeripheral = null;
                         this.ble.connectionPending = null;
