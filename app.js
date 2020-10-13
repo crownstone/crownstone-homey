@@ -17,6 +17,14 @@ class CrownstoneApp extends Homey.App {
     this.email = Homey.ManagerSettings.get('email');
     this.password = Homey.ManagerSettings.get('password');
     loginToCloud(this.email, this.password).catch((e) => { console.log('There was a problem making a connection with the cloud:', e); });
+
+    // this function runs when a user changed the credentials..
+    Homey.ManagerSettings.on('set', function(){
+      this.log('Credentials were changed. Creating new cloud instance..');
+      this.email = Homey.ManagerSettings.get('email');
+      this.password = Homey.ManagerSettings.get('password');
+      loginToCloud(this.email, this.password).catch((e) => { console.log('There was a problem making a connection with the cloud:', e); });
+    });
   }
   // [todo] simplify code
   getUserToken(callback) {
