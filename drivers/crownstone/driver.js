@@ -27,13 +27,13 @@ class CrownstoneDriver extends Homey.Driver {
 
     onPairListDevices( data, callback ) {
         this.log('Start discovering Crownstones in cloud');
-        getCurrentLocation(this.cloud, this.getDevices(), function(devices){
+        getCurrentLocation(this.cloud, function(devices){
             callback(null, devices);
         }).catch((e) => { console.log('There was a problem looking for Crownstones in the cloud:', e); });
     }
 }
 
-async function getCurrentLocation(cloud, existingDevices, callback){
+async function getCurrentLocation(cloud, callback){
     let devices = [];
     cloud.setAccessToken(accessToken);
     let userReference = await cloud.me();
@@ -44,35 +44,13 @@ async function getCurrentLocation(cloud, existingDevices, callback){
             let crownstoneList = await cloud.sphere(sphereId).crownstones();
             for (let i = 0; i < crownstoneList.length; i++) {
                 console.log('Crownstone ' + i + ' with ID: ' + crownstoneList[i].id + ' and name: ' + crownstoneList[i].name);
-
                 let device =  {
-                        'name': 'My Device',
-                        'data': {
-                            'id': 'abcd',
-                        }
+                    'name': crownstoneList[i].name,
+                    'data': {
+                        'id': crownstoneList[i].id,
                     }
-
-                //let device = {};
-                device['name'] = crownstoneList[i].name;
-                device['data'].id = crownstoneList[i].id;
+                }
                 devices.push(device);
-
-                // /**
-                //  * The next piece code is temporarily required to prevent a bug on the Homey which lets you add devices multiple times.
-                //  */
-                // let duplicate = false;
-                // for (let j = 0; j < existingDevices.length; j++){
-                //     if(existingDevices[j].getData().id == crownstoneList[i].id){
-                //         duplicate = true;
-                //         console.log(crownstoneList[i].name + ' already exists!');
-                //     }
-                // }
-                // if(!duplicate){
-                //     let device = {};
-                //     device['name'] = crownstoneList[i].name;
-                //     device['data'] = crownstoneList[i];
-                //     devices.push(device);
-                // }
             }
         } else {
             this.log('No sphere found')
