@@ -1,91 +1,58 @@
+<!doctype html>
 <html>
-  <head id="head">
-
-    <meta charset="UTF-8">
-
+  <head>
+    <!-- The '/homey.js' script must be included in your settings view to work -->
     <script type="text/javascript" src="/homey.js" data-origin="settings"></script>
   </head>
   <body>
 
-    <!-- no internationalization yet -->
-    <h1>Crownstone configuration</h1>
-    <p>Crownstone needs to know which BLE devices are Crownstones.
-    For the initial setup process it will query the Crownstone servers for this.
-    Your Crownstone email address and password will be stored on the Homey.</p>
+    <h1 data-i18n="settings.title"> <!-- Translation --> </h1>
+    <p data-i18n="settings.subtitle"> <!-- Translation --> </p>
 
-
-    <fieldset>
-      <legend>Crownstone cloud settings</legend>
+    <fieldset>  <!-- Credential label field -->
+      <legend data-i18n="settings.credentials"> </legend>
       <div class="field row">
-	<label for="email">Email address</label>
-	<input id="email" type="text" value="">
+        <label for="email" data-i18n="settings.email" > </label>
+        <input id="email" type="text" value="">
       </div>
       <div class="field row">
-	<label for="password">Password</label>
-	<input id="password" type="password" value="">
+       <label for="password" data-i18n="settings.password"> </label>
+       <input id="password" type="password" value="">
       </div>
     </fieldset>
 
-    <div id="login_form"></div>
-
-    <div id="like_button_container"></div>
-
-    <button id="save" class="right">Next</button>
-
-    <!-- Load React. -->
-    <!-- Note: when deploying, replace "development.js" with "production.min.js". -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/JSXTransformer.js" crossorigin></script>
-    <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
-    
-    <script src="sha1sum.js"></script>
-
-    <!-- Load our React component. -->
-    <script type="text/jsx" src="like_button.js"></script>
-    
-    <script type="text/jsx" src="login_form.js"></script> 
+    <button id="save" class="right" data-i18n="settings.next"> </button> <!-- Button translation -->
 
     <script type="text/javascript">
 
-//      render(<LoginForm />, document.getElementById('login_form'));
-
-//      const domContainer = document.querySelector('#login_form');
-  //    ReactDOM.render(e(LikeButton), domContainer);
-
+      // A method named 'onHomeyReady' must be present in your code
       function onHomeyReady(Homey) {
-	Homey.ready();
+        // Tell Homey we're ready to be displayed
+        Homey.ready();
 
-	var emailElement = document.getElementById('email');
-	var passwordElement = document.getElementById('password');
-	var saveElement = document.getElementById('save');
-	var headElement = document.getElementById('head');
+        var emailElement = document.getElementById('email');
+        var passwordElement = document.getElementById('password');
+        var saveElement = document.getElementById('save');
 
-	Homey.get('email', function( err, email ) {
-	  if( err ) return Homey.alert( err );
-	  emailElement.value = email;
-	});
+        // Put earlier-stored credentials in labels
+        Homey.get('email', function (err, email) {
+          if (err) return Homey.alert(err);
+          emailElement.value = email;
+        });
+        Homey.get('password', function (err, password) {
+          if (err) return Homey.alert(err);
+          passwordElement.value = password;
+        });
 
-	Homey.get('password', function( err, password ) {
-	  if( err ) return Homey.alert( err );
-	  passwordElement.value = password;
-	});
-
-	saveElement.addEventListener('click', function(e) {
-
-	  Homey.set('email', emailElement.value, function( err ){
-	    if( err ) return Homey.alert( err );
-	  });
-	  Homey.set('password', passwordElement.value, function( err ){
-	    if( err ) return Homey.alert( err );
-	  });
-
-
-	  Homey.alert("Thanks! We have stored your account information on your Homey!.");
-
-	  //window.location.href = "sphere.html";
-	  //window.location.replace("sphere.html");
-
-	});
+        saveElement.addEventListener('click', function (e) {
+          Homey.set('email', emailElement.value, function (err) {
+            if (err) return Homey.alert(err);
+          });
+          Homey.set('password', passwordElement.value, function (err) {
+            if (err) return Homey.alert(err);
+          });
+          Homey.alert(Homey.__("settings.alert")); // Translation of the alert
+        });
       }
     </script>
   </body>
