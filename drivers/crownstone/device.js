@@ -32,10 +32,12 @@ class CrownstoneDevice extends Homey.Device {
      * Called when the device has requested a state change (turned on or off).
      */
     async onCapabilityOnoff(value, opts) {
-        this.log('Change state to ' + value);
+        this.log('Change ' + this.getName() + ' to ' + value);
         if (value) {
+            this.log(this.getData().id + ': turn on!');
             await this.cloud.crownstone(this.getData().id).turnOn()
-        } else if (!value) {
+        } else if (!value){
+            this.log(this.getData().id + ': turn off!');
             await this.cloud.crownstone(this.getData().id).turnOff()
         }
         //todo: handle errors

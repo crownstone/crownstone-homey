@@ -41,26 +41,38 @@ async function getCurrentLocation(cloud, existingDevices, callback){
     if(userLocation.length > 0){
         if(userLocation[0]['inSpheres'].length > 0){
             let sphereId = userLocation[0]['inSpheres'][0]['sphereId'];	// get sphere closest to the user
-            let allCs = await cloud.sphere(sphereId).crownstones();
-            for (let i = 0; i < allCs.length; i++){
-                console.log('Crownstone ' + i + ' with ID: ' + allCs[i].id + ' and name: ' + allCs[i].name);
+            let crownstoneList = await cloud.sphere(sphereId).crownstones();
+            for (let i = 0; i < crownstoneList.length; i++) {
+                console.log('Crownstone ' + i + ' with ID: ' + crownstoneList[i].id + ' and name: ' + crownstoneList[i].name);
 
-                /**
-                 * The next piece code is temporarily required to prevent a bug on the Homey which lets you add devices multiple times.
-                 */
-                let duplicate = false;
-                for (let j = 0; j < existingDevices.length; j++){
-                    if(existingDevices[j].getData().id == allCs[i].id){
-                        duplicate = true;
-                        console.log(allCs[i].name + ' already exists!');
+                let device =  {
+                        'name': 'My Device',
+                        'data': {
+                            'id': 'abcd',
+                        }
                     }
-                }
-                if(!duplicate){
-                    let device = {};
-                    device['name'] = allCs[i].name;
-                    device['data'] = allCs[i];
-                    devices.push(device);
-                }
+
+                //let device = {};
+                device['name'] = crownstoneList[i].name;
+                device['data'].id = crownstoneList[i].id;
+                devices.push(device);
+
+                // /**
+                //  * The next piece code is temporarily required to prevent a bug on the Homey which lets you add devices multiple times.
+                //  */
+                // let duplicate = false;
+                // for (let j = 0; j < existingDevices.length; j++){
+                //     if(existingDevices[j].getData().id == crownstoneList[i].id){
+                //         duplicate = true;
+                //         console.log(crownstoneList[i].name + ' already exists!');
+                //     }
+                // }
+                // if(!duplicate){
+                //     let device = {};
+                //     device['name'] = crownstoneList[i].name;
+                //     device['data'] = crownstoneList[i];
+                //     devices.push(device);
+                // }
             }
         } else {
             this.log('No sphere found')
