@@ -1,6 +1,8 @@
 'use strict';
 
 const Homey = require('homey');
+let cloudLib = require('crownstone-cloud')
+let cloud = new cloudLib.CrownstoneCloud();
 
 /**
  * This class gets the data from the form shown to the user when the latter install the Crownstone app. There are
@@ -9,15 +11,18 @@ const Homey = require('homey');
 class CrownstoneApp extends Homey.App {
 
   onInit() {
-    this.log('Crownstone!');
-    this.log(`App ${Homey.app.manifest.id} is running...`);
-    this.log('Load bluenet library')
-
-    // get email and password from settings
-    this.email = Homey.ManagerSettings.get("email");
-    this.password = Homey.ManagerSettings.get("password");
-
+    this.log(`App ${Homey.app.manifest.name.en} is running...`);
+    // Get email and password from settings
+    this.email = Homey.ManagerSettings.get('email');
+    this.password = Homey.ManagerSettings.get('password');
+    loginToCloud(this.email, this.password).catch((e) => { console.log('There was a problem making a connection with the cloud:', e); });
   }
+}
+
+// Make a connection with the cloud and obtain the userdata
+async function loginToCloud(email, password){
+  await cloud.login(email, password);
+  let userData = await cloud.me();
 }
 
 module.exports = CrownstoneApp;
