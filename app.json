@@ -1,6 +1,6 @@
 {
   "id": "rocks.crownstone",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "compatibility": ">=1.5.0",
   "sdk": 2,
   "name": {
@@ -12,8 +12,7 @@
     "nl": "Crownstones schakelen, dimmen, meten en kunnen direct op je locatie in hus reageren."
   },
   "category": [
-    "localization", 
-    "appliances",
+    "localization",
     "lights"
   ],
   "permissions": [
@@ -38,6 +37,10 @@
       {
         "name": "Anne van Rossum",
         "email": "anne@crownstone.rocks"
+      },
+      {
+        "name": "Mart-Jan Koedam",
+        "email": "martjan.koedam@gmail.com"
       }
     ]
   },
@@ -53,12 +56,14 @@
         "small": "/assets/images/very-small-square.png"
       },
       "class": "socket",
-      "capabilities": [ "onoff" ],
+      "capabilities": [
+        "onoff"
+      ],
       "capabilitiesOptions": {
         "onoff": {
           "title": {
             "en": "Crownstone switch or dimmer",
-            "en": "Crownstone schakelaar/dimmer"
+            "nl": "Crownstone schakelaar/dimmer"
           }
         }
       },      
