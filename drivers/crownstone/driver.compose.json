@@ -1,0 +1,30 @@
+{
+  "name": {
+    "en": "Crownstone Zero",
+    "nl": "Crownstone Zero"
+  },
+  "class": "socket",
+  "capabilities": [
+    "onoff"
+  ],
+  "capabilitiesOptions": {
+    "onoff": {
+      "title": {
+        "en": "Crownstone switch or dimmer"
+      }
+    }
+  },
+  "pair": [
+    {
+      "id": "list_devices",
+      "template": "list_devices",
+      "navigation": {
+        "next": "add_devices"
+      }
+    },
+    {
+      "id": "add_devices",
+      "template": "add_devices"
+    }
+  ]
+}

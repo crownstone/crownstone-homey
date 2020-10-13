@@ -1,9 +1,10 @@
 'use strict';
 
 const Homey = require('homey');
+let accessToken;
 
 /**
- * The deriver is called to list the devices when a user starts to use the app for the first time. It will query
+ * The driver is called to list the devices when a user starts to use the app for the first time. It will query
  * the cloud for a list of Crownstone devices. For that it will get a particular sphere (indicated by the location
  * of the user's smartphone). 
  *
@@ -19,10 +20,9 @@ const Homey = require('homey');
 class CrownstoneDriver extends Homey.Driver {
 
     onInit() {
-        super.onInit();
-        this.log("Init Crownstone driver");
-        this.userData = Homey.app.getUserData();
-        this.cloudAPI = Homey.app.getCloudAPI();
+        this.log('Crownstone driver has been inited');
+        this.cloud = Homey.app.getCloud();
+        accessToken = Homey.app.getUserToken(function(token){accessToken = token});	//? can it be simplified?
     }
 
     onPairListDevices( data, callback ) {
