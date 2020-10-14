@@ -20,7 +20,6 @@ class CrownstoneDevice extends Homey.Device {
         this.log(this.getName() + ' has been inited');
         this.log('Name:', this.getName());
         this.log('Class:', this.getClass());
-        console.log(this.getData().id);
         this.cloud = Homey.app.getCloud();
         accessToken = Homey.app.getUserToken(function (token) {
             accessToken = token;
@@ -32,15 +31,11 @@ class CrownstoneDevice extends Homey.Device {
      * Called when the device has requested a state change (turned on or off).
      */
     async onCapabilityOnoff(value, opts) {
-        this.log('Change ' + this.getName() + ' to ' + value);
         if (value) {
-            this.log(this.getData().id + ': turn on!');
             await this.cloud.crownstone(this.getData().id).turnOn()
         } else if (!value){
-            this.log(this.getData().id + ': turn off!');
             await this.cloud.crownstone(this.getData().id).turnOff()
         }
-        //todo: handle errors
     }
 
     // this method is called when the Device is added

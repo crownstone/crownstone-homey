@@ -39,7 +39,6 @@ class CrownstoneDriver extends Homey.Driver {
                     let sphereId = userLocation[0]['inSpheres'][0]['sphereId'];	// Get sphere closest to the user // todo: let the user select different spheres
                     let crownstoneList = await cloud.sphere(sphereId).crownstones();
                     for (let i = 0; i < crownstoneList.length; i++) {
-                        console.log('Crownstone ' + i + ' with ID: ' + crownstoneList[i].id + ' and name: ' + crownstoneList[i].name);
                         let device =  { // Device object to push in the list
                             'name': crownstoneList[i].name,
                             'data': {
