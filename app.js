@@ -16,23 +16,28 @@ class CrownstoneApp extends Homey.App {
     // Get email and password from settings
     this.email = Homey.ManagerSettings.get('email');
     this.password = Homey.ManagerSettings.get('password');
-    loginToCloud(this.email, this.password).catch((e) => { console.log('There was a problem making a connection with the cloud:', e); });
+    loginToCloud(this.email, this.password).catch((e) => {
+      console.log('There was a problem making a connection with the cloud:', e);
+    });
 
     // this function runs when a user changed the credentials..
-    Homey.ManagerSettings.on('set', function(){
+    Homey.ManagerSettings.on('set', function () {
       this.log('Credentials were changed. Creating new cloud instance..');
       this.email = Homey.ManagerSettings.get('email');
       this.password = Homey.ManagerSettings.get('password');
-      loginToCloud(this.email, this.password).catch((e) => { console.log('There was a problem making a connection with the cloud:', e); });
+      loginToCloud(this.email, this.password).catch((e) => {
+        console.log('There was a problem making a connection with the cloud:', e);
+      });
     });
   }
-  // [todo] simplify code
+
   getUserToken(callback) {
     retrieveAccessToken(function(){
       callback(accessToken);
     });
   }
-  getCloud(){
+
+  getCloud() {
     return cloud;
   }
 }
@@ -44,7 +49,7 @@ async function loginToCloud(email, password){
   accessToken = userData.rest.tokenStore.accessToken;
 }
 
-// return accesstoken as soon as it is obtained
+//return accesstoken as soon as it is obtained
 function retrieveAccessToken(callback){
   if(typeof accessToken !== 'undefined') {
     callback();
