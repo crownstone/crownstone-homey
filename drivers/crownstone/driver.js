@@ -21,44 +21,41 @@ class CrownstoneDriver extends Homey.Driver {
 
     onInit() {
         this.log('Crownstone driver has been inited');
-        this.cloud = Homey.app.getCloud();
-        accessToken = Homey.app.getUserToken(function(token){accessToken = token});	//? can it be simplified?
+        this.cloud = Homey.app.getCloud();  // Get the cloud instance from app.js
+        accessToken = Homey.app.getUserToken(function(token){accessToken = token}); // Get the accessToken from app.js
     }
 
     onPairListDevices( data, callback ) {
         this.log('Start discovering Crownstones in cloud');
-        getCurrentLocation(this.cloud, function(devices){
-            callback(null, devices);
-        }).catch((e) => { console.log('There was a problem looking for Crownstones in the cloud:', e); });
-    }
-}
+        getCurrentLocation(this.cloud).catch((e) => { console.log('There was a problem looking for Crownstones in the cloud:', e); });
 
-async function getCurrentLocation(cloud, callback){
-    let devices = [];
-    cloud.setAccessToken(accessToken);
-    let userReference = await cloud.me();
-    let userLocation = await userReference.currentLocation();
-    if(userLocation.length > 0){
-        if(userLocation[0]['inSpheres'].length > 0){
-            let sphereId = userLocation[0]['inSpheres'][0]['sphereId'];	// get sphere closest to the user
-            let crownstoneList = await cloud.sphere(sphereId).crownstones();
-            for (let i = 0; i < crownstoneList.length; i++) {
-                console.log('Crownstone ' + i + ' with ID: ' + crownstoneList[i].id + ' and name: ' + crownstoneList[i].name);
-                let device =  {
-                    'name': crownstoneList[i].name,
-                    'data': {
-                        'id': crownstoneList[i].id,
+        async function getCurrentLocation(cloud){
+            let devices = [];
+            cloud.setAccessToken(accessToken);  // Obtain accesstoken
+            let userLocation = await cloud.me().currentLocation();
+            if(userLocation.length > 0) {
+                if (userLocation[0]['inSpheres'].length > 0) {
+                    let sphereId = userLocation[0]['inSpheres'][0]['sphereId'];	// Get sphere closest to the user // todo: let the user select different spheres
+                    let crownstoneList = await cloud.sphere(sphereId).crownstones();
+                    for (let i = 0; i < crownstoneList.length; i++) {
+                        console.log('Crownstone ' + i + ' with ID: ' + crownstoneList[i].id + ' and name: ' + crownstoneList[i].name);
+                        let device =  {
+                            'name': crownstoneList[i].name,
+                            'data': {
+                                'id': crownstoneList[i].id,
+                            }
+                        }
+                        devices.push(device);
                     }
+                } else {
+                    this.log('No sphere found')
                 }
-                devices.push(device);
+            } else {
+                this.log('No userlocation found');
             }
-        } else {
-            this.log('No sphere found')
+            callback(null, devices);
         }
-    } else {
-        this.log('No userlocation found');
     }
-    callback(devices);
 }
 
 module.exports = CrownstoneDriver;
