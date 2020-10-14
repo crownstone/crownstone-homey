@@ -32,14 +32,15 @@ class CrownstoneDriver extends Homey.Driver {
         async function getCurrentLocation(cloud){
             let devices = [];
             cloud.setAccessToken(accessToken);  // Obtain accesstoken
-            let userLocation = await cloud.me().currentLocation();
-            if(userLocation.length > 0) {
-                if (userLocation[0]['inSpheres'].length > 0) {
+            let userLocation = await cloud.me().currentLocation(); // Get current location of the user
+            let spheres = await cloud.spheres(); // Get all the spheres you have access to
+            if(spheres.length > 0) {
+                if (userLocation.length > 0) {
                     let sphereId = userLocation[0]['inSpheres'][0]['sphereId'];	// Get sphere closest to the user // todo: let the user select different spheres
                     let crownstoneList = await cloud.sphere(sphereId).crownstones();
                     for (let i = 0; i < crownstoneList.length; i++) {
                         console.log('Crownstone ' + i + ' with ID: ' + crownstoneList[i].id + ' and name: ' + crownstoneList[i].name);
-                        let device =  {
+                        let device =  { // Device object to push in the list
                             'name': crownstoneList[i].name,
                             'data': {
                                 'id': crownstoneList[i].id,
@@ -48,10 +49,10 @@ class CrownstoneDriver extends Homey.Driver {
                         devices.push(device);
                     }
                 } else {
-                    this.log('No sphere found')
+                    console.log('No userlocation found');
                 }
             } else {
-                this.log('No userlocation found');
+                console.log('No spheres found');
             }
             callback(null, devices);
         }
