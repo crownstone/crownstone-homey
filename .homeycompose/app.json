@@ -1,0 +1,46 @@
+{
+  "id": "rocks.crownstone",
+  "version": "0.0.2",
+  "compatibility": ">=1.5.0",
+  "sdk": 2,
+  "name": {
+    "en": "Crownstone",
+    "nl": "Crownstone"
+  },
+  "description": {
+    "en": "Control Crownstones, switch, dim, measure power consumption, or localize yourself",
+    "nl": "Crownstones schakelen, dimmen, meten en kunnen direct op je locatie in hus reageren."
+  },
+  "category": [
+    "localization"
+  ],
+  "permissions": [
+    "homey:manager:speech-output",
+    "homey:manager:ledring",
+    "homey:wireless:ble"
+  ],
+  "images": {
+    "large": "/assets/images/large.png",
+    "small": "/assets/images/small.png"
+  },
+  "author": {
+    "name": "Crownstone",
+    "email": "team@crownstone.rocks"
+  },
+  "contributor": {
+    "developers": [
+      {
+        "name": "Alex de Mulder",
+        "email": "alex@crownstone.rocks"
+      },
+      {
+        "name": "Anne van Rossum",
+        "email": "anne@crownstone.rocks"
+      },
+      {
+        "name": "Mart-Jan Koedam",
+        "email": "martjan.koedam@gmail.com"
+      }
+    ]
+  }
+}
