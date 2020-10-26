@@ -1,0 +1,29 @@
+{
+  "id": "room_presence",
+  "title": {
+    "en": "User is in room"
+  },
+  "tokens": [
+    {
+      "name": "mm_per_hour",
+      "type": "number",
+      "title": {
+        "en": "mm/h"
+      },
+      "example": 5
+    },
+    {
+      "name": "city",
+      "type": "string",
+      "title": {
+        "en": "City"
+      },
+      "example": {
+        "en": "Amsterdam"
+      }
+    }
+  ],
+  "hint": {
+    "en": "When a user is in a room"
+  }
+}
