@@ -84,6 +84,49 @@
           "en": "just testing"
         }
       }
+    ],
+    "conditions": [
+      {
+        "id": "is_raining",
+        "title": {
+          "en": "It !{{is|isn't}} raining"
+        }
+      },
+      {
+        "id": "raining_in",
+        "title": {
+          "en": "It's going to rain in..."
+        },
+        "titleFormatted": {
+          "en": "It !{{is|isn't}} going to rain in [[when]]"
+        },
+        "args": [
+          {
+            "name": "when",
+            "type": "dropdown",
+            "values": [
+              {
+                "id": "5",
+                "label": {
+                  "en": "5 minutes"
+                }
+              },
+              {
+                "id": "10",
+                "label": {
+                  "en": "10 minutes"
+                }
+              },
+              {
+                "id": "15",
+                "label": {
+                  "en": "15 minutes"
+                }
+              }
+            ]
+          }
+        ]
+      }
     ]
   },
   "drivers": [
