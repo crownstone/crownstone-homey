@@ -19,42 +19,64 @@ let accessToken;
  */
 class CrownstoneDriver extends Homey.Driver {
 
+    /**
+     * This method is called when the Driver is initialized.
+     * It will obtain the cloud instance and the access token.
+     * */
     onInit() {
         this.log('Crownstone driver has been inited');
-        this.cloud = Homey.app.getCloud();  // Get the cloud instance from app.js
-        accessToken = Homey.app.getUserToken(function(token){accessToken = token}); // Get the accessToken from app.js
+        this.cloud = Homey.app.getCloud();
+        accessToken = Homey.app.getUserToken(function(token){accessToken = token});
     }
 
-    onPairListDevices( data, callback ) {
+    /**
+     * This method is called when a user is adding a device
+     * and the 'list_devices' view is called.
+     */
+    onPairListDevices( data, callback ){
         this.log('Start discovering Crownstones in cloud');
         getCurrentLocation(this.cloud).catch((e) => { console.log('There was a problem looking for Crownstones in the cloud:', e); });
 
-        async function getCurrentLocation(cloud){
-            let devices = [];
-            cloud.setAccessToken(accessToken);  // Obtain accesstoken
-            let userLocation = await cloud.me().currentLocation(); // Get current location of the user
-            let spheres = await cloud.spheres(); // Get all the spheres you have access to
-            if(spheres.length > 0) {
-                if (userLocation.length > 0) {
-                    let sphereId = userLocation[0]['inSpheres'][0]['sphereId'];	// Get sphere closest to the user // todo: let the user select different spheres
-                    let crownstoneList = await cloud.sphere(sphereId).crownstones();
-                    for (let i = 0; i < crownstoneList.length; i++) {
-                        let device =  { // Device object to push in the list
-                            'name': crownstoneList[i].name,
-                            'data': {
-                                'id': crownstoneList[i].id,
-                            }
-                        }
-                        devices.push(device);
-                    }
+        /**
+         * This function obtains and checks information from the Crownstone Cloud to see if the information isn't undefined.
+         * [todo]: let the user select a specific sphere
+         */
+        async function getCurrentLocation(cloud) {
+            cloud.setAccessToken(accessToken);
+            let deviceList;
+            let userReference = await cloud.me();
+            let userLocation = await userReference.currentLocation();
+            if (userLocation.length > 0) {
+                let spheres = await cloud.spheres();
+                if (spheres.length > 0) {
+                    let devices = await cloud.sphere(userLocation[0]['inSpheres'][0]['sphereId']);
+                    deviceList = listDevices(devices);
                 } else {
-                    console.log('No userlocation found');
+                    console.log('Unable to find sphere');
                 }
             } else {
-                console.log('No spheres found');
+                console.log('Unable to locate user');
             }
-            callback(null, devices);
+            callback(null, deviceList);
         }
+
+        /**
+         * This function returns a json list with all the devices in the sphere.
+         */
+        function listDevices(deviceList){
+            let devices = [];
+            for (let i = 0; i < deviceList.length; i++) {
+                let device =  {
+                    'name': deviceList[i].name,
+                    'data': {
+                        'id': deviceList[i].id,
+                    }
+                }
+                devices.push(device);
+            }
+            return devices;
+        }
+
     }
 }
 
