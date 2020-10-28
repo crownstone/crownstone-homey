@@ -11,44 +11,59 @@ let accessToken;
  */
 class CrownstoneApp extends Homey.App {
 
-  onInit() {
+  /**
+   * This method is called when the App is initialized.
+   * The email and password for the Crownstone Cloud from the user will be obtained using the data from the form.
+   */
+  onInit(){
     this.log(`App ${Homey.app.manifest.name.en} is running...`);
-    // Get email and password from settings
     this.email = Homey.ManagerSettings.get('email');
     this.password = Homey.ManagerSettings.get('password');
     loginToCloud(this.email, this.password).catch((e) => { console.log('There was a problem making a connection with the cloud:', e);});
 
-    // this function runs when a user changed the credentials..
-    Homey.ManagerSettings.on('set', function () {
+    /**
+     * This function will fire when a user changed the credentials in the settings-page.
+     */
+    Homey.ManagerSettings.on('set', function (){
       this.email = Homey.ManagerSettings.get('email');
       this.password = Homey.ManagerSettings.get('password');
       loginToCloud(this.email, this.password).catch((e) => { console.log('There was a problem making a connection with the cloud:', e);});
     });
   }
 
-  getUserToken(callback) {
+  /**
+   * This method will call the function to retrieve the access token.
+   */
+  getUserToken(callback){
     retrieveAccessToken(function(){
       callback(accessToken);
     });
   }
 
-  getCloud() {
+  /**
+   * This method will return the instance of the cloud.
+   */
+  getCloud(){
     return cloud;
   }
 }
 
-// Make a connection with the cloud and obtain the userdata
+/**
+ * This function will make a connection with the cloud and obtain the userdata.
+ */
 async function loginToCloud(email, password){
   await cloud.login(email, password);
   let userData = await cloud.me();
   accessToken = userData.rest.tokenStore.accessToken;
 }
 
-//return accesstoken as soon as it is obtained
+/**
+ * This function will return the access token as soon as it is obtained.
+ */
 function retrieveAccessToken(callback){
   if(typeof accessToken !== 'undefined') {
     callback();
-  } else {
+  } else{
     setTimeout(function(){
       retrieveAccessToken(callback);}, 50);
   }

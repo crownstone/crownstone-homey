@@ -15,13 +15,16 @@ let accessToken;
  */
 class CrownstoneDevice extends Homey.Device {
 
-    // This method is called when the Device is initialized. It does not necessarily do any scanning itself. 
-    onInit() {
+    /**
+     * This method is called when the Device is initialized. It does not necessarily do any scanning itself.
+     * It will obtain the cloud instance and the access token.
+     * */
+    onInit(){
         this.log(this.getName() + ' has been inited');
         this.log('Name:', this.getName());
         this.log('Class:', this.getClass());
         this.cloud = Homey.app.getCloud();
-        accessToken = Homey.app.getUserToken(function (token) {
+        accessToken = Homey.app.getUserToken(function (token){
             accessToken = token;
         });
         this.registerCapabilityListener('onoff', this.onCapabilityOnoff.bind(this));
@@ -30,22 +33,26 @@ class CrownstoneDevice extends Homey.Device {
     /**
      * Called when the device has requested a state change (turned on or off).
      */
-    async onCapabilityOnoff(value, opts) {
-        if (value) {
+    async onCapabilityOnoff(value, opts){
+        if (value){
             await this.cloud.crownstone(this.getData().id).turnOn()
         } else if (!value){
             await this.cloud.crownstone(this.getData().id).turnOff()
         }
     }
 
-    // this method is called when the Device is added
-    onAdded() {
+    /**
+     * this method is called when the Device is added.
+     * */
+    onAdded(){
         this.log(this.getName() + ' has been added.');
         // todo register a capability listener for dimming if the Crownstone can be dimmed (use this.getData())
     }
 
-    // this method is called when the Device is deleted
-    onDeleted() {
+    /**
+     * this method is called when the Device is deleted.
+     * */
+    onDeleted(){
         this.log(this.getName() + ' has been deleted.');
     }
 }
