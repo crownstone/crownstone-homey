@@ -16,6 +16,31 @@ class CrownstoneApp extends Homey.App {
    * The email and password for the Crownstone Cloud from the user will be obtained using the data from the form.
    */
   onInit(){
+
+    let myAction = new Homey.FlowCardTrigger('rain_start');
+    myAction
+        .register()
+        .registerRunListener(( args, state ) => {
+          // ...
+        })
+        .getArgument('my_autocomplete')
+        .registerAutocompleteListener(( query, args ) => {
+          return Promise.resolve([
+            {
+              icon: 'https://path.to/icon.svg', // or use "image: 'https://path.to/icon.png'" for non-svg icons.
+              name: 'Item name',
+              description: 'Optional description',
+              some_value_for_myself: 'that i will recognize when fired, such as an ID'
+            },
+            {
+              name: 'Name 2'
+              // ...
+            }
+          ]);
+        })
+
+
+
     this.log(`App ${Homey.app.manifest.name.en} is running...`);
     this.email = Homey.ManagerSettings.get('email');
     this.password = Homey.ManagerSettings.get('password');
