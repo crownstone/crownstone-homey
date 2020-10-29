@@ -49,15 +49,15 @@ class CrownstoneDriver extends Homey.Driver {
             if (userLocation.length > 0) {
                 let spheres = await cloud.spheres();
                 if (spheres.length > 0) {
-                    let devices = await cloud.sphere(userLocation[0]['inSpheres'][0]['sphereId']);
-                    deviceList = listDevices(devices);
+                    let sphereId = await userLocation[0]['inSpheres'][0]['sphereId'];
+                    let devices = await cloud.sphere(sphereId).crownstones();
+                    callback(null, listDevices(devices));
                 } else {
                     console.log('Unable to find sphere');
                 }
             } else {
                 console.log('Unable to locate user');
             }
-            callback(null, deviceList);
         }
 
         /**
