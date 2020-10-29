@@ -43,7 +43,6 @@ class CrownstoneDriver extends Homey.Driver {
          */
         async function getCurrentLocation(cloud) {
             cloud.setAccessToken(accessToken);
-            let deviceList;
             let userReference = await cloud.me();
             let userLocation = await userReference.currentLocation();
             if (userLocation.length > 0) {
