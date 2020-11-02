@@ -1,29 +1,18 @@
 {
   "id": "room_presence",
   "title": {
-    "en": "User is in room"
+    "en": "User enters room"
   },
-  "tokens": [
+  "args": [
     {
-      "name": "mm_per_hour",
-      "type": "number",
-      "title": {
-        "en": "mm/h"
-      },
-      "example": 5
-    },
-    {
-      "name": "city",
-      "type": "string",
-      "title": {
-        "en": "City"
-      },
-      "example": {
-        "en": "Amsterdam"
+      "type": "autocomplete",
+      "name": "room_autocomplete",
+      "placeholder": {
+        "en": "Select a room"
       }
     }
   ],
   "hint": {
-    "en": "When a user is in a room"
+    "en": "When a user enters a room..."
   }
 }

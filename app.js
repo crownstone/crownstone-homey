@@ -2,8 +2,10 @@
 
 const Homey = require('homey');
 let cloudLib = require('crownstone-cloud')
+const sseLib = require('crownstone-sse')
 let cloud = new cloudLib.CrownstoneCloud();
-let accessToken;
+let sse = new sseLib.CrownstoneSSE();
+let sphereId;
 
 /**
  * This class gets the data from the form shown to the user when the latter install the Crownstone app. There are
@@ -14,37 +16,20 @@ class CrownstoneApp extends Homey.App {
   /**
    * This method is called when the App is initialized.
    * The email and password for the Crownstone Cloud from the user will be obtained using the data from the form.
+   * Instances of the flowcard triggers and conditions are inited.
    */
   onInit(){
-
-    let myAction = new Homey.FlowCardTrigger('rain_start');
-    myAction
-        .register()
-        .registerRunListener(( args, state ) => {
-          // ...
-        })
-        .getArgument('my_autocomplete')
-        .registerAutocompleteListener(( query, args ) => {
-          return Promise.resolve([
-            {
-              icon: 'https://path.to/icon.svg', // or use "image: 'https://path.to/icon.png'" for non-svg icons.
-              name: 'Item name',
-              description: 'Optional description',
-              some_value_for_myself: 'that i will recognize when fired, such as an ID'
-            },
-            {
-              name: 'Name 2'
-              // ...
-            }
-          ]);
-        })
-
-
-
     this.log(`App ${Homey.app.manifest.name.en} is running...`);
     this.email = Homey.ManagerSettings.get('email');
     this.password = Homey.ManagerSettings.get('password');
-    loginToCloud(this.email, this.password).catch((e) => { console.log('There was a problem making a connection with the cloud:', e);});
+    loginToCloud(this.email, this.password).catch((e) => { console.log('There was a problem making a connection with the cloud:', e); });
+    loginToEventServer(this.email, this.password).catch((e) => { console.log('There was a problem making a connection with the event server:', e); });
+
+    let presenceTrigger = new Homey.FlowCardTrigger('room_presence');
+    presenceTrigger.register().registerRunListener(( args, state ) => {
+    }).getArgument('room_autocomplete').registerAutocompleteListener(( query, args ) => {
+      return Promise.resolve(getRooms().catch((e) => { console.log('There was a problem obtaining the rooms:', e);}));
+    })
 
     /**
      * This function will fire when a user changed the credentials in the settings-page.
@@ -52,17 +37,18 @@ class CrownstoneApp extends Homey.App {
     Homey.ManagerSettings.on('set', function (){
       this.email = Homey.ManagerSettings.get('email');
       this.password = Homey.ManagerSettings.get('password');
-      loginToCloud(this.email, this.password).catch((e) => { console.log('There was a problem making a connection with the cloud:', e);});
+      loginToCloud(this.email, this.password).catch((e) => { console.log('There was a problem making a connection with the cloud:', e); });
+      loginToEventServer(this.email, this.password).catch((e) => { console.log('There was a problem making a connection with the event server:', e); });
     });
   }
 
   /**
-   * This method will call the function to retrieve the access token.
+   * [todo] documentation
    */
-  getUserToken(callback){
-    retrieveAccessToken(function(){
-      callback(accessToken);
-    });
+  getLocation(callback){
+    getCurrentLocation(function(){
+      callback(cloud, sphereId);
+    }).catch((e) => { console.log('There was a problem getting the ID of the sphere where the user is currently in:', e); });
   }
 
   /**
@@ -78,20 +64,78 @@ class CrownstoneApp extends Homey.App {
  */
 async function loginToCloud(email, password){
   await cloud.login(email, password);
-  let userData = await cloud.me();
-  accessToken = userData.rest.tokenStore.accessToken;
+  await getCurrentLocation(function(){}).catch((e) => { console.log('There was a problem getting the ID of the sphere where the user is currently in:', e); });
 }
 
 /**
- * This function will return the access token as soon as it is obtained.
+ * [todo] documentation
  */
-function retrieveAccessToken(callback){
-  if(typeof accessToken !== 'undefined') {
-    callback();
-  } else{
-    setTimeout(function(){
-      retrieveAccessToken(callback);}, 50);
+async function loginToEventServer(email, password){
+  await sse.stop();
+  console.log('previous eventhandler stopped');
+  await sse.login(email , password);
+  console.log('logged in with sse');
+  await sse.start(eventHandler);
+  console.log('eventhandler started!');
+}
+
+/**
+ * [todo] documentation
+ */
+let eventHandler = (data) => {
+  if(data.type === 'presence' && data.subType === 'enterLocation'){
+    let location = data.location.name;
+    console.log('user entered location: ' + location)
   }
+}
+
+/**
+ * [todo] documentation
+ */
+async function getCurrentLocation(callback){
+  let userReference = await cloud.me();
+  let userLocation = await userReference.currentLocation();
+  if (userLocation.length > 0) {
+    let spheres = await cloud.spheres();
+    if (spheres.length > 0) {
+      sphereId = await userLocation[0]['inSpheres'][0]['sphereId'];
+      console.log('Userlocation found: ' + sphereId);
+      callback();
+    } else {
+      console.log('Unable to find sphere');
+    }
+  } else {
+    console.log('Unable to locate user');
+  }
+}
+
+/**
+ * [todo] documentation
+ */
+async function getRooms(){
+  let rooms = await cloud.sphere(sphereId).locations();
+  if(rooms.length > 0){
+    return listRooms(rooms);
+  } else {
+    console.log('Unable to find any rooms');
+  }
+}
+
+/**
+ * [todo] documentation
+ * [todo:] add custom icons
+ */
+function listRooms(rooms){
+  let roomList = [];
+  for(let i = 0; i < rooms.length; i++){
+    let room = {
+      'name': rooms[i].name,
+      'id': rooms[i].id
+    }
+    console.log(room.name);
+    roomList.push(room);
+  }
+  return roomList;
 }
 
 module.exports = CrownstoneApp;

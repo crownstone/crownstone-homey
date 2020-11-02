@@ -1,7 +1,6 @@
 'use strict';
 
 const Homey = require('homey');
-let accessToken;
 
 /**
  * The driver is called to list the devices when a user starts to use the app for the first time. It will query
@@ -21,42 +20,27 @@ class CrownstoneDriver extends Homey.Driver {
 
     /**
      * This method is called when the Driver is initialized.
-     * It will obtain the cloud instance and the access token.
      * */
     onInit() {
         this.log('Crownstone driver has been inited');
-        this.cloud = Homey.app.getCloud();
-        accessToken = Homey.app.getUserToken(function(token){accessToken = token});
     }
 
     /**
      * This method is called when a user is adding a device
      * and the 'list_devices' view is called.
      */
-    onPairListDevices( data, callback ){
+    onPairListDevices(data, callback ){
         this.log('Start discovering Crownstones in cloud');
-        getCurrentLocation(this.cloud).catch((e) => { console.log('There was a problem looking for Crownstones in the cloud:', e); });
+        Homey.app.getLocation(function(cloud, sphereId){
+            getDevices(cloud, sphereId).catch((e) => { console.log('There was a problem obtaining the available devices:', e); });
+        });
 
         /**
-         * This function obtains and checks information from the Crownstone Cloud to see if the information isn't undefined.
-         * [todo]: let the user select a specific sphere
+         * [todo] documentation
          */
-        async function getCurrentLocation(cloud) {
-            cloud.setAccessToken(accessToken);
-            let userReference = await cloud.me();
-            let userLocation = await userReference.currentLocation();
-            if (userLocation.length > 0) {
-                let spheres = await cloud.spheres();
-                if (spheres.length > 0) {
-                    let sphereId = await userLocation[0]['inSpheres'][0]['sphereId'];
-                    let devices = await cloud.sphere(sphereId).crownstones();
-                    callback(null, listDevices(devices));
-                } else {
-                    console.log('Unable to find sphere');
-                }
-            } else {
-                console.log('Unable to locate user');
-            }
+        async function getDevices(cloud, sphereId){
+            let devices = await cloud.sphere(sphereId).crownstones();
+            callback(null, listDevices(devices));
         }
 
         /**
@@ -75,7 +59,6 @@ class CrownstoneDriver extends Homey.Driver {
             }
             return devices;
         }
-
     }
 }
 
