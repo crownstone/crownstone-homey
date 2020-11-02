@@ -1,7 +1,6 @@
 'use strict';
 
 const Homey = require('homey');
-let accessToken;
 
 /**
  * Current we have implemented this through the BLE chip on board of the Homey. This has the advantage that we can
@@ -24,9 +23,6 @@ class CrownstoneDevice extends Homey.Device {
         this.log('Name:', this.getName());
         this.log('Class:', this.getClass());
         this.cloud = Homey.app.getCloud();
-        accessToken = Homey.app.getUserToken(function (token){
-            accessToken = token;
-        });
         this.registerCapabilityListener('onoff', this.onCapabilityOnoff.bind(this));
     }
 
