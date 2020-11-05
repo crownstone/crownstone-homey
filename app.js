@@ -64,7 +64,6 @@ class CrownstoneApp extends Homey.App {
  */
 async function loginToCloud(email, password){
   await cloud.login(email, password);
-  await getCurrentLocation(function(){}).catch((e) => { console.log('There was a problem getting the ID of the sphere where the user is currently in:', e); });
 }
 
 /**
@@ -113,6 +112,7 @@ async function getCurrentLocation(callback){
  * [todo] documentation
  */
 async function getRooms(){
+  await getCurrentLocation(function(){}).catch((e) => { console.log('There was a problem getting the ID of the sphere where the user is currently in:', e); });
   let rooms = await cloud.sphere(sphereId).locations();
   if(rooms.length > 0){
     return listRooms(rooms);
