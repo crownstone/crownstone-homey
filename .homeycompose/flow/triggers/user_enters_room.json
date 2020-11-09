@@ -1,12 +1,12 @@
 {
-  "id": "room_presence",
+  "id": "user_enters_room",
   "title": {
     "en": "User enters room"
   },
   "args": [
     {
       "type": "autocomplete",
-      "name": "room_autocomplete",
+      "name": "rooms",
       "placeholder": {
         "en": "Select a room"
       }
