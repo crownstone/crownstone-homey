@@ -7,13 +7,20 @@ let cloud = new cloudLib.CrownstoneCloud();
 let sse = new sseLib.CrownstoneSSE();
 let sphereId;
 
-/**
- * [todo:] documentation
- */
 let presenceTrigger = new Homey.FlowCardTrigger('user_enters_room');
+
+/**
+ * This code runs when a trigger has been fired. If the room name and id are equal, the flow will run.
+ */
 presenceTrigger.register().registerRunListener((args, state ) => {
   return Promise.resolve(args.rooms.name === state.name && args.rooms.id === state.id);
-}).getArgument('rooms').registerAutocompleteListener(( query, args ) => {
+})
+
+/**
+ * This code runs when a flow is being constructed, and a room should be selected.
+ * This code returns a list of rooms in a sphere.
+ */
+presenceTrigger.getArgument('rooms').registerAutocompleteListener(( query, args ) => {
   return Promise.resolve(getRooms().catch((e) => { console.log('There was a problem obtaining the rooms:', e);}));
 })
 
@@ -47,7 +54,7 @@ class CrownstoneApp extends Homey.App {
   }
 
   /**
-   * [todo] documentation
+   * This method will call the getCurrentLocation function and returns the sphere ID with a callback.
    */
   getLocation(callback){
     getCurrentLocation(function(){
@@ -71,19 +78,17 @@ async function loginToCloud(email, password){
 }
 
 /**
- * [todo] documentation
+ * This function will stop all running eventHandlers, in case a user enters other credentials,
+ * make a new connection with the sse-server and starts the eventHandler.
  */
 async function loginToEventServer(email, password){
   await sse.stop();
-  console.log('previous eventhandler stopped');
   await sse.login(email , password);
-  console.log('logged in with sse');
   await sse.start(eventHandler);
-  console.log('eventhandler started!');
 }
 
 /**
- * [todo] documentation
+ * The eventHandler receives events from the sse-server and fires the presenceTrigger when a user enters a room.
  */
 let eventHandler = (data) => {
   if(data.type === 'presence' && data.subType === 'enterLocation'){
@@ -93,7 +98,7 @@ let eventHandler = (data) => {
 }
 
 /**
- * [todo] documentation
+ * This function will obtain the sphere where the user is currently located.
  */
 async function getCurrentLocation(callback){
   let userReference = await cloud.me();
@@ -102,7 +107,6 @@ async function getCurrentLocation(callback){
     let spheres = await cloud.spheres();
     if (spheres.length > 0) {
       sphereId = await userLocation[0]['inSpheres'][0]['sphereId'];
-      console.log('Userlocation found: ' + sphereId);
       callback();
     } else {
       console.log('Unable to find sphere');
@@ -113,7 +117,7 @@ async function getCurrentLocation(callback){
 }
 
 /**
- * [todo] documentation
+ * This function obtains all the rooms of the sphere where the user is currently located in.
  */
 async function getRooms(){
   await getCurrentLocation(function(){}).catch((e) => { console.log('There was a problem getting the ID of the sphere where the user is currently in:', e); });
@@ -126,7 +130,7 @@ async function getRooms(){
 }
 
 /**
- * [todo] documentation
+ * This function returns a json list with all the rooms in the sphere.
  * [todo:] add custom icons
  */
 function listRooms(rooms){
@@ -136,7 +140,6 @@ function listRooms(rooms){
       'name': rooms[i].name,
       'id': rooms[i].id
     }
-    console.log(room.name);
     roomList.push(room);
   }
   return roomList;
