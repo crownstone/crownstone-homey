@@ -47,69 +47,21 @@
   "flow": {
     "triggers": [
       {
-        "id": "rain_start",
-        "title": {
-          "en": "It starts raining"
-        },
-        "tokens": [
-          {
-            "name": "mm_per_hour",
-            "type": "number",
-            "title": {
-              "en": "mm/h"
-            },
-            "example": 5
-          }
-        ],
-        "args": [
-          {
-            "type": "autocomplete",
-            "name": "my_autocomplete",
-            "placeholder": {
-              "en": "Search for things..."
-            }
-          }
-        ]
-      },
-      {
-        "id": "room_presence",
+        "id": "user_enters_room",
         "title": {
           "en": "User enters room"
         },
-        "tokens": [
-          {
-            "name": "mm_per_hour",
-            "type": "number",
-            "title": {
-              "en": "mm/h"
-            },
-            "example": 5
-          }
-        ],
         "args": [
           {
             "type": "autocomplete",
-            "name": "room_autocomplete",
+            "name": "rooms",
             "placeholder": {
               "en": "Select a room"
             }
-          },
-          {
-            "name": "location",
-            "type": "text"
           }
         ],
         "hint": {
           "en": "When a user enters a room..."
-        }
-      },
-      {
-        "id": "test_trigger",
-        "title": {
-          "en": "test"
-        },
-        "hint": {
-          "en": "just testing"
         }
       }
     ],

@@ -8,6 +8,16 @@ let sse = new sseLib.CrownstoneSSE();
 let sphereId;
 
 /**
+ * [todo:] documentation
+ */
+let presenceTrigger = new Homey.FlowCardTrigger('user_enters_room');
+presenceTrigger.register().registerRunListener((args, state ) => {
+  return Promise.resolve(args.rooms.name === state.name && args.rooms.id === state.id);
+}).getArgument('rooms').registerAutocompleteListener(( query, args ) => {
+  return Promise.resolve(getRooms().catch((e) => { console.log('There was a problem obtaining the rooms:', e);}));
+})
+
+/**
  * This class gets the data from the form shown to the user when the latter install the Crownstone app. There are
  * only two fields, email and password. This is used to retrieve all information from the Crownstone cloud. 
  */
@@ -24,12 +34,6 @@ class CrownstoneApp extends Homey.App {
     this.password = Homey.ManagerSettings.get('password');
     loginToCloud(this.email, this.password).catch((e) => { console.log('There was a problem making a connection with the cloud:', e); });
     loginToEventServer(this.email, this.password).catch((e) => { console.log('There was a problem making a connection with the event server:', e); });
-
-    let presenceTrigger = new Homey.FlowCardTrigger('room_presence');
-    presenceTrigger.register().registerRunListener(( args, state ) => {
-    }).getArgument('room_autocomplete').registerAutocompleteListener(( query, args ) => {
-      return Promise.resolve(getRooms().catch((e) => { console.log('There was a problem obtaining the rooms:', e);}));
-    })
 
     /**
      * This function will fire when a user changed the credentials in the settings-page.
@@ -83,8 +87,8 @@ async function loginToEventServer(email, password){
  */
 let eventHandler = (data) => {
   if(data.type === 'presence' && data.subType === 'enterLocation'){
-    let location = data.location.name;
-    console.log('user entered location: ' + location)
+    let state = {'name': data.location.name, 'id': data.location.id}
+    presenceTrigger.trigger(null, state).then(this.log).catch(this.error)
   }
 }
 
