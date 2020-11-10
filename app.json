@@ -49,19 +49,22 @@
       {
         "id": "user_enters_room",
         "title": {
-          "en": "User enters room"
+          "en": "User enters room",
+          "nl": "Gebruiker komt kamer binnen"
         },
         "args": [
           {
             "type": "autocomplete",
             "name": "rooms",
             "placeholder": {
-              "en": "Select a room"
+              "en": "Select a room",
+              "nl": "Selecteer een kamer"
             }
           }
         ],
         "hint": {
-          "en": "When a user enters a room..."
+          "en": "When a user enters a room...",
+          "nl": "Wanneer een gebruiker de kamer binnen komt..."
         }
       }
     ],
@@ -106,6 +109,27 @@
             ]
           }
         ]
+      },
+      {
+        "id": "user_presence",
+        "title": {
+          "en": "User !{{is|isn't}} present in the room",
+          "nl": "De gebruiker !{{is|is niet}} aanwezig in de kamer"
+        },
+        "args": [
+          {
+            "type": "autocomplete",
+            "name": "rooms",
+            "placeholder": {
+              "en": "Select a room",
+              "nl": "Selecteer een kamer"
+            }
+          }
+        ],
+        "hint": {
+          "en": "When a user is present in a room...",
+          "nl": "Wanneer een gebruiker in een kamer aanwezig is..."
+        }
       }
     ]
   },

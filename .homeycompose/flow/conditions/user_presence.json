@@ -1,0 +1,21 @@
+{
+  "id": "user_presence",
+  "title": {
+    "en": "User !{{is|isn't}} present in the room",
+    "nl": "De gebruiker !{{is|is niet}} aanwezig in de kamer"
+  },
+  "args": [
+    {
+      "type": "autocomplete",
+      "name": "rooms",
+      "placeholder": {
+        "en": "Select a room",
+        "nl": "Selecteer een kamer"
+      }
+    }
+  ],
+  "hint": {
+    "en": "When a user is present in a room...",
+    "nl": "Wanneer een gebruiker in een kamer aanwezig is..."
+  }
+}

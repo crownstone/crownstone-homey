@@ -6,21 +6,44 @@ const sseLib = require('crownstone-sse')
 let cloud = new cloudLib.CrownstoneCloud();
 let sse = new sseLib.CrownstoneSSE();
 let sphereId;
+let inLocationName;
+let inLocationId;
 
 let presenceTrigger = new Homey.FlowCardTrigger('user_enters_room');
+let presenceCondition = new Homey.FlowCardCondition('user_presence');
 
 /**
  * This code runs when a trigger has been fired. If the room name and id are equal, the flow will run.
  */
-presenceTrigger.register().registerRunListener((args, state ) => {
+presenceTrigger.register().registerRunListener((args, state) => {
   return Promise.resolve(args.rooms.name === state.name && args.rooms.id === state.id);
 })
 
 /**
- * This code runs when a flow is being constructed, and a room should be selected.
- * This code returns a list of rooms in a sphere.
+ * This code runs after a trigger has been fired and a condition-card is configured in the flow.
+ * If the room name and id are equal to the name and id from the room the user is currently in, the flow will run.
+ */
+presenceCondition.register().registerRunListener(async( args, state ) => {
+  await getCurrentLocation(function(){}).catch((e) => { console.log('There was a problem getting the user location:', e); });
+  if (typeof inLocationId !== 'undefined' && typeof inLocationName !== 'undefined') {
+    return Promise.resolve(args.rooms.id === inLocationId && args.rooms.name === inLocationName);
+  }
+  return false;
+})
+
+/**
+ * This code runs when a flow is being constructed for a trigger-card, and a room should be selected.
+ * This code returns a list of rooms in a sphere which is shown to the user.
  */
 presenceTrigger.getArgument('rooms').registerAutocompleteListener(( query, args ) => {
+  return Promise.resolve(getRooms().catch((e) => { console.log('There was a problem obtaining the rooms:', e);}));
+})
+
+/**
+ * This code runs when a flow is being constructed for a condition-card, and a room should be selected.
+ * This code returns a list of rooms in a sphere.
+ */
+presenceCondition.getArgument('rooms').registerAutocompleteListener(( query, args ) => {
   return Promise.resolve(getRooms().catch((e) => { console.log('There was a problem obtaining the rooms:', e);}));
 })
 
@@ -59,7 +82,7 @@ class CrownstoneApp extends Homey.App {
   getLocation(callback){
     getCurrentLocation(function(){
       callback(cloud, sphereId);
-    }).catch((e) => { console.log('There was a problem getting the ID of the sphere where the user is currently in:', e); });
+    }).catch((e) => { console.log('There was a problem getting the user location:', e); });
   }
 
   /**
@@ -98,7 +121,7 @@ let eventHandler = (data) => {
 }
 
 /**
- * This function will obtain the sphere where the user is currently located.
+ * This function will obtain the sphere and, if available, the room where the user is currently located.
  */
 async function getCurrentLocation(callback){
   let userReference = await cloud.me();
@@ -107,6 +130,8 @@ async function getCurrentLocation(callback){
     let spheres = await cloud.spheres();
     if (spheres.length > 0) {
       sphereId = await userLocation[0]['inSpheres'][0]['sphereId'];
+      inLocationName = await userLocation[0]['inSpheres'][0]['inLocation']['locationName'];
+      inLocationId = await userLocation[0]['inSpheres'][0]['inLocation']['locationId'];
       callback();
     } else {
       console.log('Unable to find sphere');
@@ -120,7 +145,7 @@ async function getCurrentLocation(callback){
  * This function obtains all the rooms of the sphere where the user is currently located in.
  */
 async function getRooms(){
-  await getCurrentLocation(function(){}).catch((e) => { console.log('There was a problem getting the ID of the sphere where the user is currently in:', e); });
+  await getCurrentLocation(function(){}).catch((e) => { console.log('There was a problem getting the user location:', e); });
   let rooms = await cloud.sphere(sphereId).locations();
   if(rooms.length > 0){
     return listRooms(rooms);
