@@ -49,8 +49,8 @@
       {
         "id": "user_enters_room",
         "title": {
-          "en": "User enters room",
-          "nl": "Gebruiker komt kamer binnen"
+          "en": "User enters room !{{is|isn't}} ",
+          "nl": "Gebruiker komt kamer binnen !{{is|isn't}} "
         },
         "args": [
           {
@@ -59,6 +59,14 @@
             "placeholder": {
               "en": "Select a room",
               "nl": "Selecteer een kamer"
+            }
+          },
+          {
+            "type": "autocomplete",
+            "name": "users",
+            "placeholder": {
+              "en": "Select a user",
+              "nl": "Selecteer een gebruiker"
             }
           }
         ],
@@ -82,6 +90,14 @@
             "placeholder": {
               "en": "Select a room",
               "nl": "Selecteer een kamer"
+            }
+          },
+          {
+            "type": "autocomplete",
+            "name": "users",
+            "placeholder": {
+              "en": "Select a user",
+              "nl": "Selecteer een gebruiker"
             }
           }
         ],

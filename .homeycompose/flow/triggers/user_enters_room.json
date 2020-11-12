@@ -7,6 +7,14 @@
   "args": [
     {
       "type": "autocomplete",
+      "name": "users",
+      "placeholder": {
+        "en": "Select a user",
+        "nl": "Selecteer een gebruiker"
+      }
+    },
+    {
+      "type": "autocomplete",
       "name": "rooms",
       "placeholder": {
         "en": "Select a room",

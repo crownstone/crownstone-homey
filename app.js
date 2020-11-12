@@ -14,19 +14,22 @@ const presenceCondition = new Homey.FlowCardCondition('user_presence');
 /**
  * This code runs when a trigger has been fired. If the room name and id are equal, the flow will run.
  */
-presenceTrigger.register().registerRunListener((args, state) => Promise.resolve(args.rooms.name === state.name && args.rooms.id === state.id));
+presenceTrigger.register().registerRunListener((args, state) => Promise.resolve((args.rooms.name === state.name && args.rooms.id === state.roomId) && (args.users.id === state.userId || args.users.id === 'default')));
 
 /**
  * This code runs after a trigger has been fired and a condition-card is configured in the flow.
  * If the room name and id are equal to the name and id from the room the user is currently in, the flow will run.
+ * [todo:] Check for users!!
  */
 presenceCondition.register().registerRunListener(async (args) => {
   await getCurrentLocation(() => {}).catch((e) => { console.log('There was a problem getting the user location:', e); });
   if (typeof inLocationId !== 'undefined' && typeof inLocationName !== 'undefined') {
-    return Promise.resolve(args.rooms.id === inLocationId && args.rooms.name === inLocationName);
+    return Promise.resolve((args.rooms.id === inLocationId && args.rooms.name === inLocationName) && (true));
   }
   return false;
 });
+
+
 
 /**
  * This code runs when a flow is being constructed for a trigger-card, and a room should be selected.
@@ -35,10 +38,20 @@ presenceCondition.register().registerRunListener(async (args) => {
 presenceTrigger.getArgument('rooms').registerAutocompleteListener(() => Promise.resolve(getRooms().catch((e) => { console.log('There was a problem obtaining the rooms:', e); })));
 
 /**
+ * [todo:] documentation
+ */
+presenceTrigger.getArgument('users').registerAutocompleteListener(() => Promise.resolve(getUsers().catch((e) => { console.log('There was a problem obtaining the users:', e); })));
+
+/**
  * This code runs when a flow is being constructed for a condition-card, and a room should be selected.
  * This code returns a list of rooms in a sphere.
  */
 presenceCondition.getArgument('rooms').registerAutocompleteListener(() => Promise.resolve(getRooms().catch((e) => { console.log('There was a problem obtaining the rooms:', e); })));
+
+/**
+ * [todo:] documentation
+ */
+presenceCondition.getArgument('users').registerAutocompleteListener(() => Promise.resolve(getUsers().catch((e) => { console.log('There was a problem obtaining the users:', e); })));
 
 /**
  * This class gets the data from the form shown to the user when the latter install the Crownstone app. There are
@@ -107,7 +120,7 @@ async function loginToEventServer(email, password) {
  */
 let eventHandler = (data) => {
   if (data.type === 'presence' && data.subType === 'enterLocation') {
-    const state = { name: data.location.name, id: data.location.id };
+    const state = { name: data.location.name, roomId: data.location.id, userId: data.user.id };
     presenceTrigger.trigger(null, state).then(this.log).catch(this.error);
   }
 };
@@ -160,6 +173,48 @@ function listRooms(rooms) {
     roomList.push(room);
   }
   return roomList;
+}
+
+/**
+ * [todo:] documentation
+ */
+async function getUsers(){
+  await getCurrentLocation(() => {}).catch((e) => { console.log('There was a problem getting the user location:', e); });
+  const users = await cloud.sphere(sphereId).users();
+  return listUsers(users);
+}
+
+/**
+ * [todo:] documentation
+ */
+function listUsers(users) {
+  const userList = [];
+  const defaultUser = {
+    name: 'Somebody',
+    id: 'default',
+  };
+  userList.push(defaultUser);
+  addUserToList(users.admins);
+  addUserToList(users.members);
+  addUserToList(users.guests);
+  if (userList.length > 1) {
+    return userList;
+  }
+  console.log('Unable to find any users');
+  return null;
+
+  /**
+   * [todo:] documentation
+   */
+  function addUserToList(object) {
+    for (let i = 0; i < object.length; i++) {
+      const user = {
+        name: object[i].firstName + ' ' + object[i].lastName,
+        id: object[i].id,
+      };
+      userList.push(user);
+    }
+  }
 }
 
 module.exports = CrownstoneApp;
