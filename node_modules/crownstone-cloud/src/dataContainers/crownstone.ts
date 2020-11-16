@@ -38,7 +38,6 @@ export class Crownstone {
     await this._switch({type:"TURN_OFF"});
   }
 
-
   async _switch(switchData : StoneSwitchData) {
     let value = switchData.percentage;
 
