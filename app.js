@@ -25,14 +25,7 @@ presenceTrigger.register().registerRunListener((args, state) =>
  */
 presenceCondition.register().registerRunListener(async (args) => {
   let userInList = checkUserId(args.users.id);
-  if (userInList > -1) {
-    if (args.rooms.id === userLocations[userInList].locations[0]) {
-      console.log('return true');
-    } else {
-      console.log('return false');
-    }
-    return Promise.resolve(args.rooms.id === userLocations[userInList].locations[0]);
-  }
+  if (userInList > -1) { return Promise.resolve(args.rooms.id === userLocations[userInList].locations[0]); }
   return false;
 });
 
@@ -143,12 +136,10 @@ async function loginToEventServer(email, password) {
  */
 let eventHandler = (data) => {
   if (data.type === 'presence' && data.subType === 'enterLocation') {
-    console.log(data.user.name + ' enters ' + data.location.name);
     runTrigger(data, true).catch((e) => {
       console.log('There was a problem firing the trigger:', e); });
   }
   if (data.type === 'presence' && data.subType === 'exitLocation') {
-    console.log(data.user.name + ' exits ' + data.location.name);
     runTrigger(data, false).catch((e) => {
       console.log('There was a problem firing the trigger:', e); });
   }
@@ -160,7 +151,6 @@ let eventHandler = (data) => {
 async function runTrigger(data, entersRoom) {
   const state = { userId: data.user.id, locationId: data.location.id };
   await updateUserLocation(entersRoom, data.user.id, data.location.id);
-  console.log('TRIGGER!');
   if (entersRoom) { presenceTrigger.trigger(null, state).then(this.log).catch(this.error); }
 }
 
@@ -170,45 +160,31 @@ async function runTrigger(data, entersRoom) {
  * the getPresentPeople-function will be called to refresh the list.
  */
 async function updateUserLocation(entersRoom, userId, location) {
-  console.log('START UPDATE');
   let userInList = checkUserId(userId);
   if (entersRoom) {
-    console.log('checkpoint 1');
-    console.log(userInList);
     if (userInList < 0) {
-      console.log('checkpoint 2');
-      //user not in list yet
       const userLocation = {
         userId: userId,
         location: location,
       };
-      console.log('add this user to the list since he entered the room');
       userLocations.push(userLocation);
     } else {
       if (userLocations[userInList].locations[0] === location) {
         getPresentPeople(() => {}).catch((e) => {
           console.log('There was a problem getting the locations of the users:', e); });
       } else {
-        //user is already in list.. so change location:
-        console.log('change location to: ' + location);
         userLocations[userInList].locations[0] = location;
       }
     }
   } else if (!entersRoom) {
-    //user exits location
     if (userInList > -1) {
-      //if the user is already in the list
       if (userLocations[userInList].locations[0] !== location) {
-        //and the location of the user is not the same as the location the user just 'left'..
-        console.log(userLocations);
         return;
       }
     }
     getPresentPeople(() => {}).catch((e) => {
       console.log('There was a problem getting the locations of the users:', e); });
   }
-  console.log(userLocations);
-  console.log('END UPDATE');
 }
 
 /**
@@ -216,9 +192,7 @@ async function updateUserLocation(entersRoom, userId, location) {
  */
 function checkUserId(userId) {
   for (let i = 0; i < userLocations.length; i++) {
-    if (userLocations[i].userId === userId) {
-      return i;
-    }
+    if (userLocations[i].userId === userId) { return i; }
   }
   return -1;
 }
@@ -227,10 +201,8 @@ function checkUserId(userId) {
  * This function will obtain all the users and their locations in the sphere.
  */
 async function getPresentPeople() {
-  console.log('GETPRESENTPEOPLE()');
   await getSphereId(() => {}).catch((e) => { console.log('There was a problem getting the sphere Id:', e); });
   userLocations = await cloud.sphere(sphereId).presentPeople();
-  console.log(userLocations);
 }
 
 /**
@@ -243,8 +215,6 @@ async function getSphereId(callback) {
     const spheres = await cloud.spheres();
     if (spheres.length > 0) {
       sphereId = userLocation[0].inSpheres[0].sphereId;
-      // getPresentPeople(() => {}).catch((e) => {
-      //   console.log('There was a problem getting the locations of the users:', e); });
       callback();
     } else {
       console.log('Unable to find sphere');
