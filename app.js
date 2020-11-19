@@ -140,7 +140,6 @@ async function loginToEventServer(email, password) {
  */
 let eventHandler = (data) => {
   if (data.type === 'presence' && data.subType === 'enterLocation') {
-    console.log(data.user.name + ' enters ' + data.location.name + ' with id: ' + data.location.id);
     runTrigger(data, true).catch((e) => {
       console.log('There was a problem firing the trigger:', e); });
   }
@@ -154,7 +153,6 @@ let eventHandler = (data) => {
  * This function will update the userLocations-list and will fire the trigger after it is complete.
  */
 async function runTrigger(data, entersRoom) {
-  console.log('runTrigger for: ' + entersRoom);
   const state = { userId: data.user.id, locationId: data.location.id };
   await updateUserLocation(entersRoom, data.user.id, data.location.id);
   if (entersRoom) { presenceTrigger.trigger(null, state).then(this.log).catch(this.error); }
@@ -166,18 +164,15 @@ async function runTrigger(data, entersRoom) {
  * the getPresentPeople-function will be called to refresh the list.
  */
 async function updateUserLocation(entersRoom, userId, location) {
-  console.log('updateUserLocation');
   let userInList = checkUserId(userId);
   if (entersRoom) {
     if (userInList < 0) {
-      console.log('user not in list');
       const userLocation = {
         userId: userId,
         locations: [ location ],
       };
       userLocations.push(userLocation);
     } else {
-      console.log('user already in list');
       if (userLocations[userInList].locations[0] === location) {
         getPresentPeople(() => {}).catch((e) => {
           console.log('There was a problem getting the locations of the users:', e); });
@@ -186,7 +181,6 @@ async function updateUserLocation(entersRoom, userId, location) {
       }
     }
   } else if (!entersRoom) {
-    console.log('nothing to see here..');
     if (userInList > -1) {
       if (userLocations[userInList].locations[0] !== location) {
         return;
@@ -201,16 +195,8 @@ async function updateUserLocation(entersRoom, userId, location) {
  * This function will check if the userId is already defined in the list of userLocations and returns the index.
  */
 function checkUserId(userId) {
-  console.log('checkUserId');
-  console.log(userLocations);
-  console.log(userLocations.length);
-  for (let i = 0; i < 1; i++) {
-    console.log('iterationcheck: ' + i);
-  }
   for (let i = 0; i < userLocations.length; i++) {
-    if (userLocations[i].userId === userId) {
-      console.log('return ' + i);
-      return i; }
+    if (userLocations[i].userId === userId) { return i; }
   }
   return -1;
 }
