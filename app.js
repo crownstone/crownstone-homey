@@ -15,7 +15,8 @@ const presenceCondition = new Homey.FlowCardCondition('user_presence');
  * This code runs when a trigger has been fired. If the room name and id are equal, the flow will run.
  */
 presenceTrigger.register().registerRunListener((args, state) =>
-    Promise.resolve(args.rooms.id === state.locationId && args.users.id === state.userId || args.users.id === 'default')
+    Promise.resolve(args.rooms.id === state.locationId && args.users.id === state.userId
+        || args.users.id === 'default')
 );
 
 /**
@@ -24,9 +25,13 @@ presenceTrigger.register().registerRunListener((args, state) =>
  * [todo:] Check for users!!
  */
 presenceCondition.register().registerRunListener(async (args) => {
-  let userInList = checkUserId(args.users.id);
-  if (userInList > -1) { return Promise.resolve(args.rooms.id === userLocations[userInList].locations[0]); }
-  return false;
+  if (args.users.id === 'default') {
+    return checkRoomId(args.rooms.id);
+  } else {
+    let userInList = checkUserId(args.users.id);
+    if (userInList > -1) { return Promise.resolve(args.rooms.id === userLocations[userInList].locations[0]); }
+    return false;
+  }
 });
 
 /**
@@ -76,10 +81,8 @@ class CrownstoneApp extends Homey.App {
     this.log(`App ${Homey.app.manifest.name.en} is running...`);
     this.email = Homey.ManagerSettings.get('email');
     this.password = Homey.ManagerSettings.get('password');
-    loginToCloud(this.email, this.password).catch((e) => {
-      console.log('There was a problem making a connection with the cloud:', e); });
-    loginToEventServer(this.email, this.password).catch((e) => {
-      console.log('There was a problem making a connection with the event server:', e); });
+    setupConnections(this.email, this.password).catch((e) => {
+      console.log('There was a problem making the connections:', e); });
 
     /**
      * This function will fire when a user changed the credentials in the settings-page.
@@ -87,10 +90,8 @@ class CrownstoneApp extends Homey.App {
     Homey.ManagerSettings.on('set', function () {
       this.email = Homey.ManagerSettings.get('email');
       this.password = Homey.ManagerSettings.get('password');
-      loginToCloud(this.email, this.password).catch((e) => {
-        console.log('There was a problem making a connection with the cloud:', e); });
-      loginToEventServer(this.email, this.password).catch((e) => {
-        console.log('There was a problem making a connection with the event server:', e); });
+      setupConnections(this.email, this.password).catch((e) => {
+        console.log('There was a problem making the connections:', e); });
     });
   }
 
@@ -112,12 +113,15 @@ class CrownstoneApp extends Homey.App {
 }
 
 /**
- * This function will make a connection with the cloud and obtain the userdata.
+ * This function will make a connection with the cloud, call the function to get all the users and
+ * their locations in the sphere, and call the function to make a connection to the event server.
  */
-async function loginToCloud(email, password) {
-  await cloud.login(email, password);
-  await getPresentPeople(() => {}).catch((e) => {
-    console.log('There was a problem getting the locations of the users:', e); });
+async function setupConnections(email, password) {
+  await cloud.login(email, password).catch((e) => {
+    console.log('There was a problem making a connection with the cloud:', e); });
+  await getPresentPeople();
+  await loginToEventServer(email, password).catch((e) => {
+    console.log('There was a problem making a connection with the event server:', e); });
 }
 
 /**
@@ -136,6 +140,7 @@ async function loginToEventServer(email, password) {
  */
 let eventHandler = (data) => {
   if (data.type === 'presence' && data.subType === 'enterLocation') {
+    console.log(data.user.name + ' enters ' + data.location.name + ' with id: ' + data.location.id);
     runTrigger(data, true).catch((e) => {
       console.log('There was a problem firing the trigger:', e); });
   }
@@ -149,6 +154,7 @@ let eventHandler = (data) => {
  * This function will update the userLocations-list and will fire the trigger after it is complete.
  */
 async function runTrigger(data, entersRoom) {
+  console.log('runTrigger for: ' + entersRoom);
   const state = { userId: data.user.id, locationId: data.location.id };
   await updateUserLocation(entersRoom, data.user.id, data.location.id);
   if (entersRoom) { presenceTrigger.trigger(null, state).then(this.log).catch(this.error); }
@@ -156,19 +162,22 @@ async function runTrigger(data, entersRoom) {
 
 /**
  * This function will update the userLocations-list by using events.
- * If an ID is missing or is in the wrong place,
+ * To fix missed events: If an ID is missing or is the same as the newer ID,
  * the getPresentPeople-function will be called to refresh the list.
  */
 async function updateUserLocation(entersRoom, userId, location) {
+  console.log('updateUserLocation');
   let userInList = checkUserId(userId);
   if (entersRoom) {
     if (userInList < 0) {
+      console.log('user not in list');
       const userLocation = {
         userId: userId,
-        location: location,
+        locations: [ location ],
       };
       userLocations.push(userLocation);
     } else {
+      console.log('user already in list');
       if (userLocations[userInList].locations[0] === location) {
         getPresentPeople(() => {}).catch((e) => {
           console.log('There was a problem getting the locations of the users:', e); });
@@ -177,6 +186,7 @@ async function updateUserLocation(entersRoom, userId, location) {
       }
     }
   } else if (!entersRoom) {
+    console.log('nothing to see here..');
     if (userInList > -1) {
       if (userLocations[userInList].locations[0] !== location) {
         return;
@@ -188,13 +198,31 @@ async function updateUserLocation(entersRoom, userId, location) {
 }
 
 /**
- * This function will check if the userId is already defined in the list of userLocations.
+ * This function will check if the userId is already defined in the list of userLocations and returns the index.
  */
 function checkUserId(userId) {
+  console.log('checkUserId');
+  console.log(userLocations);
+  console.log(userLocations.length);
+  for (let i = 0; i < 1; i++) {
+    console.log('iterationcheck: ' + i);
+  }
   for (let i = 0; i < userLocations.length; i++) {
-    if (userLocations[i].userId === userId) { return i; }
+    if (userLocations[i].userId === userId) {
+      console.log('return ' + i);
+      return i; }
   }
   return -1;
+}
+
+/**
+ * This function will check if the roomId exists in the list of userLocations and returns a boolean.
+ */
+function checkRoomId(roomId) {
+  for (let i = 0; i < userLocations.length; i++) {
+    if (userLocations[i].locations[0] === roomId) { return true; }
+  }
+  return false;
 }
 
 /**
@@ -202,7 +230,9 @@ function checkUserId(userId) {
  */
 async function getPresentPeople() {
   await getSphereId(() => {}).catch((e) => { console.log('There was a problem getting the sphere Id:', e); });
-  userLocations = await cloud.sphere(sphereId).presentPeople();
+  if (typeof sphereId !== 'undefined') {
+    userLocations = await cloud.sphere(sphereId).presentPeople();
+  }
 }
 
 /**
