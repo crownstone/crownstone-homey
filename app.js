@@ -114,15 +114,6 @@ class CrownstoneApp extends Homey.App {
 }
 
 /**
- * This function will call the getPresentPeople-function every 30 minutes in case of missed events.
- */
-async function obtainUserLocations() {
-setInterval(() => {
-  getPresentPeople();
-  }, 1000*1800); // 30 minutes
-}
-
-/**
  * This function will make a connection with the cloud, call the function to get all the users and
  * their locations in the sphere, and call the function to make a connection to the event server.
  */
@@ -132,6 +123,44 @@ async function setupConnections(email, password) {
   await getPresentPeople();
   await loginToEventServer(email, password).catch((e) => {
     console.log('There was a problem making a connection with the event server:', e); });
+}
+
+/**
+ * This function will obtain all the users and their locations in the sphere.
+ */
+async function getPresentPeople() {
+  await getSphereId(() => {}).catch((e) => { console.log('There was a problem getting the sphere Id:', e); });
+  if (typeof sphereId !== 'undefined') {
+    userLocations = await cloud.sphere(sphereId).presentPeople();
+  }
+}
+
+/**
+ * This function will obtain the sphere and, if available, the room where the user is currently located.
+ */
+async function getSphereId(callback) {
+  const userReference = await cloud.me();
+  const userLocation = await userReference.currentLocation();
+  if (userLocation.length > 0) {
+    const spheres = await cloud.spheres();
+    if (spheres.length > 0) {
+      sphereId = userLocation[0].inSpheres[0].sphereId;
+      callback();
+    } else {
+      console.log('Unable to find sphere');
+    }
+  } else {
+    console.log('Unable to locate user');
+  }
+}
+
+/**
+ * This function will call the getPresentPeople-function every 30 minutes in case of missed events.
+ */
+async function obtainUserLocations() {
+setInterval(() => {
+  getPresentPeople();
+  }, 1000*1800); // 30 minutes
 }
 
 /**
@@ -219,35 +248,6 @@ function checkRoomId(roomId) {
     if (userLocations[i].locations[0] === roomId) { return true; }
   }
   return false;
-}
-
-/**
- * This function will obtain all the users and their locations in the sphere.
- */
-async function getPresentPeople() {
-  await getSphereId(() => {}).catch((e) => { console.log('There was a problem getting the sphere Id:', e); });
-  if (typeof sphereId !== 'undefined') {
-    userLocations = await cloud.sphere(sphereId).presentPeople();
-  }
-}
-
-/**
- * This function will obtain the sphere and, if available, the room where the user is currently located.
- */
-async function getSphereId(callback) {
-  const userReference = await cloud.me();
-  const userLocation = await userReference.currentLocation();
-  if (userLocation.length > 0) {
-    const spheres = await cloud.spheres();
-    if (spheres.length > 0) {
-      sphereId = userLocation[0].inSpheres[0].sphereId;
-      callback();
-    } else {
-      console.log('Unable to find sphere');
-    }
-  } else {
-    console.log('Unable to locate user');
-  }
 }
 
 /**
