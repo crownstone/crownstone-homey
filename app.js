@@ -22,7 +22,6 @@ presenceTrigger.register().registerRunListener((args, state) =>
 /**
  * This code runs after a trigger has been fired and a condition-card is configured in the flow.
  * If the room name and id are equal to the name and id from the room the user is currently in, the flow will run.
- * [todo:] Check for users!!
  */
 presenceCondition.register().registerRunListener(async (args) => {
   if (args.users.id === 'default') {
@@ -83,6 +82,8 @@ class CrownstoneApp extends Homey.App {
     this.password = Homey.ManagerSettings.get('password');
     setupConnections(this.email, this.password).catch((e) => {
       console.log('There was a problem making the connections:', e); });
+    obtainUserLocations().catch((e) => {
+      console.log('There was a problem repeating code:', e); });
 
     /**
      * This function will fire when a user changed the credentials in the settings-page.
@@ -110,6 +111,15 @@ class CrownstoneApp extends Homey.App {
   getCloud() {
     return cloud;
   }
+}
+
+/**
+ * This function will call the getPresentPeople-function every 30 minutes in case of missed events.
+ */
+async function obtainUserLocations() {
+setInterval(() => {
+  getPresentPeople();
+  }, 1000*1800); // 30 minutes
 }
 
 /**
@@ -154,7 +164,7 @@ let eventHandler = (data) => {
  */
 async function runTrigger(data, entersRoom) {
   const state = { userId: data.user.id, locationId: data.location.id };
-  await updateUserLocation(entersRoom, data.user.id, data.location.id);
+  await updateUserLocationList(entersRoom, data.user.id, data.location.id);
   if (entersRoom) { presenceTrigger.trigger(null, state).then(this.log).catch(this.error); }
 }
 
@@ -163,7 +173,7 @@ async function runTrigger(data, entersRoom) {
  * To fix missed events: If an ID is missing or is the same as the newer ID,
  * the getPresentPeople-function will be called to refresh the list.
  */
-async function updateUserLocation(entersRoom, userId, location) {
+async function updateUserLocationList(entersRoom, userId, location) {
   let userInList = checkUserId(userId);
   if (entersRoom) {
     if (userInList < 0) {
