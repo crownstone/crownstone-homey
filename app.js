@@ -12,7 +12,7 @@ const presenceTrigger = new Homey.FlowCardTrigger('user_enters_room');
 const presenceCondition = new Homey.FlowCardCondition('user_presence');
 
 /**
- * This code runs when a trigger has been fired. If the room name and id are equal, the flow will run.
+ * This code runs when a trigger has been fired. If the room id and user id are equal, the flow will run.
  */
 presenceTrigger.register().registerRunListener((args, state) =>
     Promise.resolve(args.rooms.id === state.locationId && args.users.id === state.userId
@@ -21,7 +21,7 @@ presenceTrigger.register().registerRunListener((args, state) =>
 
 /**
  * This code runs after a trigger has been fired and a condition-card is configured in the flow.
- * If the room name and id are equal to the name and id from the room the user is currently in, the flow will run.
+ * If the room id and user id are equal to the name and id from the room the user is currently in, the flow will run.
  */
 presenceCondition.register().registerRunListener(async (args) => {
   if (args.users.id === 'default') {
