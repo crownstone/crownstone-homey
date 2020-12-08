@@ -32,6 +32,18 @@ _Here the user can enter his credentials for his Crownstone Account._
 There is no way to check the logs of the app unless you run the app from your own terminal. From there you can see the logs and potential errors.
 
 ### Maintaining code
+
+To publish a new version of the app, run `homey app publish` from the app directory.
+
+Then, you are asked to choose if you want to change the version number or not.
+
+By default the app will be submitted as _Draft_. You can then choose to release a test version of the app, which will only be available for users who visit the app via the test link which is available in the owner's dashboard.
+
+Go to _https://developer.athom.com/_ > _Apps SDK_ > _My Apps_ and from there
+you can choose to submit the app to Test, or Live by submitting it for certification. The app will be published after it is approved by a reviewer at Athom.
+
+A more detailed explanation is provided in the [Documentation](https://apps-sdk-v2.developer.athom.com/tutorial-App%20Development%20Guidelines.html) from Athom.
+
 When working on and updating code, there are some things to consider.
 
 When publishing a new version of the app a `.homeychangelog.json` file is automatically created in the root directory of your app and `homey` will ask you to add an entry to this changelog.
