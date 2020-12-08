@@ -1,0 +1,1 @@
+With Crownstone you can control your lighting remotely. With the indoor localization your presence can be detected and you can switch Crownstones whenever you want!
