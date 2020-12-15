@@ -171,6 +171,7 @@ async function loginToEventServer(email, password) {
   await sse.stop();
   await sse.login(email, password);
   await sse.start(eventHandler);
+  await getPresentPeople();
 }
 
 /**
