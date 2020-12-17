@@ -1,3 +1,4 @@
+"use strict";
 const Homey = require('homey');
 const cloudLib = require('crownstone-cloud');
 const sseLib = require('crownstone-sse');
@@ -97,12 +98,21 @@ class CrownstoneApp extends Homey.App {
   }
 
   /**
-   * This method will call the getSphereId function and returns the sphere ID with a callback.
+   * This method will call the obtainSphereId function and returns the sphere ID with a callback.
+   * This is for asynchronous functions.
    */
   getLocation(callback) {
-    getSphereId(() => {
+    obtainSphereId(() => {
       callback(cloud, sphereId);
-    }).catch((e) => { console.log('There was a problem getting the sphere Id:', e); });
+    }).catch((e) => { console.log('There was a problem getting the sphere ID:', e); });
+  }
+
+  /**
+   * This method will call the obtainSphereId function and returns the sphere ID.
+   */
+  async getSphereId() {
+    await obtainSphereId(() => {}).catch((e) => { console.log('There was a problem getting the sphere ID:', e); });
+    return sphereId;
   }
 
   /**
@@ -129,7 +139,7 @@ async function setupConnections(email, password) {
  * This function will obtain all the users and their locations in the sphere.
  */
 async function getPresentPeople() {
-  await getSphereId(() => {}).catch((e) => { console.log('There was a problem getting the sphere Id:', e); });
+  await obtainSphereId(() => {}).catch((e) => { console.log('There was a problem getting the sphere ID:', e); });
   if (typeof sphereId !== 'undefined') {
     userLocations = await cloud.sphere(sphereId).presentPeople();
   }
@@ -138,7 +148,7 @@ async function getPresentPeople() {
 /**
  * This function will obtain the sphere and, if available, the room where the user is currently located.
  */
-async function getSphereId(callback) {
+async function obtainSphereId(callback) {
   const userReference = await cloud.me();
   const userLocation = await userReference.currentLocation();
   if (userLocation.length > 0) {
@@ -255,7 +265,7 @@ function checkRoomId(roomId) {
  * This function obtains all the rooms of the sphere where the user is currently located in.
  */
 async function getRooms() {
-  await getSphereId(() => {}).catch((e) => {
+  await obtainSphereId(() => {}).catch((e) => {
     console.log('There was a problem getting the sphere Id:', e); });
   const rooms = await cloud.sphere(sphereId).locations();
   if (rooms.length > 0) {
@@ -285,7 +295,7 @@ function listRooms(rooms) {
  * This function will ask for the sphere Id and return a list of all the users in the sphere.
  */
 async function getUsers(){
-  await getSphereId(() => {}).catch((e) => {
+  await obtainSphereId(() => {}).catch((e) => {
     console.log('There was a problem getting the sphere Id:', e); });
   const users = await cloud.sphere(sphereId).users();
   return listUsers(users);

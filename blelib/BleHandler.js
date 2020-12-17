@@ -1,10 +1,12 @@
-Object.defineProperty(exports, "__esModule", { value: true });
+// todo: add documentation
+"use strict";
+Object.defineProperty(exports, '__esModule', { value: true });
 class BleHandler {
-    constructor() {
+    constructor(settings) {
         this.connectedPeripheral = null;
         this.connectionSessionId = null;
         //this.connectionPending = false;
-        console.log('this is the BleHandler!');
+        this.settings = settings;
     }
 
     async connect(connectData) {
@@ -28,16 +30,16 @@ class BleHandler {
             }
             return this.connectedPeripheral;
         }
-        catch (e) {
-            this.app.log("Error: ", e);
+        catch(e) {
+            this.log('There was a problem making a connection to the device:', e);
             await this.disconnect();
             throw e;
         }
     }
 
     _setConnectedPeripheral(peripheral) {
-        peripheral.once("disconnect", () => {
-            this.log("BleHandler: Disconnected from Device, cleaning up...");
+        peripheral.once('disconnect', () => {
+            this.log('Disconnected from device');
             this.connectedPeripheral = null;
         });
         this.connectionSessionId = this.getVersion4UUID();
@@ -45,55 +47,54 @@ class BleHandler {
     }
 
     disconnect() {
-        this.log("BleHandler: starting disconnect.....");
+        this.log('Disconnecting..');
         if (this.connectedPeripheral !== null) {
-            this.log("BleHandler: Disconnecting from peripheral.....");
+            this.log('Disconnecting from peripheral..');
             return this.connectedPeripheral.peripheral.disconnect()
                 .then(() => {
-                    this.log("BleHandler: Disconnected successfully.");
+                    this.log('Disconnected successfully');
                     //this.connectionPending = false;
                     this.connectedPeripheral = null;
                 })
                 .catch((e) => {
-                    this.log("BleHandler: Disconnecting failed...");
-                })
+                    this.log('There was a problem disconnecting:', e);
+                });
         }
     }
 
-    readCharacteristicWithoutEncryption(serviceId, characteristicId) {
-        return this.readCharacteristic(serviceId, characteristicId, false);
-    }
-
-    readCharacteristic(serviceId, characteristicId, encryptionEnabled = true) {
-        this.log("Read characteristic", characteristicId);
-
+    readCharacteristic(serviceId, characteristicId) {
+        this.log('Read characteristic', characteristicId);
         return this.getCharacteristic(serviceId, characteristicId)
             .then((characteristic) => {
-                this.log("Read data");
+                this.log('Read data');
                 return characteristic.read();
             })
-            .catch((err) => {
-                this.log("Read error", err);
-            })
+            .catch((e) => {
+                this.log('There was a problem reading the characteristics:', e);
+            });
     }
 
     getCharacteristic(serviceId, characteristicId) {
         return new Promise((resolve, reject) => {
             if (!this.connectedPeripheral) {
-                return reject("NOT CONNECTED");
+                return reject('NOT CONNECTED');
             }
             let serviceList = this.connectedPeripheral.characteristics[serviceId];
             if (!serviceList) {
-                return reject("Service Unknown:" + serviceId + " in list:" + JSON.stringify(Object.keys(this.connectedPeripheral.characteristics)));
+                return reject('Service Unknown: ' + serviceId + ' in list:' + JSON.stringify(Object.keys(this.connectedPeripheral.characteristics)));
             }
             let characteristic = serviceList[characteristicId];
             if (!characteristic) {
-                return reject("Characteristic Unknown:" + characteristicId + " in list:" + JSON.stringify(Object.keys(serviceList)));
+                return reject('Characteristic Unknown: ' + characteristicId + ' in list:' + JSON.stringify(Object.keys(serviceList)));
             }
             resolve(characteristic);
         });
     }
 
+    /**
+     * This method will return a Version 4 UUID as a string.
+     * The unique UUID is obtained using random numbers.
+     */
     getVersion4UUID() {
         const S4 = function () {
             return Math.floor(Math.random() * 0x10000 /* 65536 */).toString(16);
