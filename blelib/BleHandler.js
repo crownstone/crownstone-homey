@@ -1,6 +1,8 @@
-// todo: add documentation
+// todo: add documentation, add writeToCharacteristic-function
 "use strict";
 Object.defineProperty(exports, '__esModule', { value: true });
+const EncryptionHandler = require('./EncryptionHandler');
+const Util = require('./Util');
 class BleHandler {
     constructor(settings) {
         this.connectedPeripheral = null;
@@ -11,10 +13,10 @@ class BleHandler {
 
     async connect(connectData) {
         try {
-            this.log('Connect');
+            console.log('Connect');
             const peripheral = await connectData.connect();
             this._setConnectedPeripheral(peripheral);
-            this.log('Discover services');
+            console.log('Discover services');
             const services = await peripheral.discoverServices();
             services.forEach((service) => {
                 this.connectedPeripheral.services[service.uuid] = service;
@@ -31,7 +33,7 @@ class BleHandler {
             return this.connectedPeripheral;
         }
         catch(e) {
-            this.log('There was a problem making a connection to the device:', e);
+            console.log('There was a problem making a connection to the device:', e);
             await this.disconnect();
             throw e;
         }
@@ -39,38 +41,38 @@ class BleHandler {
 
     _setConnectedPeripheral(peripheral) {
         peripheral.once('disconnect', () => {
-            this.log('Disconnected from device');
+            console.log('Disconnected from device');
             this.connectedPeripheral = null;
         });
-        this.connectionSessionId = this.getVersion4UUID();
+        this.connectionSessionId = Util.Util.getVersion4UUID();
         this.connectedPeripheral = { peripheral: peripheral, services: {}, characteristics: {} };
     }
 
     disconnect() {
-        this.log('Disconnecting..');
+        console.log('Disconnecting..');
         if (this.connectedPeripheral !== null) {
-            this.log('Disconnecting from peripheral..');
+            console.log('Disconnecting from peripheral..');
             return this.connectedPeripheral.peripheral.disconnect()
                 .then(() => {
-                    this.log('Disconnected successfully');
+                    console.log('Disconnected successfully');
                     //this.connectionPending = false;
                     this.connectedPeripheral = null;
                 })
                 .catch((e) => {
-                    this.log('There was a problem disconnecting:', e);
+                    console.log('There was a problem disconnecting:', e);
                 });
         }
     }
 
     readCharacteristic(serviceId, characteristicId) {
-        this.log('Read characteristic', characteristicId);
+        console.log('Read characteristic', characteristicId);
         return this.getCharacteristic(serviceId, characteristicId)
             .then((characteristic) => {
-                this.log('Read data');
+                console.log('Read data');
                 return characteristic.read();
             })
             .catch((e) => {
-                this.log('There was a problem reading the characteristics:', e);
+                console.log('There was a problem reading the characteristics:', e);
             });
     }
 
@@ -91,15 +93,16 @@ class BleHandler {
         });
     }
 
-    /**
-     * This method will return a Version 4 UUID as a string.
-     * The unique UUID is obtained using random numbers.
-     */
-    getVersion4UUID() {
-        const S4 = function () {
-            return Math.floor(Math.random() * 0x10000 /* 65536 */).toString(16);
-        };
-        return (S4() + S4() + '-' + S4() + '-' + S4() + '-' + S4() + '-' + S4() + S4() + S4());
+    writeToCharacteristic(serviceId, characteristicId, packet) {
+        let dataToUse = EncryptionHandler.EncryptionHandler.encrypt(packet, this.settings);
+        return this.getCharacteristic(serviceId, characteristicId)
+            .then((characteristic) => {
+                console.log('Write data');
+                return characteristic.write(dataToUse);
+            })
+            .catch((err) => {
+                console.log('Write error', err);
+            });
     }
 }
 exports.BleHandler = BleHandler;

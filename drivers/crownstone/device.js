@@ -14,6 +14,21 @@ class CrownstoneDevice extends Homey.Device {
     this.bluenet = new BleLib.default();
     this.cloud = Homey.app.getCloud();
     this.registerCapabilityListener('onoff', this.onCapabilityOnoff.bind(this));
+    //this.connecting().then(() => this.log('done'));
+  }
+
+  async connecting(value) {
+    this.state = 0;
+    if (value == true) {
+      this.state = 1;
+    }
+    await this.getKeys().catch((e) => { console.log('There was a problem obtaining the keys:', e); });
+    let homeyAdvertisement = await this.findCrownstone();
+    this.log('Connect to Crownstone..');
+    await this.bluenet.connect(homeyAdvertisement);
+
+    this.log('Switch Crownstone..');
+    await this.bluenet.control.setSwitchState(this.state);
   }
 
   /**
@@ -22,15 +37,13 @@ class CrownstoneDevice extends Homey.Device {
    */
   async onCapabilityOnoff(value) {
     console.log('oncapabilityonoff');
-    await this.getKeys().catch((e) => { console.log('There was a problem obtaining the keys:', e); });
-    //let homeyAdvertisement = await this.findCrownstone();
-    //await this.bluenet.connect(homeyAdvertisement);
+    await this.connecting(value);
 
-    if (value) {
-      await this.cloud.crownstone(this.getData().id).turnOn();
-    } else if (!value) {
-      await this.cloud.crownstone(this.getData().id).turnOff();
-    }
+    // if (value) {
+    //   await this.cloud.crownstone(this.getData().id).turnOn();
+    // } else if (!value) {
+    //   await this.cloud.crownstone(this.getData().id).turnOff();
+    // }
   }
 
   /**
@@ -39,7 +52,8 @@ class CrownstoneDevice extends Homey.Device {
   async getKeys() {
     if (this.bluenet.settings.adminKey !== null &&
         this.bluenet.settings.memberKey !== null &&
-        this.bluenet.settings.guestKey !== null) {
+        this.bluenet.settings.basicKey !== null
+    ) {
       this.log('The keys are already obtained');
     } else {
       let sphereId = await Homey.app.getSphereId();
@@ -51,10 +65,10 @@ class CrownstoneDevice extends Homey.Device {
         } else if (keyArray[i].keyType === 'MEMBER_KEY') {
           this.memberKey = keyArray[i].key;
         } else if (keyArray[i].keyType === 'BASIC_KEY') {
-          this.guestKey = keyArray[i].key;
+          this.basicKey = keyArray[i].key;
         }
       }
-      this.bluenet.settings.loadKeys(this.adminKey, this.memberKey, this.guestKey);
+      this.bluenet.settings.loadKeys(this.adminKey, this.memberKey, this.basicKey);
     }
   }
 

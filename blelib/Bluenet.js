@@ -17,11 +17,11 @@ class Bluenet {
     connect(connectData) {
         return this.bleHandler.connect(connectData)
             .then(() => {
-                this.log('Getting Session nonce..');
+                console.log('Getting Session nonce..');
                 return this.control.getAndSetSessionNonce();
             })
             .then(() => {
-                this.log('Session nonce obtained');
+                console.log('Session nonce obtained');
             });
     }
 
