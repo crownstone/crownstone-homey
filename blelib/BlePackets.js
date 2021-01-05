@@ -1,7 +1,9 @@
+// todo: add documentation
 "use strict";
 Object.defineProperty(exports, '__esModule', { value: true });
 class BLEPacket {
     constructor(packetType) {
+        this.protocol = 5;
         this.type = 0;
         this.length = 0;
         this.payloadBuffer = null;
@@ -16,12 +18,12 @@ class BLEPacket {
         this.length = this.payloadBuffer.length;
         return this;
     }
-    getPacket(reserved = 0) {
-        let packetLength = 1 + 1 + 2;
+    getPacket() {
+        let packetLength = 1 + 2 + 2;
         let buffer = Buffer.alloc(packetLength);
-        buffer.writeUInt8(this.type, 0);
-        buffer.writeUInt8(reserved, 1); // reserved
-        buffer.writeUInt16LE(this.length, 2); // length
+        buffer.writeUInt8(this.protocol, 0);
+        buffer.writeUInt16LE(this.type, 1);
+        buffer.writeUInt16LE(this.length, 3);
         if (this.length > 0 && this.payloadBuffer) {
             buffer = Buffer.concat([buffer, this.payloadBuffer]);
         }

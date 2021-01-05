@@ -14,7 +14,6 @@ class CrownstoneDevice extends Homey.Device {
     this.bluenet = new BleLib.default();
     this.cloud = Homey.app.getCloud();
     this.registerCapabilityListener('onoff', this.onCapabilityOnoff.bind(this));
-    //this.connecting().then(() => this.log('done'));
   }
 
   async connecting(value) {
@@ -26,9 +25,30 @@ class CrownstoneDevice extends Homey.Device {
     let homeyAdvertisement = await this.findCrownstone();
     this.log('Connect to Crownstone..');
     await this.bluenet.connect(homeyAdvertisement);
+    this.log('connecting done');
 
     this.log('Switch Crownstone..');
     await this.bluenet.control.setSwitchState(this.state);
+    this.log('switching Done!');
+
+    // this.log('disconnect crownstone..');
+    // await this.bluenet.control.disconnect();
+    // this.log('disconnecting done..');
+
+    // return this.bluenet.control.setSwitchState(this.state)
+    //     .then(() => {
+    //       this.log('done!');
+    //     })
+    //     .then(() => {
+    //       this.log('disconnect crownstone..');
+    //       return this.bluenet.control.disconnect();
+    //     })
+    //     .catch((err) => {
+    //       this.log('Error: ', err);
+    //       throw err;
+    //     });
+
+    //this.log('switching done');
   }
 
   /**

@@ -1,3 +1,4 @@
+// todo: add documentation
 "use strict";
 Object.defineProperty(exports, '__esModule', { value: true });
 exports.UserLevel = {
@@ -12,8 +13,8 @@ class BluenetSettings {
         this.adminKey = null;
         this.memberKey = null;
         this.basicKey = null;
-        //this.setupKey = null;
         this.sessionNonce = null;
+        this.validationKey = null;
         this.initializedKeys = false;
         this.userLevel = exports.UserLevel.unknown;
     }
@@ -52,7 +53,7 @@ class BluenetSettings {
         else if (this.memberKey.length == 16) {
             this.userLevel = exports.UserLevel.member;
         }
-        else if (this.guestKey.length == 16) {
+        else if (this.basicKey.length == 16) {
             this.userLevel = exports.UserLevel.guest;
         }
         else {
@@ -66,6 +67,10 @@ class BluenetSettings {
      */
     setSessionNonce(sessionNonce) {
         this.sessionNonce = sessionNonce;
+    }
+
+    setValidationKey(validationKey) {
+        this.validationKey = validationKey;
     }
 }
 exports.BluenetSettings = BluenetSettings;

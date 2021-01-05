@@ -1,5 +1,7 @@
+// todo: add documentation
 "use strict";
-Object.defineProperty(exports, '__esModule', { value: true });
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.ControlType = {
-    SWITCH: 0,
+    SWITCH: 20,
+    DISCONNECT: 13,
 };

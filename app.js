@@ -205,7 +205,10 @@ let eventHandler = (data) => {
 async function runTrigger(data, entersRoom) {
   const state = { userId: data.user.id, locationId: data.location.id };
   await updateUserLocationList(entersRoom, data.user.id, data.location.id);
-  if (entersRoom) { presenceTrigger.trigger(null, state).then(this.log).catch(this.error); }
+  if (entersRoom) {
+    presenceTrigger.trigger(null, state).catch((e) => {
+      console.log('Something went wrong:', e); });
+  }
 }
 
 /**

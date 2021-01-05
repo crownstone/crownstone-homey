@@ -1,17 +1,20 @@
-// todo: add documentation, add 'encrypt'-function
+// todo: add documentation, remove unnecessary variables.
 "use strict";
 Object.defineProperty(exports, '__esModule', { value: true });
 const BluenetSettings = require('./BluenetSettings');
 var crypto = require('crypto');
 const aesjs = require('aes-js');
-let BLOCK_LENGTH = 16;//
+
+let VALIDATION_KEY_LENGTH = 4;
+
+let BLOCK_LENGTH = 16;
 let NONCE_LENGTH = 16;
-let SESSION_DATA_LENGTH = 5;//
-let SESSION_KEY_LENGTH = 4;//
-let PACKET_USER_LEVEL_LENGTH = 1;//
-let PACKET_NONCE_LENGTH = 3;//
+let SESSION_DATA_LENGTH = 5;
+let SESSION_KEY_LENGTH = 4;
+let PACKET_USER_LEVEL_LENGTH = 1;
+let PACKET_NONCE_LENGTH = 3;
 class EncryptionHandler {
-    static decryptSessionNonce(rawNonce, key) {
+    static decryptSessionData(rawNonce, key) {
         if (key.length !== 16) {
             throw ('INPUT_ERROR', 'Invalid Key', 500);
         }
@@ -22,12 +25,13 @@ class EncryptionHandler {
         var decrypted = Buffer.from(aesEcb.decrypt(rawNonce));
         // start validation
         if (0xcafebabe === decrypted.readUInt32LE(0)) {
-            return decrypted.slice(4, 4 + SESSION_DATA_LENGTH);
+            return decrypted.slice(5, 5 + SESSION_DATA_LENGTH + VALIDATION_KEY_LENGTH);
         } else {
             throw ('COULD_NOT_VALIDATE_SESSION_NONCE', 'Could not validate Session Nonce', 301);
         }
     }
     static encrypt(data, settings) {
+        console.log('ENCRYPTING SWITCH PACKET');
         if (settings.sessionNonce == null) {
             throw "BleError.NO_SESSION_NONCE_SET";
         }
@@ -35,7 +39,7 @@ class EncryptionHandler {
             throw "BleError.DO_NOT_HAVE_ENCRYPTION_KEY";
         }
         // unpack the session data
-        let sessionData = new SessionData(settings.sessionNonce);
+        let sessionData = new SessionData(settings.sessionNonce, settings.validationKey);
         // create Nonce array
         let nonce = Buffer.alloc(PACKET_NONCE_LENGTH);
         EncryptionHandler.fillWithRandomNumbers(nonce);
@@ -87,9 +91,6 @@ class EncryptionHandler {
             case BluenetSettings.UserLevel.guest:
                 key = settings.basicKey;
                 break;
-            //case BluenetSettings.UserLevel.setup:
-                //key = settings.setupKey;
-                //break;
             default:
                 throw "BleError.INVALID_KEY_FOR_ENCRYPTION";
         }
@@ -113,14 +114,14 @@ class EncryptionHandler {
 }
 exports.EncryptionHandler = EncryptionHandler;
 class SessionData {
-    constructor(sessionData) {
+    constructor(sessionData, validationKey) {
         this.sessionNonce = null;
         this.validationKey = null;
         if (sessionData.length != SESSION_DATA_LENGTH) {
             throw "BleError.INVALID_SESSION_DATA";
         }
         this.sessionNonce = Buffer.from(sessionData);
-        this.validationKey = this.sessionNonce.slice(0, 4);
+        this.validationKey = Buffer.from(validationKey);
     }
 }
 exports.SessionData = SessionData;

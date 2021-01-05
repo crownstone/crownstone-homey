@@ -1,4 +1,4 @@
-// todo: add documentation, add writeToCharacteristic-function
+// todo: add documentation
 "use strict";
 Object.defineProperty(exports, '__esModule', { value: true });
 const EncryptionHandler = require('./EncryptionHandler');
@@ -7,16 +7,13 @@ class BleHandler {
     constructor(settings) {
         this.connectedPeripheral = null;
         this.connectionSessionId = null;
-        //this.connectionPending = false;
         this.settings = settings;
     }
 
     async connect(connectData) {
         try {
-            console.log('Connect');
             const peripheral = await connectData.connect();
             this._setConnectedPeripheral(peripheral);
-            console.log('Discover services');
             const services = await peripheral.discoverServices();
             services.forEach((service) => {
                 this.connectedPeripheral.services[service.uuid] = service;
@@ -65,10 +62,8 @@ class BleHandler {
     }
 
     readCharacteristic(serviceId, characteristicId) {
-        console.log('Read characteristic', characteristicId);
         return this.getCharacteristic(serviceId, characteristicId)
             .then((characteristic) => {
-                console.log('Read data');
                 return characteristic.read();
             })
             .catch((e) => {
@@ -97,11 +92,10 @@ class BleHandler {
         let dataToUse = EncryptionHandler.EncryptionHandler.encrypt(packet, this.settings);
         return this.getCharacteristic(serviceId, characteristicId)
             .then((characteristic) => {
-                console.log('Write data');
                 return characteristic.write(dataToUse);
             })
             .catch((err) => {
-                console.log('Write error', err);
+                console.log('Write error: ', err);
             });
     }
 }
