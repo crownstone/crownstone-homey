@@ -1,6 +1,8 @@
-"use strict";
+'use strict';
 const Homey = require('homey');
 const BleLib = require('../../blelib/Bluenet');
+
+let activeConnection = false;
 
 class CrownstoneDevice extends Homey.Device {
   /**
@@ -8,47 +10,29 @@ class CrownstoneDevice extends Homey.Device {
    * It will obtain the cloud instance and the access token.
    */
   onInit() {
-    this.log(this.getName()  + 'has been inited');
+    this.log(this.getName() + ' has been inited');
     this.log('Name:', this.getName());
     this.log('Class:', this.getClass());
     this.bluenet = new BleLib.default();
     this.cloud = Homey.app.getCloud();
     this.registerCapabilityListener('onoff', this.onCapabilityOnoff.bind(this));
+    if (this.getData().locked) {
+      this.setUnavailable('This device is locked.').catch(this.error);
+    }
   }
 
-  async connecting(value) {
-    this.state = 0;
-    if (value == true) {
-      this.state = 1;
-    }
-    await this.getKeys().catch((e) => { console.log('There was a problem obtaining the keys:', e); });
-    let homeyAdvertisement = await this.findCrownstone();
-    this.log('Connect to Crownstone..');
-    await this.bluenet.connect(homeyAdvertisement);
-    this.log('connecting done');
-
-    this.log('Switch Crownstone..');
-    await this.bluenet.control.setSwitchState(this.state);
-    this.log('switching Done!');
-
-    // this.log('disconnect crownstone..');
-    // await this.bluenet.control.disconnect();
-    // this.log('disconnecting done..');
-
-    // return this.bluenet.control.setSwitchState(this.state)
-    //     .then(() => {
-    //       this.log('done!');
-    //     })
-    //     .then(() => {
-    //       this.log('disconnect crownstone..');
-    //       return this.bluenet.control.disconnect();
-    //     })
-    //     .catch((err) => {
-    //       this.log('Error: ', err);
-    //       throw err;
-    //     });
-
-    //this.log('switching done');
+  /**
+   * This method will lock or unlock the device depending on the state.
+   * todo: change available-setting to custom lock-capability.
+   */
+  async changeLockState(state) {
+      if (state) {
+        this.getData().locked = true;
+        await this.setUnavailable('This device is locked.');
+      } else if (!state) {
+        this.getData().locked = false;
+        await this.setAvailable();
+      }
   }
 
   /**
@@ -56,14 +40,36 @@ class CrownstoneDevice extends Homey.Device {
    * It will use Ble to switch the Crownstone, if that fails, it will use the cloud instead.
    */
   async onCapabilityOnoff(value) {
-    console.log('oncapabilityonoff');
-    await this.connecting(value);
+    if (!activeConnection && Homey.app.checkMailAndPass()) {
+      activeConnection = true;
+      await this.switchBLE(value).catch(async (e) => {
+        console.log('There was a problem switching the device:', e);
+        if (value) {
+          await this.cloud.crownstone(this.getData().id).turnOn();
+        } else if (!value) {
+          await this.cloud.crownstone(this.getData().id).turnOff();
+        }
+      });
+      activeConnection = false;
+    }
+  }
 
-    // if (value) {
-    //   await this.cloud.crownstone(this.getData().id).turnOn();
-    // } else if (!value) {
-    //   await this.cloud.crownstone(this.getData().id).turnOff();
-    // }
+  /**
+   * This method will switch the device using BLE.
+   */
+  async switchBLE(value) {
+    this.state = 0;
+    if (value == true) {
+      this.state = 1;
+    }
+    await this.getKeys().catch((e) => {
+      console.log('There was a problem obtaining the keys:', e);
+    });
+    let homeyAdvertisement = await this.findCrownstone();
+    await this.bluenet.connect(homeyAdvertisement);
+    await this.bluenet.control.setSwitchState(this.state);
+    await this.bluenet.control.disconnect();
+    await this.bluenet.disconnect();
   }
 
   /**
@@ -76,6 +82,7 @@ class CrownstoneDevice extends Homey.Device {
     ) {
       this.log('The keys are already obtained');
     } else {
+      this.log('Obtaining the keys..');
       let sphereId = await Homey.app.getSphereId();
       let keysInSphere = await this.cloud.sphere(sphereId).keys();
       let keyArray = keysInSphere.sphereKeys;

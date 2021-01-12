@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 const Homey = require('homey');
 const cloudLib = require('crownstone-cloud');
 const sseLib = require('crownstone-sse');
@@ -72,6 +72,7 @@ presenceCondition.getArgument('users').registerAutocompleteListener(() =>
  * This is used to retrieve all information from the Crownstone cloud.
  */
 class CrownstoneApp extends Homey.App {
+
   /**
    * This method is called when the App is initialized.
    * The email and password for the Crownstone Cloud from the user will be obtained using the data from the form.
@@ -81,19 +82,25 @@ class CrownstoneApp extends Homey.App {
     this.log(`App ${Homey.app.manifest.name.en} is running...`);
     this.email = Homey.ManagerSettings.get('email');
     this.password = Homey.ManagerSettings.get('password');
-    setupConnections(this.email, this.password).catch((e) => {
-      console.log('There was a problem making the connections:', e); });
-    obtainUserLocations().catch((e) => {
-      console.log('There was a problem repeating code:', e); });
+    if (checkMailAndPassword()) {
+      setupConnections(this.email, this.password).catch((e) => {
+        console.log('There was a problem making the connections:', e); });
+      obtainUserLocations().catch((e) => {
+        console.log('There was a problem repeating code:', e); });
+    }
+
+
 
     /**
      * This function will fire when a user changed the credentials in the settings-page.
      */
     Homey.ManagerSettings.on('set', function () {
-      this.email = Homey.ManagerSettings.get('email');
-      this.password = Homey.ManagerSettings.get('password');
-      setupConnections(this.email, this.password).catch((e) => {
-        console.log('There was a problem making the connections:', e); });
+      Homey.app.email = Homey.ManagerSettings.get('email');
+      Homey.app.password = Homey.ManagerSettings.get('password');
+      if (checkMailAndPassword()) {
+        setupConnections(Homey.app.email, Homey.app.password).catch((e) => {
+          console.log('There was a problem making the connections:', e); });
+      }
     });
   }
 
@@ -121,6 +128,25 @@ class CrownstoneApp extends Homey.App {
   getCloud() {
     return cloud;
   }
+
+  /**
+   * This method will call the checkMailAndPassword-function and will return a boolean.
+   */
+  checkMailAndPass() {
+    return checkMailAndPassword();
+  }
+}
+
+/**
+ * This function will check if the email or password is either empty or undefined, and will return
+ * a boolean.
+ */
+function checkMailAndPassword() {
+  if (Homey.app.email === '' || typeof Homey.app.email === 'undefined'
+      || Homey.app.password === '' || typeof Homey.app.password === 'undefined') {
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -139,9 +165,11 @@ async function setupConnections(email, password) {
  * This function will obtain all the users and their locations in the sphere.
  */
 async function getPresentPeople() {
-  await obtainSphereId(() => {}).catch((e) => { console.log('There was a problem getting the sphere ID:', e); });
-  if (typeof sphereId !== 'undefined') {
-    userLocations = await cloud.sphere(sphereId).presentPeople();
+  if (checkMailAndPassword()){
+    await obtainSphereId(() => {}).catch((e) => { console.log('There was a problem getting the sphere ID:', e); });
+    if (typeof sphereId !== 'undefined') {
+      userLocations = await cloud.sphere(sphereId).presentPeople();
+    }
   }
 }
 
@@ -197,7 +225,36 @@ let eventHandler = (data) => {
     runTrigger(data, false).catch((e) => {
       console.log('There was a problem firing the trigger:', e); });
   }
+  if (data.type === 'dataChange' && data.subType === 'stones' && data.operation === 'update') {
+    let deviceId = data.changedItem.id;
+    getLockedState(deviceId).catch(this.error);
+  }
 };
+
+/**
+ * This function will obtain the locked state of the device, compare the device ID with that of all
+ * the devices, and will call the function to update the locked state when a match has been found.
+ */
+async function getLockedState(deviceId) {
+  let crownstoneData = await cloud.crownstone(deviceId).data();
+  let lockedState = crownstoneData.locked;
+  let crownstoneDriver = Homey.ManagerDrivers.getDriver('crownstone');
+  let devices = crownstoneDriver.getDevices();
+  devices.forEach(device => {
+    if (device.getData().id === deviceId) {
+      updateLockedState(device, lockedState).catch((e) => {
+        console.log('There was a problem updating the locked state of a device:', e);
+      });
+    }
+  });
+}
+
+/**
+ * This function will call the device's method to change the locked state.
+ */
+async function updateLockedState(device, state) {
+  await device.changeLockState(state);
+}
 
 /**
  * This function will update the userLocations-list and will fire the trigger after it is complete.
@@ -268,13 +325,18 @@ function checkRoomId(roomId) {
  * This function obtains all the rooms of the sphere where the user is currently located in.
  */
 async function getRooms() {
-  await obtainSphereId(() => {}).catch((e) => {
-    console.log('There was a problem getting the sphere Id:', e); });
-  const rooms = await cloud.sphere(sphereId).locations();
-  if (rooms.length > 0) {
-    return listRooms(rooms);
+  console.log('getrooms:checkmailandpass..');
+  if (checkMailAndPassword()) {
+    await obtainSphereId(() => {}).catch((e) => {
+      console.log('There was a problem getting the sphere Id:', e);
+    });
+    const rooms = await cloud.sphere(sphereId).locations();
+    if (rooms.length > 0) {
+      return listRooms(rooms);
+    }
+    console.log('Unable to find any rooms');
+    return [];
   }
-  console.log('Unable to find any rooms');
   return [];
 }
 
@@ -298,10 +360,15 @@ function listRooms(rooms) {
  * This function will ask for the sphere Id and return a list of all the users in the sphere.
  */
 async function getUsers(){
-  await obtainSphereId(() => {}).catch((e) => {
-    console.log('There was a problem getting the sphere Id:', e); });
-  const users = await cloud.sphere(sphereId).users();
-  return listUsers(users);
+  console.log('getusers:getmailandpass');
+  if (checkMailAndPassword()) {
+    await obtainSphereId(() => {}).catch((e) => {
+      console.log('There was a problem getting the sphere Id:', e);
+    });
+    const users = await cloud.sphere(sphereId).users();
+    return listUsers(users);
+  }
+  return [];
 }
 
 /**

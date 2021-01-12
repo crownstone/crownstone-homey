@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 const Homey = require('homey');
 
 /**
@@ -19,10 +19,15 @@ class CrownstoneDriver extends Homey.Driver {
    * and the 'list_devices' view is called.
    */
   onPairListDevices(data, callback) {
-    this.log('Start discovering Crownstones in cloud');
-    Homey.app.getLocation((cloud, sphereId) => {
-      getDevices(cloud, sphereId).catch((e) => { console.log('There was a problem obtaining the available devices:', e); });
-    });
+    if (Homey.app.checkMailAndPass()) {
+      this.log('Start discovering Crownstones in cloud..');
+      Homey.app.getLocation((cloud, sphereId) => {
+        getDevices(cloud, sphereId).catch((e) => {
+          console.log('There was a problem obtaining the available devices:', e); });
+      });
+    } else {
+      callback(null, []);
+    }
 
     /**
      * This function will obtain all the data of the stones in the sphere.
@@ -43,6 +48,7 @@ class CrownstoneDriver extends Homey.Driver {
           data: {
             id: deviceList[i].id,
             address: deviceList[i].address,
+            locked: deviceList[i].locked,
           },
         };
         devices.push(device);

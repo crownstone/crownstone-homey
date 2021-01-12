@@ -1,5 +1,4 @@
-// todo: add documentation
-"use strict";
+'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
 const EncryptionHandler = require('./EncryptionHandler');
 const Util = require('./Util');
@@ -10,6 +9,10 @@ class BleHandler {
         this.settings = settings;
     }
 
+    /**
+     * This method will connect the Homey to the peripheral and discover all of it's services and
+     * characteristics.
+     */
     async connect(connectData) {
         try {
             const peripheral = await connectData.connect();
@@ -36,6 +39,9 @@ class BleHandler {
         }
     }
 
+    /**
+     * This method will set up the peripheral instance and will generate a random session ID.
+     */
     _setConnectedPeripheral(peripheral) {
         peripheral.once('disconnect', () => {
             console.log('Disconnected from device');
@@ -45,22 +51,24 @@ class BleHandler {
         this.connectedPeripheral = { peripheral: peripheral, services: {}, characteristics: {} };
     }
 
+    /**
+     * This method will disconnect the Homey from the peripheral and reset the variables.
+     */
     disconnect() {
-        console.log('Disconnecting..');
         if (this.connectedPeripheral !== null) {
-            console.log('Disconnecting from peripheral..');
             return this.connectedPeripheral.peripheral.disconnect()
                 .then(() => {
-                    console.log('Disconnected successfully');
-                    //this.connectionPending = false;
                     this.connectedPeripheral = null;
                 })
                 .catch((e) => {
-                    console.log('There was a problem disconnecting:', e);
+                    console.log('There was a problem disconnecting from the peripheral:', e);
                 });
         }
     }
 
+    /**
+     * This method will read the characteristic for given serviceUuid and characteristicUuid.
+     */
     readCharacteristic(serviceId, characteristicId) {
         return this.getCharacteristic(serviceId, characteristicId)
             .then((characteristic) => {
@@ -71,6 +79,9 @@ class BleHandler {
             });
     }
 
+    /**
+     * This method will get the characteristic for given serviceUuid and characteristicUuid.
+     */
     getCharacteristic(serviceId, characteristicId) {
         return new Promise((resolve, reject) => {
             if (!this.connectedPeripheral) {
@@ -88,14 +99,18 @@ class BleHandler {
         });
     }
 
+    /**
+     * This method will write the buffer data to the characteristic for given serviceUuid and
+     * characteristicUuid.
+     */
     writeToCharacteristic(serviceId, characteristicId, packet) {
         let dataToUse = EncryptionHandler.EncryptionHandler.encrypt(packet, this.settings);
         return this.getCharacteristic(serviceId, characteristicId)
             .then((characteristic) => {
                 return characteristic.write(dataToUse);
             })
-            .catch((err) => {
-                console.log('Write error: ', err);
+            .catch((e) => {
+                console.log('There was a problem writing to characteristic:', e);
             });
     }
 }

@@ -1,19 +1,21 @@
-// todo: add documentation, remove unnecessary variables.
-"use strict";
+'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
 const BluenetSettings = require('./BluenetSettings');
-var crypto = require('crypto');
+const crypto = require('crypto');
 const aesjs = require('aes-js');
 
+let SESSION_NONCE_LENGTH = 5;
 let VALIDATION_KEY_LENGTH = 4;
-
 let BLOCK_LENGTH = 16;
 let NONCE_LENGTH = 16;
-let SESSION_DATA_LENGTH = 5;
 let SESSION_KEY_LENGTH = 4;
 let PACKET_USER_LEVEL_LENGTH = 1;
 let PACKET_NONCE_LENGTH = 3;
+
 class EncryptionHandler {
+    /**
+     * This method will decrypt the session data using a key and return the session nonce and the validation key.
+     */
     static decryptSessionData(rawNonce, key) {
         if (key.length !== 16) {
             throw ('INPUT_ERROR', 'Invalid Key', 500);
@@ -25,18 +27,21 @@ class EncryptionHandler {
         var decrypted = Buffer.from(aesEcb.decrypt(rawNonce));
         // start validation
         if (0xcafebabe === decrypted.readUInt32LE(0)) {
-            return decrypted.slice(5, 5 + SESSION_DATA_LENGTH + VALIDATION_KEY_LENGTH);
+            return decrypted.slice(5, 5 + SESSION_NONCE_LENGTH + VALIDATION_KEY_LENGTH);
         } else {
             throw ('COULD_NOT_VALIDATE_SESSION_NONCE', 'Could not validate Session Nonce', 301);
         }
     }
+
+    /**
+     * This method will encrypt a packet using the AES 128 CTR encryption method.
+     */
     static encrypt(data, settings) {
-        console.log('ENCRYPTING SWITCH PACKET');
         if (settings.sessionNonce == null) {
-            throw "BleError.NO_SESSION_NONCE_SET";
+            throw 'BleError.NO_SESSION_NONCE_SET';
         }
         if (settings.userLevel === BluenetSettings.UserLevel.unknown) {
-            throw "BleError.DO_NOT_HAVE_ENCRYPTION_KEY";
+            throw 'BleError.DO_NOT_HAVE_ENCRYPTION_KEY';
         }
         // unpack the session data
         let sessionData = new SessionData(settings.sessionNonce, settings.validationKey);
@@ -67,7 +72,7 @@ class EncryptionHandler {
     }
     static generateIV(packetNonce, sessionData) {
         if (packetNonce.length != PACKET_NONCE_LENGTH) {
-            throw "BleError.INVALID_SIZE_FOR_SESSION_NONCE_PACKET";
+            throw 'BleError.INVALID_SIZE_FOR_SESSION_NONCE_PACKET';
         }
         let IV = Buffer.alloc(NONCE_LENGTH);
         // the IV used in the CTR mode is 8 bytes, the first 3 are random
@@ -78,7 +83,7 @@ class EncryptionHandler {
     }
     static _getKey(userLevel, settings) {
         if (settings.initializedKeys == false && userLevel != BluenetSettings.UserLevel.setup) {
-            throw "BleError.COULD_NOT_ENCRYPT_KEYS_NOT_SET";
+            throw 'BleError.COULD_NOT_ENCRYPT_KEYS_NOT_SET';
         }
         let key = null;
         switch (userLevel) {
@@ -92,18 +97,18 @@ class EncryptionHandler {
                 key = settings.basicKey;
                 break;
             default:
-                throw "BleError.INVALID_KEY_FOR_ENCRYPTION";
+                throw 'BleError.INVALID_KEY_FOR_ENCRYPTION';
         }
         if (key == null) {
-            throw "BleError.DO_NOT_HAVE_ENCRYPTION_KEY";
+            throw 'BleError.DO_NOT_HAVE_ENCRYPTION_KEY';
         }
         if (key.length !== 16) {
-            throw "BleError.DO_NOT_HAVE_ENCRYPTION_KEY";
+            throw 'BleError.DO_NOT_HAVE_ENCRYPTION_KEY';
         }
         return key;
     }
     static fillWithRandomNumbers(buff) {
-        if (global["BLUENET_ENCRYPTION_TESTING"]) {
+        if (global['BLUENET_ENCRYPTION_TESTING']) {
             for (let i = 0; i < buff.length; i++) {
                 buff.writeUInt8(128, i);
             }
@@ -113,12 +118,19 @@ class EncryptionHandler {
     }
 }
 exports.EncryptionHandler = EncryptionHandler;
+
 class SessionData {
+    /**
+     * This constructor will obtain the session nonce and the validation key from the settings.
+     */
     constructor(sessionData, validationKey) {
         this.sessionNonce = null;
         this.validationKey = null;
-        if (sessionData.length != SESSION_DATA_LENGTH) {
-            throw "BleError.INVALID_SESSION_DATA";
+        if (sessionData.length != SESSION_NONCE_LENGTH) {
+            throw 'BleError.INVALID_SESSION_DATA';
+        }
+        if (validationKey.length != VALIDATION_KEY_LENGTH) {
+            throw 'BleError.INVALID_VALIDATION_KEY';
         }
         this.sessionNonce = Buffer.from(sessionData);
         this.validationKey = Buffer.from(validationKey);

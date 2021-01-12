@@ -1,5 +1,4 @@
-// todo: add documentation
-"use strict";
+'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
 exports.UserLevel = {
     admin: 0,
@@ -46,6 +45,9 @@ class BluenetSettings {
         }
     }
 
+    /**
+     * This method will determine the user level for each key.
+     */
     determineUserLevel() {
         if (this.adminKey.length == 16) {
             this.userLevel = exports.UserLevel.admin;
@@ -69,6 +71,9 @@ class BluenetSettings {
         this.sessionNonce = sessionNonce;
     }
 
+    /**
+     * This method will set the validation key to the value of the parameter.
+     */
     setValidationKey(validationKey) {
         this.validationKey = validationKey;
     }

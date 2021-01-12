@@ -1,5 +1,4 @@
-// todo: add documentation
-"use strict";
+'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
 exports.Util = {
     boundToUnity: function (value) {

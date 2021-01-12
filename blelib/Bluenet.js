@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
 const BluenetSettings = require('./BluenetSettings');
 const BleHandler = require('./BleHandler');
@@ -12,13 +12,13 @@ class Bluenet {
 
     /**
      * This function will connect the Homey to the peripheral using a Homey advertisement as the connectData
-     * and it will obtain the session nonce.
+     * and it will obtain the session data.
      */
     connect(connectData) {
         return this.bleHandler.connect(connectData)
             .then(() => {
                 console.log('Getting Session nonce..');
-                return this.control.getAndSetSessionNonce();
+                return this.control.getAndSetSessionData();
             })
             .then(() => {
                 console.log('Session nonce obtained');

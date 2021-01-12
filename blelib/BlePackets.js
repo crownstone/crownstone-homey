@@ -1,5 +1,4 @@
-// todo: add documentation
-"use strict";
+'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
 class BLEPacket {
     constructor(packetType) {
@@ -18,6 +17,10 @@ class BLEPacket {
         this.length = this.payloadBuffer.length;
         return this;
     }
+
+    /**
+     * This method will write all the necessary values to the buffer and return it.
+     */
     getPacket() {
         let packetLength = 1 + 2 + 2;
         let buffer = Buffer.alloc(packetLength);
@@ -31,6 +34,7 @@ class BLEPacket {
     }
 }
 exports.BLEPacket = BLEPacket;
+
 class ControlPacket extends BLEPacket {
 }
 exports.ControlPacket = ControlPacket;

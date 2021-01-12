@@ -1,5 +1,4 @@
-//todo: update logs, add documentation
-"use strict";
+'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
 const EncryptionHandler = require('./EncryptionHandler');
 const ControlPackets = require('./ControlPackets');
@@ -11,31 +10,46 @@ class ControlHandler {
         this.crownstoneCharacteristicsControl = '24f0000c7d104805bfc17663a01c3bff';
     }
 
-    getAndSetSessionNonce() {
+    /**
+     * This method will obtain the session nonce and validation key and set it in the settings.
+     */
+    getAndSetSessionData() {
         return this.ble.readCharacteristic(this.crownstoneServiceUUID, this.crownstoneCharacteristicsSessionNonce)
             .then((rawNonce) => {
                 let decryptedNonce = EncryptionHandler.EncryptionHandler.decryptSessionData(rawNonce, this.ble.settings.basicKey);
                 let decryptedSessionNonce = decryptedNonce.slice(0, 5);
                 let decryptedValidationkey = decryptedNonce.slice(5, 9);
+                // this.ble.settings.setSessionNonce(decryptedNonce.slice(0, 5));
+                // this.ble.settings.setValidationKey(decryptedNonce.slice(5, 9));
                 this.ble.settings.setSessionNonce(decryptedSessionNonce);
-                this.ble.settings.setValidationKey(decryptedValidationkey);
+                this.ble.settings.setValidationKey(decryptedValidationkey)
             })
             .catch((e) => {
-                console.log('There was a problem validating the session nonce:', e);
+                console.log('There was a problem validating the session data:', e);
                 throw e;
             });
     }
 
+    /**
+     * This method will return a control packet to switch a device to a certain value.
+     */
     setSwitchState(state) {
         let switchState = state * 100;
         let packet = ControlPackets.ControlPacketsGenerator.getSwitchStatePacket(switchState);
         return this._writeControlPacket(packet);
     }
 
+    /**
+     * This method will call the method to write the control packet for given serviceUuid,
+     * characteristicUuid and packet.
+     */
     _writeControlPacket(packet) {
         return this.ble.writeToCharacteristic(this.crownstoneServiceUUID, this.crownstoneCharacteristicsControl, packet);
     }
 
+    /**
+     * This method will disconnect the device.
+     */
     disconnect() {
         let packet = ControlPackets.ControlPacketsGenerator.getDisconnectPacket();
         return this._writeControlPacket(packet)
