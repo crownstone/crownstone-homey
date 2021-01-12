@@ -325,7 +325,6 @@ function checkRoomId(roomId) {
  * This function obtains all the rooms of the sphere where the user is currently located in.
  */
 async function getRooms() {
-  console.log('getrooms:checkmailandpass..');
   if (checkMailAndPassword()) {
     await obtainSphereId(() => {}).catch((e) => {
       console.log('There was a problem getting the sphere Id:', e);
@@ -360,7 +359,6 @@ function listRooms(rooms) {
  * This function will ask for the sphere Id and return a list of all the users in the sphere.
  */
 async function getUsers(){
-  console.log('getusers:getmailandpass');
   if (checkMailAndPassword()) {
     await obtainSphereId(() => {}).catch((e) => {
       console.log('There was a problem getting the sphere Id:', e);
