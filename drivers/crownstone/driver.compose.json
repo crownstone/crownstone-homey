@@ -5,7 +5,8 @@
   },
   "class": "socket",
   "capabilities": [
-    "onoff"
+    "onoff",
+    "dim"
   ],
   "capabilitiesOptions": {
     "onoff": {
@@ -19,6 +20,18 @@
     "small": "/assets/images/very-small-square.png"
   },
   "pair": [
+    {
+      "id": "initiate_setup",
+      "template": "loading"
+    },
+    {
+      "id": "login_credentials",
+      "template": "login_credentials",
+      "options": {
+        "usernameLabel": "E-mail address",
+        "usernamePlaceholder": "crownstone.rocks@gmail.com"
+      }
+    },
     {
       "id": "list_devices",
       "template": "list_devices",

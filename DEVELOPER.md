@@ -98,7 +98,7 @@ Then, this method is used to make a connection to the Crownstone Cloud:
 
 ##### getPresentPeople
 After that, all the users and their current locations in the sphere should be obtained from the cloud. The data will be used later for the Flows.
-The first thing the `getPresentPeople()` function will do is obtain the current sphere ID using the `getSphereId()` function.
+The first thing the `getPresentPeople()` function will do is obtain the current sphere ID using the `obtainSphereId()` function.
 If the user is not present in the sphere or has his location turned off, the sphere ID will be _undefined_ and the list of user locations will stay empty.
 If the sphere ID is defined, the data will be obtained from the Crownstone Cloud and saved in the local variable _userLocations_ using:
 

@@ -45,13 +45,16 @@
         });
 
         saveElement.addEventListener('click', function (e) {
-          Homey.set('email', emailElement.value, function (err) {
-            if (err) return Homey.alert(err);
-          });
-          Homey.set('password', passwordElement.value, function (err) {
-            if (err) return Homey.alert(err);
-          });
-          Homey.alert(Homey.__("settings.alert")); // Translation of the alert
+          Homey.api('PUT', '/', {
+            email: emailElement.value,
+            password: passwordElement.value,
+          }, function(err, result) {
+            if (result) {
+              Homey.alert(Homey.__("settings.valid_credentials"));
+            } else if (!result) {
+              Homey.alert(Homey.__("settings.invalid_credentials"));
+            }
+          })
         });
       }
     </script>
