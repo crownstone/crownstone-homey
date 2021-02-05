@@ -14,47 +14,67 @@ class CrownstoneDriver extends Homey.Driver {
     this.log('Crownstone driver has been inited');
   }
 
-  /**
-   * This method is called when a user is adding a device
-   * and the 'list_devices' view is called.
-   */
-  onPairListDevices(data, callback) {
-    if (Homey.app.checkMailAndPass()) {
-      this.log('Start discovering Crownstones in cloud..');
-      Homey.app.getLocation((cloud, sphereId) => {
-        getDevices(cloud, sphereId).catch((e) => {
-          console.log('There was a problem obtaining the available devices:', e); });
-      });
-    } else {
-      callback(null, []);
-    }
+  onPair(socket) {
 
-    /**
-     * This function will obtain all the data of the stones in the sphere.
-     */
-    async function getDevices(cloud, sphereId) {
-      const devices = await cloud.sphere(sphereId).crownstones();
-      callback(null, listDevices(devices));
-    }
-
-    /**
-     * This function returns a json list with all the devices and their name, ID and address in the sphere.
-     */
-    function listDevices(deviceList) {
-      const devices = [];
-      for (let i = 0; i < deviceList.length; i++) {
-        const device = {
-          name: deviceList[i].name,
-          data: {
-            id: deviceList[i].id,
-            address: deviceList[i].address,
-            locked: deviceList[i].locked,
-          },
-        };
-        devices.push(device);
+    socket.on('showView', ( viewId, callback ) => {
+      callback();
+      if (viewId === 'initiate_setup') {
+        if (Homey.app.getLoginState()) {
+          socket.showView('list_devices');
+        } else {
+          socket.showView('login_credentials');
+        }
       }
-      return devices;
-    }
+    });
+
+    socket.on('login', (data, callback) => {
+      return Homey.app.setSettings(data.username, data.password)
+          .then((loginState) => {
+            callback(null, loginState);
+          });
+    });
+
+    socket.on('list_devices', function (data, callback) {
+      if (Homey.app.checkMailAndPass()) {
+        console.log('Start discovering Crownstones in cloud..');
+        Homey.app.getLocation((cloud, sphereId) => {
+          getDevices(cloud, sphereId).catch((e) => {
+            console.log('There was a problem obtaining the available devices:', e);
+          });
+        });
+      } else {
+        callback(null, []);
+      }
+
+      /**
+       * This function will obtain all the data of the stones in the sphere.
+       */
+      async function getDevices(cloud, sphereId) {
+        const devices = await cloud.sphere(sphereId).crownstones();
+        callback(null, listDevices(devices));
+      }
+
+      /**
+       * This function returns a json list with all the devices and their name, ID and address in the sphere.
+       */
+      function listDevices(deviceList) {
+        const devices = [];
+        for (let i = 0; i < deviceList.length; i++) {
+          const device = {
+            name: deviceList[i].name,
+            capabilities: ["onoff"],
+            data: {
+              id: deviceList[i].id,
+              address: deviceList[i].address,
+              locked: deviceList[i].locked,
+              dimmed: deviceList[i].abilities[0].enabled,
+            },
+          };
+          devices.push(device);
+        }
+        return devices;
+      }
+    });
   }
 }
 

@@ -5,7 +5,8 @@
     "credentials": "Crownstone cloud inloggegevens",
     "email": "E-mailadres",
     "password": "Wachtwoord",
-    "next": "Ga verder",
-	"alert": "Bedankt! We hebben je accountinformatie opgeslagen op je Homey!"
+    "next": "Log in",
+	"valid_credentials": "Bedankt! Je bent nu ingelogd bij Crownstone!",
+    "invalid_credentials": "De gegevens onjuist. Controleer je e-mailadres en wachtwoord."
   }
 }

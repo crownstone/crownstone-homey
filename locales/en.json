@@ -5,7 +5,8 @@
     "credentials": "Crownstone cloud credentials",
     "email": "E-mail address",
     "password": "Password",
-    "next": "Next",
-	"alert": "Thanks! We have stored your account information on your Homey!"
+    "next": "Log in",
+	"valid_credentials": "You are now logged in to Crownstone!",
+    "invalid_credentials": "These credentials are invalid. Please check your e-mail address or password."
   }
 }

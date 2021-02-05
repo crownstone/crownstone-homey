@@ -8,6 +8,7 @@ const sse = new sseLib.CrownstoneSSE();
 
 let sphereId;
 let userLocations = [];
+let loginState = false;
 
 const presenceTrigger = new Homey.FlowCardTrigger('user_enters_room');
 const presenceCondition = new Homey.FlowCardCondition('user_presence');
@@ -84,24 +85,29 @@ class CrownstoneApp extends Homey.App {
     this.password = Homey.ManagerSettings.get('password');
     if (checkMailAndPassword()) {
       setupConnections(this.email, this.password).catch((e) => {
-        console.log('There was a problem making the connections:', e); });
+        console.log('There was a problem making the connections:', e);
+      });
       obtainUserLocations().catch((e) => {
         console.log('There was a problem repeating code:', e); });
     }
+  }
 
-
-
-    /**
-     * This function will fire when a user changed the credentials in the settings-page.
-     */
-    Homey.ManagerSettings.on('set', function () {
-      Homey.app.email = Homey.ManagerSettings.get('email');
-      Homey.app.password = Homey.ManagerSettings.get('password');
-      if (checkMailAndPassword()) {
-        setupConnections(Homey.app.email, Homey.app.password).catch((e) => {
-          console.log('There was a problem making the connections:', e); });
-      }
-    });
+  /**
+   * This function will fire when a user changed the credentials in the settings-page.
+   */
+  async setSettings(email, password) {
+    Homey.app.email = email;
+    Homey.app.password = password;
+    if (checkMailAndPassword()) {
+      await setupConnections(email, password).catch((e) => {
+        console.log('There was a problem making the connections:', e); });
+      Homey.ManagerSettings.set('email', email);
+      Homey.ManagerSettings.set('password', password);
+      return loginState;
+    }
+    Homey.ManagerSettings.set('email', '');
+    Homey.ManagerSettings.set('password', '');
+    return loginState;
   }
 
   /**
@@ -135,6 +141,13 @@ class CrownstoneApp extends Homey.App {
   checkMailAndPass() {
     return checkMailAndPassword();
   }
+
+  /**
+   * This method will return the current login state (true or false).
+   */
+  getLoginState() {
+    return loginState;
+  }
 }
 
 /**
@@ -154,8 +167,10 @@ function checkMailAndPassword() {
  * their locations in the sphere, and call the function to make a connection to the event server.
  */
 async function setupConnections(email, password) {
+  loginState = true;
   await cloud.login(email, password).catch((e) => {
-    console.log('There was a problem making a connection with the cloud:', e); });
+    loginState = false;
+  });
   await getPresentPeople();
   await loginToEventServer(email, password).catch((e) => {
     console.log('There was a problem making a connection with the event server:', e); });
@@ -207,7 +222,12 @@ setInterval(() => {
  */
 async function loginToEventServer(email, password) {
   await sse.stop();
-  await sse.login(email, password);
+  try {
+    await sse.login(email, password);
+  }
+  catch(e) {
+    console.log('There was a problem making a connection to the Event Server:: ', e);
+  }
   await sse.start(eventHandler);
   await getPresentPeople();
 }

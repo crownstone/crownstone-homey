@@ -11,11 +11,15 @@ class CrownstoneDevice extends Homey.Device {
    */
   onInit() {
     this.log(this.getName() + ' has been inited');
-    this.log('Name:', this.getName());
-    this.log('Class:', this.getClass());
+    if (this.getData().dimmed) {
+      this.addCapability('dim').catch(this.error);
+    } else if (!this.getData().dimmed) {
+      this.removeCapability('dim').catch(this.error);
+    }
     this.bluenet = new BleLib.default();
     this.cloud = Homey.app.getCloud();
     this.registerCapabilityListener('onoff', this.onCapabilityOnoff.bind(this));
+    this.registerCapabilityListener('dim', this.onCapabilityDim.bind(this));
     if (this.getData().locked) {
       this.setUnavailable('This device is locked.').catch(this.error);
     }
@@ -40,7 +44,7 @@ class CrownstoneDevice extends Homey.Device {
    * It will use Ble to switch the Crownstone, if that fails, it will use the cloud instead.
    */
   async onCapabilityOnoff(value) {
-    if (!activeConnection && Homey.app.checkMailAndPass()) {
+    if (!activeConnection && Homey.app.getLoginState()) {
       activeConnection = true;
       await this.switchBLE(value).catch(async (e) => {
         console.log('There was a problem switching the device:', e);
@@ -50,6 +54,30 @@ class CrownstoneDevice extends Homey.Device {
           await this.cloud.crownstone(this.getData().id).turnOff();
         }
       });
+      if (value) {
+        await this.setCapabilityValue('dim', 1);
+      } else if (!value) {
+        await this.setCapabilityValue('dim', 0);
+      }
+      activeConnection = false;
+    }
+  }
+
+  /**
+   * Called when the device has requested a state change (dimming).
+   * It will use the cloud to dim the Crownstone.
+   * todo: add Ble switching functionality.
+   */
+  async onCapabilityDim(value) {
+    if (!activeConnection && Homey.app.getLoginState()) {
+      activeConnection = true;
+      let percentage = value*100;
+      if (percentage > 0) {
+        await this.setCapabilityValue('onoff', true);
+      } else if (percentage < 1) {
+        await this.setCapabilityValue('onoff', false);
+      }
+      await this.cloud.crownstone(this.getData().id).setSwitch(percentage);
       activeConnection = false;
     }
   }
