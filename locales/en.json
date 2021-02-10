@@ -6,6 +6,7 @@
     "email": "E-mail address",
     "password": "Password",
     "next": "Log in",
+    "logout": "Log out",
 	"valid_credentials": "You are now logged in to Crownstone!",
     "invalid_credentials": "These credentials are invalid. Please check your e-mail address or password."
   }

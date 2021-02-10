@@ -11,15 +11,25 @@ class CrownstoneDriver extends Homey.Driver {
    * This method is called when the Driver is initialized.
    */
   onInit() {
-    this.log('Crownstone driver has been inited');
+    this.log('Crownstone driver has been initialized');
   }
 
+  /**
+   * todo: add documentation.
+   * @param socket
+   */
   onPair(socket) {
 
+    /**
+     * todo: add documentation.
+     */
     socket.on('showView', ( viewId, callback ) => {
       callback();
-      if (viewId === 'initiate_setup') {
+      if (viewId === 'loading') {
+        //console.log('loading view..');
         if (Homey.app.getLoginState()) {
+          // todo: !! add extra view where users can choose to log out. If they press 'next',
+          //  the list_devices view is shown.
           socket.showView('list_devices');
         } else {
           socket.showView('login_credentials');
@@ -27,14 +37,27 @@ class CrownstoneDriver extends Homey.Driver {
       }
     });
 
+    /**
+     * todo: add documentation.
+     */
     socket.on('login', (data, callback) => {
+      //console.log('login-view');
       return Homey.app.setSettings(data.username, data.password)
           .then((loginState) => {
-            callback(null, loginState);
+            if (loginState) {
+              //callback(null, true);
+              socket.showView('loading');
+            } else if (!loginState) {
+              callback(null, false);
+            }
           });
     });
 
+    /**
+     * todo: add documentation.
+     */
     socket.on('list_devices', function (data, callback) {
+      //console.log('list_devices-view');
       if (Homey.app.checkMailAndPass()) {
         console.log('Start discovering Crownstones in cloud..');
         Homey.app.getLocation((cloud, sphereId) => {
@@ -62,7 +85,6 @@ class CrownstoneDriver extends Homey.Driver {
         for (let i = 0; i < deviceList.length; i++) {
           const device = {
             name: deviceList[i].name,
-            capabilities: ["onoff"],
             data: {
               id: deviceList[i].id,
               address: deviceList[i].address,

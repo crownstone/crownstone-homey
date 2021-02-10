@@ -23,6 +23,8 @@
 
     <button id="save" class="right" data-i18n="settings.next"> </button> <!-- Button translation -->
 
+<!--    <button id="logout" class="rights" data-i18n="settings.logout"> </button>-->
+
     <script type="text/javascript">
 
       // A method named 'onHomeyReady' must be present in your code
@@ -33,6 +35,7 @@
         var emailElement = document.getElementById('email');
         var passwordElement = document.getElementById('password');
         var saveElement = document.getElementById('save');
+        //var logoutElement = document.getElementById('logout');
 
         // Put earlier-stored credentials in labels
         Homey.get('email', function (err, email) {
@@ -56,6 +59,10 @@
             }
           })
         });
+
+        // logoutElement.addEventListener('click', function (e) {
+        //   Homey.alert('LOGGED OUT');
+        // })
       }
     </script>
   </body>

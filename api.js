@@ -11,4 +11,11 @@ module.exports = [
             callback(null, result);
         }
     },
+    // {
+    //     method: 'PUT',
+    //     path: '/logout',
+    //     fn: {
+    //
+    //     } //function
+    // },
 ]

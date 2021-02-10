@@ -1,7 +1,7 @@
 {
   "name": {
-    "en": "Crownstone Zero",
-    "nl": "Crownstone Zero"
+    "en": "Crownstone",
+    "nl": "Crownstone"
   },
   "class": "socket",
   "capabilities": [
@@ -21,7 +21,7 @@
   },
   "pair": [
     {
-      "id": "initiate_setup",
+      "id": "loading",
       "template": "loading"
     },
     {

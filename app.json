@@ -132,7 +132,7 @@
       },
       "pair": [
         {
-          "id": "initiate_setup",
+          "id": "loading",
           "template": "loading"
         },
         {

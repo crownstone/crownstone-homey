@@ -9,6 +9,7 @@ const sse = new sseLib.CrownstoneSSE();
 let sphereId;
 let userLocations = [];
 let loginState = false;
+let setupInProgress = false;
 
 const presenceTrigger = new Homey.FlowCardTrigger('user_enters_room');
 const presenceCondition = new Homey.FlowCardCondition('user_presence');
@@ -77,7 +78,7 @@ class CrownstoneApp extends Homey.App {
   /**
    * This method is called when the App is initialized.
    * The email and password for the Crownstone Cloud from the user will be obtained using the data from the form.
-   * Instances of the flowcard triggers and conditions are inited.
+   * Instances of the flowcard triggers and conditions are initialized.
    */
   onInit() {
     this.log(`App ${Homey.app.manifest.name.en} is running...`);
@@ -107,6 +108,7 @@ class CrownstoneApp extends Homey.App {
     }
     Homey.ManagerSettings.set('email', '');
     Homey.ManagerSettings.set('password', '');
+    loginState = false;
     return loginState;
   }
 
@@ -148,15 +150,19 @@ class CrownstoneApp extends Homey.App {
   getLoginState() {
     return loginState;
   }
+
+  getSetupInProgress() {
+    return setupInProgress;
+  }
 }
 
 /**
- * This function will check if the email or password is either empty or undefined, and will return
- * a boolean.
+ * This function will check if the email or password is either empty, null or undefined, and will
+ * return a boolean.
  */
 function checkMailAndPassword() {
-  if (Homey.app.email === '' || typeof Homey.app.email === 'undefined'
-      || Homey.app.password === '' || typeof Homey.app.password === 'undefined') {
+  if (!Homey.app.email || !Homey.app.password) {
+    console.log('No value found..');
     return false;
   }
   return true;
@@ -168,19 +174,23 @@ function checkMailAndPassword() {
  */
 async function setupConnections(email, password) {
   loginState = true;
+  setupInProgress = true;
   await cloud.login(email, password).catch((e) => {
+    console.log('There was a problem making a connection to the cloud:', e);
     loginState = false;
   });
   await getPresentPeople();
   await loginToEventServer(email, password).catch((e) => {
     console.log('There was a problem making a connection with the event server:', e); });
+  setupInProgress = false;
+  console.log('Setting up connections: DONE');
 }
 
 /**
  * This function will obtain all the users and their locations in the sphere.
  */
 async function getPresentPeople() {
-  if (checkMailAndPassword()){
+  if (loginState){
     await obtainSphereId(() => {}).catch((e) => { console.log('There was a problem getting the sphere ID:', e); });
     if (typeof sphereId !== 'undefined') {
       userLocations = await cloud.sphere(sphereId).presentPeople();
@@ -247,15 +257,45 @@ let eventHandler = (data) => {
   }
   if (data.type === 'dataChange' && data.subType === 'stones' && data.operation === 'update') {
     let deviceId = data.changedItem.id;
-    getLockedState(deviceId).catch(this.error);
+    getAndSetLockedState(deviceId).catch(this.error);
+  }
+  if (data.type === 'abilityChange' && data.subType === 'dimming') {
+    let deviceId = data.stone.id;
+    let dimAbilityState = data.ability.enabled;
+    setDimmingAbilityState(deviceId, dimAbilityState).catch(this.error);
   }
 };
 
 /**
- * This function will obtain the locked state of the device, compare the device ID with that of all
- * the devices, and will call the function to update the locked state when a match has been found.
+ * This function will obtain the state of the dimming capability of the device, compare the
+ * device ID with that of all the added devices, and will call the function to update the
+ * dimming capability when a match has been found.
  */
-async function getLockedState(deviceId) {
+async function setDimmingAbilityState(deviceId, dimAbilityState) {
+  let crownstoneDriver = Homey.ManagerDrivers.getDriver('crownstone');
+  let devices = crownstoneDriver.getDevices();
+  devices.forEach(device => {
+    if (device.getData().id === deviceId) {
+      updateDimCapability(device, dimAbilityState).catch((e) => {
+        console.log('There was a problem updating the dimming capability of a device:', e);
+      });
+    }
+  });
+}
+
+/**
+ * This function will call the device's method to change the dimming capability.
+ */
+async function updateDimCapability(device, state) {
+  await device.changeDimCapability(state)
+}
+
+/**
+ * This function will obtain the locked state of the device, compare the device ID with that of all
+ * the added devices, and will call the function to update the locked state when a match has been
+ * found.
+ */
+async function getAndSetLockedState(deviceId) {
   let crownstoneData = await cloud.crownstone(deviceId).data();
   let lockedState = crownstoneData.locked;
   let crownstoneDriver = Homey.ManagerDrivers.getDriver('crownstone');
