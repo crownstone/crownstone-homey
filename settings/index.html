@@ -7,23 +7,15 @@
   <body>
 
     <h1 data-i18n="settings.title"> <!-- Translation --> </h1>
-    <p data-i18n="settings.subtitle"> <!-- Translation --> </p>
 
-    <fieldset>  <!-- Credential label field -->
-      <legend data-i18n="settings.credentials"> </legend>
-      <div class="field row">
-        <label for="email" data-i18n="settings.email" > </label>
-        <input id="email" type="text" value="">
-      </div>
-      <div class="field row">
-       <label for="password" data-i18n="settings.password"> </label>
-       <input id="password" type="password" value="">
-      </div>
+    <fieldset>
+      <h3 data-i18n="settings.checkboxtitle"> </h3>
+
+      <p><input id="cloud" type="checkbox" value="cloud">Cloud</p>
+      <p><input id="ble" type="checkbox" value="ble">Ble</p>
+
+      <p> <button id="submit" class="right" data-i18n="settings.submit"> </button> </p> <!-- Button translation --></p>
     </fieldset>
-
-    <button id="save" class="right" data-i18n="settings.next"> </button> <!-- Button translation -->
-
-<!--    <button id="logout" class="rights" data-i18n="settings.logout"> </button>-->
 
     <script type="text/javascript">
 
@@ -32,37 +24,44 @@
         // Tell Homey we're ready to be displayed
         Homey.ready();
 
-        var emailElement = document.getElementById('email');
-        var passwordElement = document.getElementById('password');
-        var saveElement = document.getElementById('save');
-        //var logoutElement = document.getElementById('logout');
+        let submitElement = document.getElementById('submit');
+        let cloudElement = document.getElementById('cloud');
+        let bleElement = document.getElementById('ble');
 
-        // Put earlier-stored credentials in labels
-        Homey.get('email', function (err, email) {
+        // Put earlier-stored values in labels
+        Homey.get('cloud', function (err, cloud) {
           if (err) return Homey.alert(err);
-          emailElement.value = email;
+          cloudElement.checked = cloud;
         });
-        Homey.get('password', function (err, password) {
+        Homey.get('ble', function (err, ble) {
           if (err) return Homey.alert(err);
-          passwordElement.value = password;
+          bleElement.checked = ble;
         });
 
-        saveElement.addEventListener('click', function (e) {
-          Homey.api('PUT', '/', {
-            email: emailElement.value,
-            password: passwordElement.value,
-          }, function(err, result) {
-            if (result) {
-              Homey.alert(Homey.__("settings.valid_credentials"));
-            } else if (!result) {
-              Homey.alert(Homey.__("settings.invalid_credentials"));
-            }
-          })
-        });
+        submitElement.addEventListener('click', function (e) {
 
-        // logoutElement.addEventListener('click', function (e) {
-        //   Homey.alert('LOGGED OUT');
-        // })
+          let checkBoxes = document.querySelectorAll('input[type=checkbox]:checked');
+
+          if (checkBoxes.length == 0) {
+            Homey.alert('At least one checkbox must be selected.');
+            Homey.get('cloud', function (err, cloud) {
+              if (err) return Homey.alert(err);
+              cloudElement.checked = cloud;
+            });
+            Homey.get('ble', function (err, ble) {
+              if (err) return Homey.alert(err);
+              bleElement.checked = ble;
+            });
+          } else {
+            Homey.set('cloud', cloudElement.checked, function (err) {
+              if (err) return Homey.alert(err);
+            });
+            Homey.set('ble', bleElement.checked, function (err) {
+              if (err) return Homey.alert(err);
+            });
+            Homey.alert('Changes are saved.');
+          }
+        })
       }
     </script>
   </body>

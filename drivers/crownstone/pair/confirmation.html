@@ -1,0 +1,34 @@
+<html>
+<head>
+</head>
+<body>
+
+<fieldset>
+    <h3> You are currently logged in.</h3>
+    <p> <button id="logout" class="left" data-i18n="settings.logout"> </button> </p> <!-- Button translation --></p>
+</fieldset>
+
+
+<p> <button id="next" class="right" data-i18n="settings.next"> </button> </p> <!-- Button translation --></p>
+
+
+<script type="text/javascript">
+
+    Homey.setTitle('Crownstone confirmation');
+
+    let logoutElement = document.getElementById('logout');
+    let nextElement = document.getElementById('next');
+
+    logoutElement.addEventListener('click', function (e) {
+        Homey.showView('login_credentials');
+    });
+
+    nextElement.addEventListener('click', function (e) {
+        Homey.showView('list_devices');
+    });
+
+
+</script>
+
+</body>
+</html>

@@ -27,13 +27,21 @@ class CrownstoneDriver extends Homey.Driver {
       callback();
       if (viewId === 'loading') {
         //console.log('loading view..');
+
         if (Homey.app.getLoginState()) {
-          // todo: !! add extra view where users can choose to log out. If they press 'next',
-          //  the list_devices view is shown.
-          socket.showView('list_devices');
+
+          socket.showView('confirmation');
+          // // todo: !! add extra view where users can choose to log out. If they press 'next',
+          // //  the list_devices view is shown.
+          // socket.showView('list_devices');
         } else {
           socket.showView('login_credentials');
         }
+      }
+      if (viewId === 'login_credentials') {
+        Homey.ManagerSettings.set('email', '');
+        Homey.ManagerSettings.set('password', '');
+        Homey.app.setLoginState(false);
       }
     });
 
@@ -42,6 +50,7 @@ class CrownstoneDriver extends Homey.Driver {
      */
     socket.on('login', (data, callback) => {
       //console.log('login-view');
+
       return Homey.app.setSettings(data.username, data.password)
           .then((loginState) => {
             if (loginState) {

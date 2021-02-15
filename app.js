@@ -8,8 +8,12 @@ const sse = new sseLib.CrownstoneSSE();
 
 let sphereId;
 let userLocations = [];
+
 let loginState = false;
 let setupInProgress = false;
+
+let cloudActive;
+let bleActive;
 
 const presenceTrigger = new Homey.FlowCardTrigger('user_enters_room');
 const presenceCondition = new Homey.FlowCardCondition('user_presence');
@@ -84,6 +88,15 @@ class CrownstoneApp extends Homey.App {
     this.log(`App ${Homey.app.manifest.name.en} is running...`);
     this.email = Homey.ManagerSettings.get('email');
     this.password = Homey.ManagerSettings.get('password');
+    cloudActive = Homey.ManagerSettings.get('cloud');
+    bleActive = Homey.ManagerSettings.get('ble');
+    this.log(cloudActive);
+    this.log(bleActive);
+    if (!cloudActive && !bleActive) {
+      this.log('both checkboxes are unselected, selecting them both as default..');
+      Homey.ManagerSettings.set('cloud', true);
+      Homey.ManagerSettings.set('ble', true);
+    }
     if (checkMailAndPassword()) {
       setupConnections(this.email, this.password).catch((e) => {
         console.log('There was a problem making the connections:', e);
@@ -91,6 +104,12 @@ class CrownstoneApp extends Homey.App {
       obtainUserLocations().catch((e) => {
         console.log('There was a problem repeating code:', e); });
     }
+
+    Homey.ManagerSettings.on('set', function () {
+      cloudActive = Homey.ManagerSettings.get('cloud');
+      bleActive = Homey.ManagerSettings.get('ble');
+    });
+
   }
 
   /**
@@ -151,9 +170,34 @@ class CrownstoneApp extends Homey.App {
     return loginState;
   }
 
+  /**
+   * This method will set the login state (true or false).
+   */
+  setLoginState(state) {
+    loginState = state;
+  }
+
+  /**
+   * todo: add documentation
+   */
   getSetupInProgress() {
     return setupInProgress;
   }
+
+  /**
+   * todo: add documentation
+   */
+  getCloudState() {
+    return cloudActive;
+  }
+
+  /**
+   * todo: add documentation
+   */
+  getBleState() {
+    return bleActive;
+  }
+
 }
 
 /**

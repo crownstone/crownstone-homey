@@ -2,11 +2,13 @@
   "settings": {
     "title": "Crownstone configuration",
     "subtitle": "Crownstone needs to know which BLE devices are Crownstones. For the initial setup process it will query the Crownstone servers for this. Your Crownstone email address and password will be stored on the Homey.",
+    "checkboxtitle": "Select the way Crownstones should be controlled",
     "credentials": "Crownstone cloud credentials",
     "email": "E-mail address",
     "password": "Password",
-    "next": "Log in",
+    "next": "Continue",
     "logout": "Log out",
+    "submit": "Submit",
 	"valid_credentials": "You are now logged in to Crownstone!",
     "invalid_credentials": "These credentials are invalid. Please check your e-mail address or password."
   }

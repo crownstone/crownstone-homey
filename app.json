@@ -111,8 +111,8 @@
   "drivers": [
     {
       "name": {
-        "en": "Crownstone Zero",
-        "nl": "Crownstone Zero"
+        "en": "Crownstone",
+        "nl": "Crownstone"
       },
       "class": "socket",
       "capabilities": [
@@ -134,6 +134,9 @@
         {
           "id": "loading",
           "template": "loading"
+        },
+        {
+          "id": "confirmation"
         },
         {
           "id": "login_credentials",

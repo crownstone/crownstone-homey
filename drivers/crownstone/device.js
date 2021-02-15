@@ -13,9 +13,6 @@ class CrownstoneDevice extends Homey.Device {
    * changed.
    */
   onInit() {
-    this.log('dimmed:', this.getData().dimmed);
-    this.log('locked:', this.getData().locked);
-    this.log('availability:', this.getAvailable());
     this.changeLockState(this.getData().locked).catch(this.error);
     this.changeDimCapability(this.getData().dimmed).catch(this.error);
 
@@ -78,7 +75,7 @@ class CrownstoneDevice extends Homey.Device {
   /**
    * Called when the device has requested a state change (dimming).
    * It will use the cloud to dim the Crownstone.
-   * todo: add Ble dimming functionality.
+   * todo: add Ble dimming functionality and ability to switch between cloud/ble.
    */
   async onCapabilityDim(value) {
     if (!activeConnection && Homey.app.getLoginState()) {
@@ -102,12 +99,20 @@ class CrownstoneDevice extends Homey.Device {
   async onCapabilityOnoff(value) {
     if (!activeConnection && Homey.app.getLoginState()) {
       activeConnection = true;
-      await this.switchCloud(value).catch(async (e) => {
-        console.log('There was a problem switching the device using the Cloud:', e);
-        await this.switchBLE(value).catch(async (e) => {
-          console.log('There was a problem switching the device using Ble:', e);
+      if (Homey.app.getCloudState()) {
+        await this.switchCloud(value).catch(async (e) => {
+          console.log('There was a problem switching the device using the Cloud:', e);
+          if (Homey.app.getBleState()) {
+            await this.switchBLE(value).catch(async (e) => {
+              console.log('There was a problem switching the device using Ble:', e);
+            });
+          }
         });
-      });
+      } else if (Homey.app.getBleState()) {
+        await this.switchCloud(value).catch(async (e) => {
+          console.log('There was a problem switching the device using the Cloud:', e);
+        });
+      }
       if (this.getCapabilities().includes('dim')) {
         if (value) {
           await this.setCapabilityValue('dim', 1);
