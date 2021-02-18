@@ -1,15 +1,10 @@
 {
   "settings": {
     "title": "Crownstone configuratie",
-    "subtitle": "Crownstone moet weten welke BLE-apparaten Crownstones zijn. Voor het eerste installatieproces zal het hiervoor de Crowstoneservers opvragen. Je Crownstone e-mailadres en wachtwoord worden op de Homey opgeslagen.",
     "checkboxtitle": "Selecteer de manier waarop Crownstones worden bestuurd",
-    "credentials": "Crownstone cloud inloggegevens",
-    "email": "E-mailadres",
-    "password": "Wachtwoord",
+    "blewarning": "Let op: De ble configuratie is experimenteel en kan niet werken op jouw apparaat.",
     "next": "Ga verder",
     "logout": "Log uit",
-    "submit": "Indienen",
-	"valid_credentials": "Bedankt! Je bent nu ingelogd bij Crownstone!",
-    "invalid_credentials": "De gegevens onjuist. Controleer je e-mailadres en wachtwoord."
+    "submit": "Indienen"
   }
 }

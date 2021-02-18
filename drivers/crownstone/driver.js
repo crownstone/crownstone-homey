@@ -26,14 +26,8 @@ class CrownstoneDriver extends Homey.Driver {
     socket.on('showView', ( viewId, callback ) => {
       callback();
       if (viewId === 'loading') {
-        //console.log('loading view..');
-
         if (Homey.app.getLoginState()) {
-
           socket.showView('confirmation');
-          // // todo: !! add extra view where users can choose to log out. If they press 'next',
-          // //  the list_devices view is shown.
-          // socket.showView('list_devices');
         } else {
           socket.showView('login_credentials');
         }
@@ -49,12 +43,9 @@ class CrownstoneDriver extends Homey.Driver {
      * todo: add documentation.
      */
     socket.on('login', (data, callback) => {
-      //console.log('login-view');
-
       return Homey.app.setSettings(data.username, data.password)
           .then((loginState) => {
             if (loginState) {
-              //callback(null, true);
               socket.showView('loading');
             } else if (!loginState) {
               callback(null, false);
@@ -66,7 +57,6 @@ class CrownstoneDriver extends Homey.Driver {
      * todo: add documentation.
      */
     socket.on('list_devices', function (data, callback) {
-      //console.log('list_devices-view');
       if (Homey.app.checkMailAndPass()) {
         console.log('Start discovering Crownstones in cloud..');
         Homey.app.getLocation((cloud, sphereId) => {
@@ -88,6 +78,7 @@ class CrownstoneDriver extends Homey.Driver {
 
       /**
        * This function returns a json list with all the devices and their name, ID and address in the sphere.
+       * It will also add the locked state, dim capability and an active value.
        */
       function listDevices(deviceList) {
         const devices = [];
@@ -96,9 +87,12 @@ class CrownstoneDriver extends Homey.Driver {
             name: deviceList[i].name,
             data: {
               id: deviceList[i].id,
+            },
+            store: {
               address: deviceList[i].address,
               locked: deviceList[i].locked,
               dimmed: deviceList[i].abilities[0].enabled,
+              active: false,
             },
           };
           devices.push(device);

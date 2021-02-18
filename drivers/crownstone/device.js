@@ -2,8 +2,7 @@
 const Homey = require('homey');
 const BleLib = require('../../blelib/Bluenet');
 
-let activeConnection = false;
-let activeConnectionDim = false;
+let activeBleConnection = false;
 
 class CrownstoneDevice extends Homey.Device {
   /**
@@ -13,8 +12,8 @@ class CrownstoneDevice extends Homey.Device {
    * changed.
    */
   onInit() {
-    this.changeLockState(this.getData().locked).catch(this.error);
-    this.changeDimCapability(this.getData().dimmed).catch(this.error);
+    this.changeLockState(this.getStoreValue('locked')).catch(this.error);
+    this.changeDimCapability(this.getStoreValue('dimmed')).catch(this.error);
 
     this.cloud = Homey.app.getCloud();
     this.bluenet = new BleLib.default();
@@ -31,15 +30,18 @@ class CrownstoneDevice extends Homey.Device {
    * cloud.
    */
   async checkCsData() {
+    await this.setStoreValue('active', false);
     let waitOnSetup = setInterval(async () => {
       if (!Homey.app.getSetupInProgress()) {
         clearInterval(waitOnSetup);
         if (Homey.app.getLoginState()) {
           let crownstoneData = await this.cloud.crownstone(this.getData().id).data();
           let lockedState = crownstoneData.locked;
-          this.changeLockState(lockedState).catch(this.error);
+          await this.changeLockState(lockedState);
           let dimState = crownstoneData.abilities[0].enabled;
-          this.changeDimCapability(dimState).catch(this.error);
+          await this.changeDimCapability(dimState);
+          let currentSwitchState = await this.cloud.crownstone(this.getData().id).currentSwitchState();
+          await this.changeOnOffStatus(currentSwitchState);
         }
       }
     }, 1000);
@@ -51,10 +53,10 @@ class CrownstoneDevice extends Homey.Device {
    */
   async changeLockState(state) {
       if (state && this.getAvailable()) {
-        this.getData().locked = true;
+        await this.setStoreValue('locked', true);
         await this.setUnavailable('This device is locked.');
       } else if (!state && !this.getAvailable()) {
-        this.getData().locked = false;
+        await this.setStoreValue('locked', false);
         await this.setAvailable();
       }
   }
@@ -64,11 +66,25 @@ class CrownstoneDevice extends Homey.Device {
    */
   async changeDimCapability(state) {
     if (state && !this.getCapabilities().includes('dim')) {
-      this.getData().dimmed = true;
+      await this.setStoreValue('dimmed', true);
       this.addCapability('dim').catch(this.error);
     } else if (!state && this.getCapabilities().includes('dim')) {
-      this.getData().dimmed = false;
+      await this.setStoreValue('dimmed', false);
       this.removeCapability('dim').catch(this.error);
+    }
+  }
+
+  /**
+   * todo: add documentation.
+   */
+  async changeOnOffStatus(switchState) {
+    if (switchState > 0) {
+      await this.setCapabilityValue('onoff', true);
+    } else if (switchState < 1) {
+      await this.setCapabilityValue('onoff', false);
+    }
+    if (this.getCapabilities().includes('dim')) {
+      await this.setCapabilityValue('dim', switchState/100);
     }
   }
 
@@ -78,8 +94,9 @@ class CrownstoneDevice extends Homey.Device {
    * todo: add Ble dimming functionality and ability to switch between cloud/ble.
    */
   async onCapabilityDim(value) {
-    if (!activeConnection && Homey.app.getLoginState()) {
-      activeConnectionDim = true;
+    let active = this.getStoreValue('active');
+    if (!active && Homey.app.getLoginState()) {
+      await this.setStoreValue('active', true);
       let percentage = value*100;
       if (percentage > 0 && percentage < 10) { percentage = 10; }
       if (percentage > 0) {
@@ -88,7 +105,7 @@ class CrownstoneDevice extends Homey.Device {
         await this.setCapabilityValue('onoff', false);
       }
       await this.cloud.crownstone(this.getData().id).setSwitch(percentage);
-      activeConnectionDim = false;
+      await this.setStoreValue('active', false);
     }
   }
 
@@ -97,20 +114,24 @@ class CrownstoneDevice extends Homey.Device {
    * It will use the Crownstone Cloud to switch the device, if that fails, it will use Ble instead.
    */
   async onCapabilityOnoff(value) {
-    if (!activeConnection && Homey.app.getLoginState()) {
-      activeConnection = true;
+    let active = this.getStoreValue('active');
+    if (!active && Homey.app.getLoginState()) {
+      await this.setStoreValue('active', true);
       if (Homey.app.getCloudState()) {
         await this.switchCloud(value).catch(async (e) => {
           console.log('There was a problem switching the device using the Cloud:', e);
-          if (Homey.app.getBleState()) {
+          if (Homey.app.getBleState() && !activeBleConnection) {
+            activeBleConnection = true;
+            console.log('Retry connection using Ble..');
             await this.switchBLE(value).catch(async (e) => {
-              console.log('There was a problem switching the device using Ble:', e);
+              await this.bleError(e);
             });
           }
         });
-      } else if (Homey.app.getBleState()) {
-        await this.switchCloud(value).catch(async (e) => {
-          console.log('There was a problem switching the device using the Cloud:', e);
+      } else if (Homey.app.getBleState() && !activeBleConnection) {
+        activeBleConnection = true;
+        await this.switchBLE(value).catch(async (e) => {
+          await this.bleError(e);
         });
       }
       if (this.getCapabilities().includes('dim')) {
@@ -120,8 +141,19 @@ class CrownstoneDevice extends Homey.Device {
           await this.setCapabilityValue('dim', 0);
         }
       }
-      activeConnection = false;
+      activeBleConnection = false;
+      await this.setStoreValue('active', false);
     }
+  }
+
+  /**
+   * This function displays an error message to the app and prevents repeating code.
+   */
+  async bleError(error) {
+    console.log('There was a problem switching the device using Ble:', error);
+    activeBleConnection = false;
+    await this.setStoreValue('active', false);
+    throw new Error('There was a problem switching the device.');
   }
 
   /**
@@ -147,10 +179,12 @@ class CrownstoneDevice extends Homey.Device {
       console.log('There was a problem obtaining the keys:', e);
     });
     let homeyAdvertisement = await this.findCrownstone();
-    await this.bluenet.connect(homeyAdvertisement);
-    await this.bluenet.control.setSwitchState(this.state);
-    await this.bluenet.control.disconnect();
-    await this.bluenet.disconnect();
+    if (homeyAdvertisement !== null) {
+      await this.bluenet.connect(homeyAdvertisement);
+      await this.bluenet.control.setSwitchState(this.state);
+      await this.bluenet.control.disconnect();
+      await this.bluenet.disconnect();
+    }
   }
 
   /**
@@ -185,7 +219,7 @@ class CrownstoneDevice extends Homey.Device {
    * the Homey can make a connection with that device.
    */
   async findCrownstone() {
-    let uuid = this.getData().address.toLowerCase().replace(/:/g, '');
+    let uuid = this.getStoreValue('address').toLowerCase().replace(/:/g, '');
     let homeyAdvertisement = await Homey.ManagerBLE.find(uuid, 10000).catch((e) => {
       this.log('There was a problem finding this Crownstone:', e);
     });
@@ -204,7 +238,6 @@ class CrownstoneDevice extends Homey.Device {
    */
   onAdded() {
     this.log(this.getName() + ' has been added.');
-    // todo register a capability listener for dimming if the Crownstone can be dimmed (use this.getData())
   }
 
   /**

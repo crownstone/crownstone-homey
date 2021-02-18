@@ -93,7 +93,6 @@ class CrownstoneApp extends Homey.App {
     this.log(cloudActive);
     this.log(bleActive);
     if (!cloudActive && !bleActive) {
-      this.log('both checkboxes are unselected, selecting them both as default..');
       Homey.ManagerSettings.set('cloud', true);
       Homey.ManagerSettings.set('ble', true);
     }
@@ -206,7 +205,6 @@ class CrownstoneApp extends Homey.App {
  */
 function checkMailAndPassword() {
   if (!Homey.app.email || !Homey.app.password) {
-    console.log('No value found..');
     return false;
   }
   return true;
@@ -227,7 +225,6 @@ async function setupConnections(email, password) {
   await loginToEventServer(email, password).catch((e) => {
     console.log('There was a problem making a connection with the event server:', e); });
   setupInProgress = false;
-  console.log('Setting up connections: DONE');
 }
 
 /**
@@ -276,12 +273,7 @@ setInterval(() => {
  */
 async function loginToEventServer(email, password) {
   await sse.stop();
-  try {
-    await sse.login(email, password);
-  }
-  catch(e) {
-    console.log('There was a problem making a connection to the Event Server:: ', e);
-  }
+  await sse.login(email, password);
   await sse.start(eventHandler);
   await getPresentPeople();
 }
@@ -289,6 +281,7 @@ async function loginToEventServer(email, password) {
 /**
  * The eventHandler receives events from the sse-server and fires the runTrigger-function
  * when a user enters or leaves a room.
+ * todo: when the state of a Crownstone changes outside of the app, update the capabilityValue.
  */
 let eventHandler = (data) => {
   if (data.type === 'presence' && data.subType === 'enterLocation') {

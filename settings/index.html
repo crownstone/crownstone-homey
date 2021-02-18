@@ -14,6 +14,8 @@
       <p><input id="cloud" type="checkbox" value="cloud">Cloud</p>
       <p><input id="ble" type="checkbox" value="ble">Ble</p>
 
+      <h4 data-i18n="settings.blewarning"> </h4>
+
       <p> <button id="submit" class="right" data-i18n="settings.submit"> </button> </p> <!-- Button translation --></p>
     </fieldset>
 
@@ -39,9 +41,7 @@
         });
 
         submitElement.addEventListener('click', function (e) {
-
           let checkBoxes = document.querySelectorAll('input[type=checkbox]:checked');
-
           if (checkBoxes.length == 0) {
             Homey.alert('At least one checkbox must be selected.');
             Homey.get('cloud', function (err, cloud) {
