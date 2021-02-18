@@ -48,10 +48,11 @@ interface SystemEvent {
 }
 
 interface MultiSwitchCrownstoneEvent {
-  type:        "command",
-  subType:     "multiSwitch"
-  sphere:      SphereData,
-  switchData:  CrownstoneSwitchCommand[],
+  type:         "command",
+  subType:      "multiSwitch"
+  sphere:       SphereData,
+  switchData:   CrownstoneSwitchCommand[],
+  sequenceTime: {timestamp: number, counter: number},
 }
 
 interface PresenceSphereEvent {
