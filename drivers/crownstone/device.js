@@ -12,18 +12,20 @@ class CrownstoneDevice extends Homey.Device {
    * changed.
    */
   onInit() {
-    this.changeLockState(this.getStoreValue('locked')).catch(this.error);
-    this.changeDimCapability(this.getStoreValue('dimmed')).catch(this.error);
-
-    this.cloud = Homey.app.getCloud();
-    this.bluenet = new BleLib.default();
-    this.checkCsData().catch(this.error);
-    this.registerCapabilityListener('onoff', this.onCapabilityOnoff.bind(this));
-    this.registerCapabilityListener('dim', this.onCapabilityDim.bind(this));
-    this.log(this.getName() + ' has been initialized.');
+    if (!this.getStoreValue('deleted')) {
+      this.changeLockState(this.getStoreValue('locked')).catch(this.error);
+      this.changeDimCapability(this.getStoreValue('dimmed')).catch(this.error);
+      this.cloud = Homey.app.getCloud();
+      this.bluenet = new BleLib.default();
+      this.checkCsData().catch(this.error);
+      this.registerCapabilityListener('onoff', this.onCapabilityOnoff.bind(this));
+      this.registerCapabilityListener('dim', this.onCapabilityDim.bind(this));
+      this.log(this.getName() + ' has been initialized.');
+    }
   }
 
   /**
+   * This method will update all the information for the device.
    * This method will update the lock-state and dim-capability of the device using the cloud.
    * This is in case data has changed while the Homey was inactive.
    * The method will wait until all the connections in the App are settled before querying to the
@@ -35,13 +37,33 @@ class CrownstoneDevice extends Homey.Device {
       if (!Homey.app.getSetupInProgress()) {
         clearInterval(waitOnSetup);
         if (Homey.app.getLoginState()) {
-          let crownstoneData = await this.cloud.crownstone(this.getData().id).data();
-          let lockedState = crownstoneData.locked;
-          await this.changeLockState(lockedState);
-          let dimState = crownstoneData.abilities[0].enabled;
-          await this.changeDimCapability(dimState);
-          let currentSwitchState = await this.cloud.crownstone(this.getData().id).currentSwitchState();
-          await this.changeOnOffStatus(currentSwitchState);
+          let devices = await this.cloud.crownstones();
+          let deviceDeleted = true;
+          for (let i = 0; i < devices.length; i++) {
+            if (devices[i].id === this.getData().id) {
+              deviceDeleted = false;
+              break;
+            }
+          }
+          if (deviceDeleted) {
+            await this.setUnavailable('This device has been deleted.');
+            await this.setStoreValue('deleted', true);
+          } else if (!deviceDeleted) {
+            let crownstoneData = await this.cloud.crownstone(this.getData().id).data();
+            let lockedState = crownstoneData.locked;
+            await this.changeLockState(lockedState);
+            for (let j = 0; j < crownstoneData.abilities.length; j++) {
+              if (crownstoneData.abilities[j].type === 'dimming') {
+                if (crownstoneData.abilities[j].enabled) {
+                  await this.changeDimCapability(true);
+                } else {
+                  await this.changeDimCapability(false);
+                }
+              }
+            }
+            let currentSwitchState = await this.cloud.crownstone(this.getData().id).currentSwitchState();
+            await this.changeOnOffStatus(currentSwitchState);
+          }
         }
       }
     }, 1000);
@@ -75,7 +97,8 @@ class CrownstoneDevice extends Homey.Device {
   }
 
   /**
-   * todo: add documentation.
+   * This method will update the state of the device which is displayed in the Homey App.
+   * It will set the on/off state and dim state using the current state.
    */
   async changeOnOffStatus(switchState) {
     if (switchState > 0) {

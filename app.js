@@ -90,8 +90,6 @@ class CrownstoneApp extends Homey.App {
     this.password = Homey.ManagerSettings.get('password');
     cloudActive = Homey.ManagerSettings.get('cloud');
     bleActive = Homey.ManagerSettings.get('ble');
-    this.log(cloudActive);
-    this.log(bleActive);
     if (!cloudActive && !bleActive) {
       Homey.ManagerSettings.set('cloud', true);
       Homey.ManagerSettings.set('ble', true);
@@ -177,21 +175,24 @@ class CrownstoneApp extends Homey.App {
   }
 
   /**
-   * todo: add documentation
+   * This method will return the current state of the setup progress so other functions will have
+   * to wait before connecting to the Cloud.
    */
   getSetupInProgress() {
     return setupInProgress;
   }
 
   /**
-   * todo: add documentation
+   * This method will return the cloudActive variable, which determines which process(Cloud/Ble)
+   * should be used.
    */
   getCloudState() {
     return cloudActive;
   }
 
   /**
-   * todo: add documentation
+   * This method will return the bleActive variable, which determines which process(Cloud/Ble)
+   * should be used.
    */
   getBleState() {
     return bleActive;
@@ -296,6 +297,10 @@ let eventHandler = (data) => {
     let deviceId = data.changedItem.id;
     getAndSetLockedState(deviceId).catch(this.error);
   }
+  if (data.type === 'dataChange' && data.subType === 'stones' && data.operation === 'delete') {
+    let deviceId = data.changedItem.id;
+    deleteDevice(deviceId).catch(this.error);
+  }
   if (data.type === 'abilityChange' && data.subType === 'dimming') {
     let deviceId = data.stone.id;
     let dimAbilityState = data.ability.enabled;
@@ -351,6 +356,30 @@ async function getAndSetLockedState(deviceId) {
  */
 async function updateLockedState(device, state) {
   await device.changeLockState(state);
+}
+
+/**
+ * This function will set the device as unavailable, since there is no method to delete a device from
+ * the app yet.
+ */
+async function deleteDevice(deviceId) {
+  let crownstoneDriver = Homey.ManagerDrivers.getDriver('crownstone');
+  let devices = crownstoneDriver.getDevices();
+  devices.forEach(device => {
+    if (device.getData().id === deviceId) {
+      setDeviceUnavailable(device).catch((e) => {
+        console.log('There was a problem setting the device unavailable:', e);
+      })
+    }
+  });
+}
+
+/**
+ * This function will change the available state of the device and update it's delete value.
+ */
+async function setDeviceUnavailable(device) {
+  await device.setUnavailable('This device has been deleted.');
+  await device.setStoreValue('deleted', true);
 }
 
 /**
