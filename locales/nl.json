@@ -2,7 +2,7 @@
   "settings": {
     "title": "Crownstone configuratie",
     "checkboxtitle": "Selecteer de manier waarop Crownstones worden bestuurd",
-    "blewarning": "Let op: De ble configuratie is experimenteel en kan niet werken op jouw apparaat.",
+    "blewarning": "Let op: De ble configuratie is experimenteel en kan mogelijk niet werken op jouw apparaat.",
     "next": "Ga verder",
     "logout": "Log uit",
     "submit": "Indienen"

@@ -7,6 +7,7 @@ const Homey = require('homey');
  * of the user's smartphone).
  */
 class CrownstoneDriver extends Homey.Driver {
+
   /**
    * This method is called when the Driver is initialized.
    */
@@ -15,66 +16,56 @@ class CrownstoneDriver extends Homey.Driver {
   }
 
   /**
-   * This method will control the views which are shown to the user which the socket as the
-   * PairSocket.
+   * This method will control the views which are shown to the user.
+   * The session property passed in onPair can control the front-end programmatically.
    */
-  onPair(socket) {
+  async onPair(session) {
 
     /**
      * This part will determine what view to show the user based on if the user is already logged
      * in or not.
      */
-    socket.on('showView', ( viewId, callback ) => {
-      callback();
+    session.setHandler('showView', async (viewId) => {
       if (viewId === 'loading') {
-        if (Homey.app.getLoginState()) {
-          socket.showView('confirmation');
+        if (this.homey.app.loginState) {
+          await session.showView('confirmation');
         } else {
-          socket.showView('login_credentials');
+          await session.showView('login_credentials');
         }
       }
       if (viewId === 'login_credentials') {
-        Homey.ManagerSettings.set('email', '');
-        Homey.ManagerSettings.set('password', '');
-        Homey.app.setLoginState(false);
+        this.homey.settings.set('email', '');
+        this.homey.settings.set('password', '');
+        this.homey.app.loginState = false;
       }
     });
 
     /**
      * This view will appear when the user is not yet logged in.
      */
-    socket.on('login', (data, callback) => {
-      return Homey.app.setSettings(data.username, data.password)
-          .then((loginState) => {
-            if (loginState) {
-              socket.showView('loading');
-            } else if (!loginState) {
-              callback(null, false);
-            }
-          });
+    session.setHandler('login', async (data, callback) => {
+      let loginState = await this.homey.app.setSettings(data.username, data.password);
+      if (loginState) {
+        await session.showView('loading');
+      } else if (!loginState) {
+        callback(null, false);
+      }
     });
 
     /**
      * This view will appear when the user is logged in.
      */
-    socket.on('list_devices', function (data, callback) {
-      if (Homey.app.checkMailAndPass()) {
+    session.setHandler('list_devices', async (data) => {
+      if (this.homey.app.checkMailAndPassword()) {
         console.log('Start discovering Crownstones in cloud..');
-        Homey.app.getLocation((cloud, sphereId) => {
-          getDevices(cloud, sphereId).catch((e) => {
-            console.log('There was a problem obtaining the available devices:', e);
-          });
-        });
+        let sphereId = await this.homey.app.getSphereId();
+        let cloud = this.homey.app.cloud;
+        let devices = await cloud.sphere(sphereId).crownstones().catch((e) => {
+          throw new Error('Could not retrieve the Crownstones from the cloud.');
+        })
+        return listDevices(devices);
       } else {
-        callback(null, []);
-      }
-
-      /**
-       * This function will obtain all the data of the stones in the sphere.
-       */
-      async function getDevices(cloud, sphereId) {
-        const devices = await cloud.sphere(sphereId).crownstones();
-        callback(null, listDevices(devices));
+        return [];
       }
 
       /**

@@ -15,7 +15,7 @@ class CrownstoneDevice extends Homey.Device {
     if (!this.getStoreValue('deleted')) {
       this.changeLockState(this.getStoreValue('locked')).catch(this.error);
       this.changeDimCapability(this.getStoreValue('dimmed')).catch(this.error);
-      this.cloud = Homey.app.getCloud();
+      this.cloud = this.homey.app.cloud;
       this.bluenet = new BleLib.default();
       this.checkCsData().catch(this.error);
       this.registerCapabilityListener('onoff', this.onCapabilityOnoff.bind(this));
@@ -34,9 +34,9 @@ class CrownstoneDevice extends Homey.Device {
   async checkCsData() {
     await this.setStoreValue('active', false);
     let waitOnSetup = setInterval(async () => {
-      if (!Homey.app.getSetupInProgress()) {
+      if (!this.homey.app.setupInProgress) {
         clearInterval(waitOnSetup);
-        if (Homey.app.getLoginState()) {
+        if (this.homey.app.loginState) {
           let devices = await this.cloud.crownstones();
           let deviceDeleted = true;
           for (let i = 0; i < devices.length; i++) {
@@ -118,7 +118,7 @@ class CrownstoneDevice extends Homey.Device {
    */
   async onCapabilityDim(value) {
     let active = this.getStoreValue('active');
-    if (!active && Homey.app.getLoginState()) {
+    if (!active && this.homey.app.loginState) {
       await this.setStoreValue('active', true);
       let percentage = value*100;
       if (percentage > 0 && percentage < 10) { percentage = 10; }
@@ -137,13 +137,15 @@ class CrownstoneDevice extends Homey.Device {
    * It will use the Crownstone Cloud to switch the device, if that fails, it will use Ble instead.
    */
   async onCapabilityOnoff(value) {
+    console.log(this.homey.app.cloudActive);
+    console.log(this.homey.app.bleActive);
     let active = this.getStoreValue('active');
-    if (!active && Homey.app.getLoginState()) {
+    if (!active && this.homey.app.loginState) {
       await this.setStoreValue('active', true);
-      if (Homey.app.getCloudState()) {
+      if (this.homey.app.cloudActive) {
         await this.switchCloud(value).catch(async (e) => {
           console.log('There was a problem switching the device using the Cloud:', e);
-          if (Homey.app.getBleState() && !activeBleConnection) {
+          if (this.homey.app.bleActive && !activeBleConnection) {
             activeBleConnection = true;
             console.log('Retry connection using Ble..');
             await this.switchBLE(value).catch(async (e) => {
@@ -151,7 +153,7 @@ class CrownstoneDevice extends Homey.Device {
             });
           }
         });
-      } else if (Homey.app.getBleState() && !activeBleConnection) {
+      } else if (this.homey.app.bleActive && !activeBleConnection) {
         activeBleConnection = true;
         await this.switchBLE(value).catch(async (e) => {
           await this.bleError(e);
@@ -221,7 +223,7 @@ class CrownstoneDevice extends Homey.Device {
       this.log('The keys are already obtained');
     } else {
       this.log('Obtaining the keys..');
-      let sphereId = await Homey.app.getSphereId();
+      let sphereId = await this.homey.app.getSphereId();
       let keysInSphere = await this.cloud.sphere(sphereId).keys();
       let keyArray = keysInSphere.sphereKeys;
       for (let i = 0; i < keysInSphere.sphereKeys.length; i++) {
@@ -243,7 +245,7 @@ class CrownstoneDevice extends Homey.Device {
    */
   async findCrownstone() {
     let uuid = this.getStoreValue('address').toLowerCase().replace(/:/g, '');
-    let homeyAdvertisement = await Homey.ManagerBLE.find(uuid, 10000).catch((e) => {
+    let homeyAdvertisement = await this.homey.ble.find(uuid, 10000).catch((e) => {
       this.log('There was a problem finding this Crownstone:', e);
     });
     if (homeyAdvertisement) {

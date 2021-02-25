@@ -40,18 +40,11 @@
           bleElement.checked = ble;
         });
 
+        // Check the checkboxes
         submitElement.addEventListener('click', function (e) {
           let checkBoxes = document.querySelectorAll('input[type=checkbox]:checked');
           if (checkBoxes.length == 0) {
             Homey.alert('At least one checkbox must be selected.');
-            Homey.get('cloud', function (err, cloud) {
-              if (err) return Homey.alert(err);
-              cloudElement.checked = cloud;
-            });
-            Homey.get('ble', function (err, ble) {
-              if (err) return Homey.alert(err);
-              bleElement.checked = ble;
-            });
           } else {
             Homey.set('cloud', cloudElement.checked, function (err) {
               if (err) return Homey.alert(err);
