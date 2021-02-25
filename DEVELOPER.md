@@ -7,7 +7,7 @@ A Crownstone app to integrate with Homey. The Crownstone App refers to the app f
 A Homey App is software that runs on Homey.
 Apps are written in JavaScript, and run on Node.js in a sandboxed environment.
 
-If you want to work on the app as a developer, there is a [Getting Started Manual](https://apps-sdk-v2.developer.athom.com/tutorial-Getting%20Started.html) at the documentation of Athom.
+If you want to work on the app as a developer, there is a [Getting Started Manual](https://apps-sdk-v3.developer.athom.com/tutorial-Getting%20Started.html) at the documentation of Athom.
 It will tell you the steps on how to install athom.
 
 After installing athom, you can run the Crownstone App by getting the code and running it:
@@ -16,17 +16,7 @@ git clone https://github.com/crownstone/crownstone-homey
 homey app run
 ```
 
-To make sure that the app can make a connection with the Crownstone Cloud and Event Server, the crendetials of your Crownstone Account should be entered in the _Settings menu_.
-
-_Go to the Settings menu._
-
-![](doc/homey-settings.jpg)
-
-_Click on the Crownstone icon at the bottom._
-
-![](doc/homey-settings-crownstone.jpg)
-
-_Here the user can enter his credentials for his Crownstone Account._
+To get started with the app, read the README.md which explains step-by-step what you should do.
 
 ### Logging
 There is no way to check the logs of the app unless you run the app from your own terminal. From there you can see the logs and potential errors.
@@ -42,7 +32,7 @@ By default the app will be submitted as _Draft_. You can then choose to release 
 Go to _https://developer.athom.com/_ > _Apps SDK_ > _My Apps_ and from there
 you can choose to submit the app to Test, or Live by submitting it for certification. The app will be published after it is approved by a reviewer at Athom.
 
-A more detailed explanation is provided in the [Documentation](https://apps-sdk-v2.developer.athom.com/tutorial-App%20Development%20Guidelines.html) from Athom.
+A more detailed explanation is provided in the [Documentation](https://apps-sdk-v3.developer.athom.com/tutorial-App%20Development%20Guidelines.html) from Athom.
 
 When working on and updating code, there are some things to consider.
 
@@ -54,7 +44,7 @@ There are a few situations in which the app breaks functionality for current use
 - Changing or removing Flow cards
 - Changing a driver's device class
 
-In the [Documentation](https://apps-sdk-v2.developer.athom.com/tutorial-App%20Development%20Guidelines.html) of Athom, the development guidelines are explained and it tells you what to do when updating code functionality as shown above. 
+In the [Documentation](https://apps-sdk-v3.developer.athom.com/tutorial-App%20Development%20Guidelines.html) of Athom, the development guidelines are explained and it tells you what to do when updating code functionality as shown above. 
 
 ## Dependencies
 
@@ -69,18 +59,23 @@ The dependencies don't update automatically as of now.
 
 ### App Manifest
 Before working on the application in Homey, it is important to know how a Homey app works. A good way to see that is to look at the file structure of the app. If the file structure of the app is easy to understand, it is much easier to find what you need.
-On the [Homey Developer website tutorial](https://apps-sdk-v2.developer.athom.com/tutorial-App%20Manifest.html), an example of the file structure is shown.
+On the [Homey Developer website tutorial](https://apps-sdk-v3.developer.athom.com/tutorial-App%20Manifest.html), an example of the file structure is shown.
 The most important parts of the file are __app.js__, which is the starting point for the app, __app.json__, which contains all metadata for the app, __drivers__, which contains all the data for the drivers (in this case for Crownstone) and __settings__, which makes it possible for users to use their credentials to make a connection to the cloud. All of these files will be explained in more detail later on.
 
 ### App
 
+**Note: The _app.json_ file can't be changed, is is seperated in 2 different files: `/.homeycompose/app.json` contains the information of the app, and the information of the driver, flowcards and onPair-views can be changed in `/drivers/crownstone/driver.compose.json`.
+More information on how Homey Compose works can be found [here](https://apps-sdk-v3.developer.athom.com/tutorial-Homey%20Compose.html).**
+
 #### Initiation
 The app.js file is the starting point of the application. As soon as the Homey starts, the `OnInit()` method is called.
-The first thing that will happen is getting the credentials (only the username and password are needed) for the Crownstone Cloud from the user which can be obtained from Homey.ManagerSettings, where the credentials are saved. These credentials will later be used to make a connection with the Crownstone Cloud and the Crownstone Event Server. This was done in the settings which will be explained in more detail in the section _App Settings_.
-The credentials can be obtained using the method `ManagerSettings.get()` and can be saved in a variable like this:
+Here the variables are defined and objects are created, for example: `this.cloud = new cloudLib.CrownstoneCloud()`.
+
+The next thing that will happen is getting the credentials (only the username and password are needed) for the Crownstone Cloud from the user which can be obtained from the settings, where the credentials are saved. These credentials will later be used to make a connection with the Crownstone Cloud and the Crownstone Event Server.
+The credentials can be obtained using the method `this.homey.settings.get()` and can be saved in a variable like this:
 ```
-this.email = Homey.ManagerSettings.get('email');
-this.password = Homey.ManagerSettings.get('password');
+this.email = this.homey.settings.get('email');
+this.password = this.homey.settings.get('password');
 ```
 
 #### Setting up the connections
@@ -116,55 +111,62 @@ const sse = new sseLib.CrownstoneSSE();
 To log in to the event server, the function `loginToEventServer(email, password)` is used with the _email-address_ and the _password_ for the user's Crownstone account as parameters.
 First, all possible running eventHandlers get stopped, in case a new connection has been made using `sse.stop();`.
 Then a new connection with the event server is made using the _email-address_ and _password_ using the method `sse.login(email, password);`.
-And then the eventHandler will be started using `sse.start(eventHandler);`. More information on how the eventHandler is used will be provided in the section of _Flows_.
+And then the eventHandler will be started using `sse.start(eventHandler);`.
 
 ##### Obtain user locations
 After that the function `obtainUserLocations()` is called, this function will call the `getPresentPeople()` function every 30 minutes in case of missed events.
 
 #### Eventlistener
-Every time a user changes the credentials in the settings, a new connection should be established with the cloud in case the user entered the wrong credentials before or changed his password for the cloud. In order to notice that the credentials have been changed, an event listener is added which will fire when a setting - such as a username or a password - has been 'set':
+Every time a user changes the credentials, a new connection should be established with the cloud in case the user entered the wrong credentials before or changed his password for the cloud. In order to notice that the credentials have been changed, an event listener is added which will fire when a setting - such as a username or a password - has been 'set':
 
-`Homey.ManagerSettings.on('set', function(){}`
+`this.homey.settings..on('set', function () { }`
 
 When it fires, the newly-stored credentials will be obtained from the Homey and the `setupConnections(email, password)` function is called which will establish a new connection to the cloud.
-This process is described in the sequence diagram below:
-![Login-to-cloud-sequence-diagram](doc/sequence-diagram-app.png)
 
 ### Driver
-When making the Homey App for Crownstone, a driver is needed to add support for devices like the Crownstone plug. The driver manages the addition and working of the devices. There is only one Driver instance and as many Device instances as there are devices added to the Homey as seen on the image on [the Homey Development Tutorial on Drivers](https://apps-sdk-v2.developer.athom.com/tutorial-Drivers.html).
+When making the Homey App for Crownstone, a driver is needed to add support for devices like the Crownstone plug. The driver manages the addition and working of the devices. There is only one Driver instance and as many Device instances as there are devices added to the Homey as seen on the image on [the Homey Development Tutorial on Drivers](https://apps-sdk-v3.developer.athom.com/tutorial-Drivers.html).
 
 #### Driver
 
 ##### Adding devices
-When a user is adding a device and the '_list\_devices_' view is called, the method `onPairListDevices(data, callback){}` is called. This method will call the `getLocation()` function which is defined in the app. That function will return the cloud-instance and the sphere ID.
-Then the `getDevices(cloud, sphereId)` function is called which uses the instance of the cloud and the sphere ID to obtain all the devices in the current sphere using:
+When a user is adding devices, they will first have to log in or confirm that they want to continue using their account. To make this possible, custom views are used.
+For the pairing process, [the Homey pairing tutorial page](https://apps-sdk-v3.developer.athom.com/tutorial-Drivers-Pairing.html) is referred.
 
-`await cloud.sphere(sphereId).crownstones();`
+This is how the structure of a device looks:
+```
+const device = {
+            name: deviceList[i].name,
+            data: {
+              id: deviceList[i].id,
+            },
+            store: {
+              address: deviceList[i].address,
+              locked: deviceList[i].locked,
+              dimmed: dimState,
+              active: false,
+              deleted: false,
+            },
+          };
+```
+In the pairing process, a list of devices in this format is returned to show to the user.
 
-Then, the function `listDevices(deviceList)` is called which will create empty _device_ objects and adding the properties of the devices obtain with the cloud to it:
-```
-let device =  {
-    'name': crownstoneList[i].name,
-    'data': {
-        'id': crownstoneList[i].id,
-    }
-}
-```
-After that a list in this format of all the devices in the sphere is returned and will be shown to the user.
-A device can be deleted using the Homey App, and it will automatically be removed from the list. Any Flows that were interacting with that device won't work anymore.
 It is important to keep in mind that the properties added to the object must be static, because the Homey identifies different devices using the object, instead of the id only.
+
 
 #### Device
 
 ##### Initiation
 When the device is initialized, it will obtain the cloud instance from the CrownstoneApp using:
 
-`this.cloud = Homey.app.getCloud();`
+`this.cloud = this.homey.app.cloud;`
 
-After that, a capability listener will be registered to listen for device state changes:
+After that, a capability listener will be registered to listen for device state changes for switching and, if enabled, dimming the device:
 ```
 this.registerCapabilityListener('onoff', this.onCapabilityOnoff.bind(this));
+this.registerCapabilityListener('dim', this.onCapabilityOnoff.bind(this));
 ```
+
+It will call the `checkCsData()`-method to set the device up-to-date. This method will check for changed that were missed when the Homey was turned off (current state, abilities, lock state, deleted state).
 
 ##### switch state
 If a state change is requested for a device a request will be sent to the cloud. 
@@ -176,10 +178,20 @@ And if the device requested to turn off:
 
 `await this.cloud.crownstone(this.getData().id).turnOff()`
 
+If the dim state is changed:
+
+`await this.cloud.crownstone(this.getData().id).setSwitch(percentage);`
+
 ### Internationalization
 Internationalization doesn't look that important in the beginning process of development, but later on, it's getting more important, especially if the application will be accessible for users around the world. That's why the implementation of internationalization early on in the development is important since it only gets more difficult to implement internationalization later on in the development of an application.
 All the different translations that are supported in the app will be included in the _/locales/_-folder (_see App Manifest_). The translation strings are stored in a _.json-file_ with the language code as their name.
 For example: _nl.json_ and _en.json_.
+
+### Deletion
+A device can be deleted using the Homey App, and it will automatically be removed from the list. Any Flows that were interacting with that device won't work anymore.
+When a device is deleted in a sphere using the Crownstone App, it is not deleted in the Homey app, but rather being set unavailable, so that flows won't immediately break.
+
+
 
 ## The process - Flows
 User can create Flows for their Homey in the Flow Editor using different cards. There are three types of cards: when, and, then.
@@ -235,7 +247,7 @@ const room = {
 If there are no rooms found, an empty list will be returned.
 
 ### Event-Handler
-The Event-Handler will receive events when a user enters or leaves a room. When an event has been received, the function `runTrigger(data, entersRoom)` will be called, with the parameter _data_ as the data received in the event and the parameter _entersRoom_ as a boolean which is _true_ if a user enters a room, and is _false_ if a user leaves a room.
+The Event-Handler will receive events when a user enters or leaves a room and stone updates like lock changes or deletions. When an event has been received, the function `runTrigger(data, entersRoom)` will be called, with the parameter _data_ as the data received in the event and the parameter _entersRoom_ as a boolean which is _true_ if a user enters a room, and is _false_ if a user leaves a room.
 
 #### Update userlocation list
 The users and their location is saved in the local variable _userLocations_ which will prevent the need for having to query the users and their locations from the cloud every time an event occurs. This will give the triggers a faster response time and will also make it easier to debug.
@@ -246,7 +258,7 @@ If the location in the list is not the same as the new location, that location w
 If _entersRoom_ is _false_, and the user just left a room, there will be a check if the user is in the list. If the user is in the list and the location is the same as the location the user just left, an event probably has been missed, and the `getPresentPeople()` function will be called to reset the variable. Otherwise, the list is already up-to-date and the function will end.
 
 #### Triggers
-After the list has been updated in the `runTrigger()` function, and the event is a user _entering_ a room, the _{presenceTrigger_ will be fired with the current state as argument. The state is an object which contains the user ID and the location ID.
+After the list has been updated in the `runTrigger()` function, and the event is a user _entering_ a room, the _presenceTrigger_ will be fired with the current state as argument. The state is an object which contains the user ID and the location ID.
 
 ##### Trigger
 For the Trigger in the _registerRunListener_, the flow will run if the location ID and user ID in the state are equal to the room ID and the user ID in the arguments of the Trigger-card, or the location ID in the state and the room ID in the argument is equal and the user ID is equal to _'default'_, the flow will run:

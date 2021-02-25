@@ -114,7 +114,7 @@ class CrownstoneDevice extends Homey.Device {
   /**
    * Called when the device has requested a state change (dimming).
    * It will use the cloud to dim the Crownstone.
-   * todo: add Ble dimming functionality and ability to switch between cloud/ble.
+   * todo: add Ble dimming functionality.
    */
   async onCapabilityDim(value) {
     let active = this.getStoreValue('active');
