@@ -1,5 +1,5 @@
 {
-  "id": "rocks.crownstone.homey",
+  "id": "rocks.crownstone",
   "version": "0.0.3",
   "compatibility": ">=5.0.0",
   "sdk": 3,
