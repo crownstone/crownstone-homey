@@ -1,15 +1,16 @@
 {
-  "id": "rocks.crownstone",
+  "id": "rocks.crownstone.homey",
   "version": "0.0.3",
   "compatibility": ">=5.0.0",
   "sdk": 3,
+  "brandColor": "#003e52",
   "name": {
     "en": "Crownstone",
     "nl": "Crownstone"
   },
   "description": {
-    "en": "Control Crownstones, switch, dim, measure power consumption, or localize yourself",
-    "nl": "Crownstones schakelen, dimmen, meten en kunnen direct op je locatie in hus reageren."
+    "en": "Crownstones can switch devices, dim lights, measure power consumption, and localize people.",
+    "nl": "Crownstones kunnen apparaten schakelen, lichten dimmen, stroom meten en binnenshuis de positie bepalen van mensen."
   },
   "category": [
     "localization"
@@ -25,7 +26,7 @@
   },
   "author": {
     "name": "Crownstone",
-    "email": "team@crownstone.rocks"
+    "email": "ask@crownstone.rocks"
   },
   "contributor": {
     "developers": [

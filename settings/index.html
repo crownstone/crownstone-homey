@@ -1,61 +1,61 @@
 <!doctype html>
 <html>
-  <head>
-    <!-- The '/homey.js' script must be included in your settings view to work -->
-    <script type="text/javascript" src="/homey.js" data-origin="settings"></script>
-  </head>
-  <body>
+	<head>
+		<!-- The '/homey.js' script must be included in your settings view to work -->
+		<script type="text/javascript" src="/homey.js" data-origin="settings"></script>
+	</head>
+	<body>
 
-    <h1 data-i18n="settings.title"> <!-- Translation --> </h1>
+		<h1 data-i18n="settings.title"> <!-- Translation --> </h1>
 
-    <fieldset>
-      <h3 data-i18n="settings.checkboxtitle"> </h3>
+		<fieldset>
+			<h3 data-i18n="settings.checkboxtitle"> </h3>
 
-      <p><input id="cloud" type="checkbox" value="cloud">Cloud</p>
-      <p><input id="ble" type="checkbox" value="ble">Ble</p>
+			<p><input id="cloud" type="checkbox" value="cloud">Cloud</p>
+			<p><input id="ble" type="checkbox" value="ble">Ble</p>
 
-      <h4 data-i18n="settings.blewarning"> </h4>
+			<h4 data-i18n="settings.blewarning"> </h4>
 
-      <p> <button id="submit" class="right" data-i18n="settings.submit"> </button> </p> <!-- Button translation --></p>
-    </fieldset>
+			<p> <button id="submit" class="right" data-i18n="settings.submit"> </button> </p> <!-- Button translation --></p>
+		</fieldset>
 
-    <script type="text/javascript">
+		<script type="text/javascript">
 
-      // A method named 'onHomeyReady' must be present in your code
-      function onHomeyReady(Homey) {
-        // Tell Homey we're ready to be displayed
-        Homey.ready();
+			// A method named 'onHomeyReady' must be present in your code
+			function onHomeyReady(Homey) {
+				// Tell Homey we're ready to be displayed
+				Homey.ready();
 
-        let submitElement = document.getElementById('submit');
-        let cloudElement = document.getElementById('cloud');
-        let bleElement = document.getElementById('ble');
+				let submitElement = document.getElementById('submit');
+				let cloudElement = document.getElementById('cloud');
+				let bleElement = document.getElementById('ble');
 
-        // Put earlier-stored values in labels
-        Homey.get('cloud', function (err, cloud) {
-          if (err) return Homey.alert(err);
-          cloudElement.checked = cloud;
-        });
-        Homey.get('ble', function (err, ble) {
-          if (err) return Homey.alert(err);
-          bleElement.checked = ble;
-        });
+				// Put earlier-stored values in labels
+				Homey.get('cloud', function (err, cloud) {
+					if (err) return Homey.alert(err);
+					cloudElement.checked = cloud;
+				});
+				Homey.get('ble', function (err, ble) {
+					if (err) return Homey.alert(err);
+					bleElement.checked = ble;
+				});
 
-        // Check the checkboxes
-        submitElement.addEventListener('click', function (e) {
-          let checkBoxes = document.querySelectorAll('input[type=checkbox]:checked');
-          if (checkBoxes.length == 0) {
-            Homey.alert('At least one checkbox must be selected.');
-          } else {
-            Homey.set('cloud', cloudElement.checked, function (err) {
-              if (err) return Homey.alert(err);
-            });
-            Homey.set('ble', bleElement.checked, function (err) {
-              if (err) return Homey.alert(err);
-            });
-            Homey.alert('Changes are saved.');
-          }
-        })
-      }
-    </script>
-  </body>
+				// Check the checkboxes
+				submitElement.addEventListener('click', function (e) {
+					let checkBoxes = document.querySelectorAll('input[type=checkbox]:checked');
+					if (checkBoxes.length == 0) {
+						Homey.alert('At least one checkbox must be selected.');
+					} else {
+						Homey.set('cloud', cloudElement.checked, function (err) {
+							if (err) return Homey.alert(err);
+						});
+						Homey.set('ble', bleElement.checked, function (err) {
+							if (err) return Homey.alert(err);
+						});
+						Homey.alert('Changes are saved.');
+					}
+				})
+			}
+		</script>
+	</body>
 </html>
