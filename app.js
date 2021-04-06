@@ -15,33 +15,65 @@ class CrownstoneApp extends Homey.App {
 	 * Instances of the flowcard triggers and conditions are initialized.
 	 */
 	onInit() {
-
+		this.log('Initialize Crownstone app');
 		this.cloud = new cloudLib.CrownstoneCloud();
 		this.sse = new sseLib.CrownstoneSSE();
+		
+		// Disable logging for the cloud (logs every request and response)
+		this.cloud.log.config.setLevel('none');
 
 		this.presenceTrigger = this.homey.flow.getTriggerCard('user_enters_room');
 		this.presenceCondition = this.homey.flow.getConditionCard('user_presence');
 
-		this.sphereId = '';
-		this.userLocations = [];
-		this.loginState = false;
-		this.setupInProgress = false;
+		// spheres are homes people have access to (their own home, homes of friends, holiday homes)
+		this.spheres = [];
+		// locations are zones or rooms per sphere (per home)
+		this.locations = [];
+		// users are people with accounts that have access
+		this.users = [];
+		// userLocations is an array with per user their location stored (we assume that a single smartphone device
+		// represents the user for now)
+		this.userLocation = [];
+
+		this.loggedIn = false;
+		//this.setupInProgress = false;
 
 		this.log(`App ${this.homey.app.manifest.name.en} is running...`);
 		this.email = this.homey.settings.get('email');
 		this.password = this.homey.settings.get('password');
 		this.cloudActive = this.homey.settings.get('cloud');
 		this.bleActive = this.homey.settings.get('ble');
+
+		this.eventTimerId = null;
+		this.eventTimerExit = false;
+
+		/**
+		 * The default only enables cloud. This is due to limitations w.r.t. Bluetooth LE on the Homey. The Homey
+		 * does only have support for Bluetooth LE connections. That means that if you switch a Crownstone through
+		 * making a connection, that Crownstone has to be in range. That is not a good user experience. Hence, the
+		 * feature should be considered beta functionality. There are two possible ways to solve this in the future:
+		 *
+		 * 1. As soon as Homey supports Bluetooth LE advertisements we do not need to implement connections at all.
+		 * We can then just broadcast the commands.
+		 *
+		 * 2. If this does not happen we can connect to a Crownstone nearby and have the information propagate through
+		 * the Crownstone network. However, setting up a connection is also slow. Hence, this will preferably require
+		 * a permanent connection. Hopefully Homey will allow apps to keep up such a permanent connection. On the
+		 * Crownstone side this means that it should support multiple connections at the same time (so the Homey
+		 * does not lock a Crownstone).
+		 *
+		 */
 		if (!this.cloudActive && !this.bleActive) {
 			this.homey.settings.set('cloud', true);
-			this.homey.settings.set('ble', true);
+			this.homey.settings.set('ble', false);
 		}
-		if (this.checkMailAndPassword()) {
-			this.setupConnections(this.email, this.password).catch((e) => {
-				console.log('There was a problem making the connections:', e);
-			});
-			this.obtainUserLocations().catch((e) => {
-				console.log('There was a problem repeating code:', e);
+		
+		this.log('Login to servers');
+		if (this.isConfigured()) {
+			this.asyncInit();
+
+			this.pollPresenceData().catch((e) => {
+				this.log('There was a problem repeating code:', e);
 			});
 		}
 
@@ -68,7 +100,7 @@ class CrownstoneApp extends Homey.App {
 			} else {
 				let userInList = this.checkUserId(args.users.id);
 				if (userInList > -1) {
-					return Promise.resolve(args.rooms.id === this.userLocations[userInList].locations[0]);
+					return Promise.resolve(args.rooms.id === this.userLocation[userInList].locationId);
 				}
 				return false;
 			}
@@ -78,37 +110,51 @@ class CrownstoneApp extends Homey.App {
 		 * This code runs when a flow is being constructed for a trigger-card, and a room should be selected.
 		 * This code returns a list of rooms in a sphere which is shown to the user.
 		 */
-		this.presenceTrigger.getArgument('rooms').registerAutocompleteListener(() =>
-			Promise.resolve(this.getRooms().catch((e) => {
-				console.log('There was a problem obtaining the rooms:', e);
-			})));
+		this.presenceTrigger.getArgument('rooms').registerAutocompleteListener(() => {
+			this.log('Extract rooms for presence trigger');
+			return this.extractRooms();
+		});
 
 		/**
 		 * This code runs when a flow is being constructed for a trigger-card, and a user should be selected.
 		 * This code returns a list of users in a sphere.
 		 */
-		this.presenceTrigger.getArgument('users').registerAutocompleteListener(() =>
-			Promise.resolve(this.getUsers().catch((e) => {
-				console.log('There was a problem obtaining the users:', e);
-			})));
+		this.presenceTrigger.getArgument('users').registerAutocompleteListener(() => {
+			this.log('Extract users for presence trigger');
+			return this.extractUsers();
+		});
 
 		/**
 		 * This code runs when a flow is being constructed for a condition-card, and a room should be selected.
 		 * This code returns a list of rooms in a sphere.
 		 */
-		this.presenceCondition.getArgument('rooms').registerAutocompleteListener(() =>
-			Promise.resolve(this.getRooms().catch((e) => {
-				console.log('There was a problem obtaining the rooms:', e);
-			})));
+		this.presenceCondition.getArgument('rooms').registerAutocompleteListener(() => {
+			this.log('Extract rooms for presence condition');
+			return this.extractRooms();
+		});
 
 		/**
 		 * This code runs when a flow is being constructed for a condition-card, and a user should be selected.
 		 * This code returns a list of users in a sphere.
 		 */
-		this.presenceCondition.getArgument('users').registerAutocompleteListener(() =>
-			Promise.resolve(this.getUsers().catch((e) => {
-				console.log('There was a problem obtaining the users:', e);
-			})));
+		this.presenceCondition.getArgument('users').registerAutocompleteListener(() => {
+			this.log('Extract users for presence condition');
+			return this.extractUsers();
+		});
+
+	}
+
+	async asyncInit() {
+		await this.setupConnections(this.email, this.password).catch((e) => {
+			this.log('There was a problem making the connections:', e);
+		});
+		this.log('Obtain all data from the cloud');
+		await this.getSpheres();
+		await this.getLocations();
+		await this.getUsers();
+		await this.getKeys();
+		await this.getPresence();
+		await this.getCrownstones();
 	}
 
 	/**
@@ -117,35 +163,26 @@ class CrownstoneApp extends Homey.App {
 	async setSettings(email, password) {
 		this.homey.app.email = email;
 		this.homey.app.password = password;
-		if (this.checkMailAndPassword()) {
-			await this.setupConnections(email, password).catch((e) => {
-				console.log('There was a problem making the connections:', e);
-			});
-			this.homey.settings.set('email', email);
-			this.homey.settings.set('password', password);
-			return this.loginState;
+		if (!this.isConfigured()) {
+			this.homey.settings.set('email', '');
+			this.homey.settings.set('password', '');
+			this.loggedIn = false;
+			return this.loggedIn;
 		}
-		this.homey.settings.set('email', '');
-		this.homey.settings.set('password', '');
-		this.loginState = false;
-		return this.loginState;
-	}
 
-	/**
-	 * This method will call the obtainSphereId function and returns the sphere ID.
-	 */
-	async getSphereId() {
-		await this.obtainSphereId(() => { }).catch((e) => {
-			console.log('There was a problem getting the sphere ID:', e);
+		await this.setupConnections(email, password).catch((e) => {
+			this.log('There was a problem making the connections:', e);
 		});
-		return this.sphereId;
+		this.homey.settings.set('email', email);
+		this.homey.settings.set('password', password);
+		return this.loggedIn;
 	}
 
 	/**
 	 * This function will check if the email or password is either empty, null or undefined, and will
 	 * return a boolean.
 	 */
-	checkMailAndPassword() {
+	isConfigured() {
 		if (!this.homey.app.email || !this.homey.app.password) {
 			return false;
 		}
@@ -157,37 +194,43 @@ class CrownstoneApp extends Homey.App {
 	 * their locations in the sphere, and call the function to make a connection to the event server.
 	 */
 	async setupConnections(email, password) {
-		this.loginState = true;
-		this.setupInProgress = true;
+		//this.setupInProgress = true;
+		this.loggedIn = false;
 		await this.cloud.loginHashed(email, password).catch((e) => {
-			console.log('There was a problem making a connection to the cloud:', e);
-			this.loginState = false;
+			this.log('There was a problem making a connection to the cloud:', e);
+			return;
 		});
-		await this.getPresentPeople();
+		this.log('Authenticated with the Crownstone cloud');
 		await this.loginToEventServer(email, password).catch((e) => {
-			console.log('There was a problem making a connection with the event server:', e);
+			this.log('There was a problem making a connection with the event server:', e);
+			return;
 		});
-		this.setupInProgress = false;
+		this.log('Authenticated with the event server');
+		//this.setupInProgress = false;
+		this.loggedIn = true;
+		this.log('Authenticated with cloud and event servers');
 	}
 
 	/**
 	 * This function will obtain all the users and their locations in the sphere.
 	 */
+	/*
 	async getPresentPeople() {
-		if (this.loginState) {
+		if (this.loggedIn) {
 			await this.obtainSphereId(() => {
 			}).catch((e) => {
-				console.log('There was a problem getting the sphere ID:', e);
+				this.log('There was a problem getting the sphere ID:', e);
 			});
 			if (typeof this.sphereId !== 'undefined') {
-				this.userLocations = await this.cloud.sphere(this.sphereId).presentPeople();
+				this.userLocation = await this.cloud.sphere(this.sphereId).presentPeople();
 			}
 		}
-	}
+	} */
 
 	/**
 	 * This function will obtain the sphere and, if available, the room where the user is currently located.
 	 */
+	/*
 	async obtainSphereId(callback) {
 		const userReference = await this.cloud.me();
 		const userLocation = await userReference.currentLocation();
@@ -197,112 +240,153 @@ class CrownstoneApp extends Homey.App {
 				this.sphereId = userLocation[0].inSpheres[0].sphereId;
 				callback();
 			} else {
-				console.log('Unable to find sphere');
+				this.log('Unable to find sphere');
 			}
 		} else {
-			console.log('Unable to locate user');
+			this.log('Unable to locate user');
 		}
 	}
+	*/
 
 	/**
 	 * This function will call the getPresentPeople-function every 30 minutes in case of missed events.
 	 */
-	async obtainUserLocations() {
+	//async obtainUserLocations() {
+	async pollPresenceData() {
 		setInterval(() => {
-			this.getPresentPeople();
+			//this.getPresentPeople();
+			this.getPresence();
 		}, 1000 * 1800); // 30 minutes
 	}
 
 	/**
-	 * This function will stop all running eventHandlers, in case a user enters other credentials,
-	 * make a new connection with the sse-server and starts the eventHandler.
+	 * This function will stop the code that listens to SSE events from the SSE server, authenticate and start
+	 * listening again.
 	 */
 	async loginToEventServer(email, password) {
 		await this.sse.stop();
 		await this.sse.loginHashed(email, password);
-		await this.sse.start(this.eventHandler);
-		await this.getPresentPeople();
+		await this.sse.start(this.sseEventHandler);
+		//await this.getPresentPeople();
 	}
 
 	/**
-	 * The eventHandler receives events from the sse-server and fires the runTrigger-function
+	 * The sseEventHandler receives events from the sse-server and fires the runLocationTrigger-function
 	 * when a user enters or leaves a room.
 	 * todo: when the state of a Crownstone changes outside of the app, update the capabilityValue.
+	 *
+	 * Incoming events from the event server are of form (exit event example):
+	 *   {
+	 *     type: 'presence',
+	 *     subType: 'exitLocation',
+	 *     sphere: { id: '$sphereId', name: '$sphereName', uid: 1 },
+	 *     location: { id: '$locationId', name: '$locationName' },
+	 *     user: { id: '$userId', name: '$userName' }
+	 *   }
 	 */
-	eventHandler = (data) => {
-		if (data.type === 'presence' && data.subType === 'enterLocation') {
-			this.runTrigger(data, true).catch((e) => {
-				console.log('There was a problem firing the trigger:', e);
-			});
+	sseEventHandler = (data) => {
+		this.log(data);
+		if (data.type === 'system') {
+			// e.g. stream starting
 		}
-		if (data.type === 'presence' && data.subType === 'exitLocation') {
-			this.runTrigger(data, false).catch((e) => {
-				console.log('There was a problem firing the trigger:', e);
-			});
+		if (data.type === 'ping') {
+			// regular updates, todo: if not receiving, restart
 		}
-		if (data.type === 'dataChange' && data.subType === 'stones' && data.operation === 'update') {
-			let deviceId = data.changedItem.id;
-			this.getAndSetLockedState(deviceId).catch(this.error);
+		if (data.type === 'presence') {
+			if (data.subType === 'enterLocation') {
+				this.setLocationTimer(data, true);
+			}
+			if (data.subType === 'exitLocation') {
+				this.setLocationTimer(data, false);
+			}
 		}
-		if (data.type === 'dataChange' && data.subType === 'stones' && data.operation === 'delete') {
-			let deviceId = data.changedItem.id;
-			this.deleteDevice(deviceId).catch(this.error);
+		// deletion and addition of Crownstones
+		if (data.type === 'dataChange') {
+			if (data.subType === 'stones') {
+				if (data.operation === 'update') {
+					this.log('Data update event');
+					let deviceId = data.changedItem.id;
+					this.updateCrownstoneCapabilities(deviceId).catch(this.error);
+				}
+				if (data.operation === 'delete') {
+					this.log('Data deletion event');
+					let deviceId = data.changedItem.id;
+					this.deleteDevice(deviceId).catch(this.error);
+				}
+			}
 		}
-		if (data.type === 'abilityChange' && data.subType === 'dimming') {
-			let deviceId = data.stone.id;
-			let dimAbilityState = data.ability.enabled;
-			this.setDimmingAbilityState(deviceId, dimAbilityState).catch(this.error);
+		if (data.type === 'abilityChange') {
+			if (data.subType === 'dimming') {
+				this.log('Ability change event');
+				let deviceId = data.stone.id;
+				let dimAbilityState = data.ability.enabled;
+				this.setDimmingAbilityState(deviceId, dimAbilityState).catch(this.error);
+			}
+		}
+		if (data.type === 'switchStateUpdate') {
+			if (data.subType === 'stone') {
+				this.log('Update status of Crownstone');
+				let deviceId = data.crownstone.id;
+				let device = this.getDevice(deviceId);
+				if (device) {
+					device.changeOnOffStatus(data.crownstone.percentage);
+				}
+			}
+		}
+		if (data.type === 'command') {
+			if (data.subType === 'multiSwitch') {
+				// this is the command we should rather react to a switchStateUpdate
+			}
 		}
 	};
 
+	setLocationTimer(data, enterEvent) {
+		if (!enterEvent) {
+			//this.log('Exit location event');
+			return;
+		}
+		
+		//this.log('Enter location event');
+		clearTimeout(this.eventTimerId);
+		this.eventTimerId = setTimeout(() => {
+			this.runLocationTrigger(data, enterEvent).catch((e) => {
+				this.log('There was a problem firing the trigger:', e);
+			});
+		}, 5000)
+	}
+
+	getDevice(deviceId) {
+		let data = { id: deviceId };
+		let device = this.homey.drivers.getDriver('crownstone').getDevice(data);
+		return device;
+	}
+
 	/**
-	 * This function will obtain the state of the dimming capability of the device, compare the
-	 * device ID with that of all the added devices, and will call the function to update the
-	 * dimming capability when a match has been found.
+	 * Update dimming ability setting of a particular Crownstone within Homey.
 	 */
 	async setDimmingAbilityState(deviceId, dimAbilityState) {
-		let crownstoneDriver = this.homey.drivers.getDriver('crownstone');
-		let devices = crownstoneDriver.getDevices();
-		devices.forEach(device => {
-			if (device.getData().id === deviceId) {
-				this.updateDimCapability(device, dimAbilityState).catch((e) => {
-					console.log('There was a problem updating the dimming capability of a device:', e);
-				});
-			}
+		let device = this.getDevice(deviceId);
+		if (!device) {
+			this.log("Device " + deviceId + " cannot be found");
+			return;
+		}
+
+		await device.changeDimCapability(dimAbilityState).catch((e) => {
+			this.log('There was a problem updating the dimming capability of a device:', e);
 		});
 	}
 
 	/**
-	 * This function will call the device's method to change the dimming capability.
+	 * Update "locked" information about Crownstone by updating all capabilities from the cloud (it is a single call).
 	 */
-	async updateDimCapability(device, state) {
-		await device.changeDimCapability(state)
-	}
+	async updateCrownstoneCapabilities(deviceId) {
+		let device = this.getDevice(deviceId);
+		if (!device) {
+			this.log("Device " + deviceId + " cannot be found, cannot lock.");
+			return;
+		}
 
-	/**
-	 * This function will obtain the locked state of the device, compare the device ID with that of all
-	 * the added devices, and will call the function to update the locked state when a match has been
-	 * found.
-	 */
-	async getAndSetLockedState(deviceId) {
-		let crownstoneData = await this.cloud.crownstone(deviceId).data();
-		let lockedState = crownstoneData.locked;
-		let crownstoneDriver = this.homey.drivers.getDriver('crownstone');
-		let devices = crownstoneDriver.getDevices();
-		devices.forEach(device => {
-			if (device.getData().id === deviceId) {
-				this.updateLockedState(device, lockedState).catch((e) => {
-					console.log('There was a problem updating the locked state of a device:', e);
-				});
-			}
-		});
-	}
-
-	/**
-	 * This function will call the device's method to change the locked state.
-	 */
-	async updateLockedState(device, state) {
-		await device.changeLockState(state);
+		device.updateCrownstoneCapabilities();
 	}
 
 	/**
@@ -310,81 +394,69 @@ class CrownstoneApp extends Homey.App {
 	 * the app yet.
 	 */
 	async deleteDevice(deviceId) {
-		let crownstoneDriver = this.homey.drivers.getDriver('crownstone');
-		let devices = crownstoneDriver.getDevices();
-		devices.forEach(device => {
-			if (device.getData().id === deviceId) {
-				this.setDeviceUnavailable(device).catch((e) => {
-					console.log('There was a problem setting the device unavailable:', e);
-				})
-			}
-		});
-	}
-
-	/**
-	 * This function will change the available state of the device and update it's delete value.
-	 */
-	async setDeviceUnavailable(device) {
-		await device.setUnavailable('This device has been deleted.');
+		let device = this.getDevice(deviceId);
+		let msg = this.homey__('deletedMessage');
+		await device.setUnavailable(msg);
 		await device.setStoreValue('deleted', true);
 	}
 
 	/**
-	 * This function will update the userLocations-list and will fire the trigger after it is complete.
+	 * This function will update the user locations and fire the trigger for the flows that use this as event.
+	 * The event can be an enter or exit event.
+	 * Only an enter event will trigger the presence condition.
 	 */
-	async runTrigger(data, entersRoom) {
-		const state = {userId: data.user.id, locationId: data.location.id};
-		await this.updateUserLocationList(entersRoom, data.user.id, data.location.id);
-		if (entersRoom) {
+	async runLocationTrigger(data, enterEvent) {
+		let user = data.user;
+		let location = data.location;
+		let updated = this.updateUserLocation(user, location, enterEvent);
+		const state = {userId: user.id, locationId: location.id};
+		if (enterEvent && updated) {
+			this.log('User ' + user.name + ' now at location ' + location.name);
 			this.presenceTrigger.trigger(null, state).catch((e) => {
-				console.log('Something went wrong:', e);
+				this.log('Something went wrong:', e);
 			});
 		}
 	}
 
 	/**
-	 * This function will update the userLocations-list by using events.
-	 * To fix missed events: If an ID is missing or is the same as the newer ID,
-	 * the getPresentPeople-function will be called to refresh the list.
+	 * This function update list for user location. A user will be only in one location.
 	 */
-	async updateUserLocationList(entersRoom, userId, location) {
+	updateUserLocation(user, location, enterEvent) {
+		let userId = user.id;
+		let locationId = location.id;
 		let userInList = this.checkUserId(userId);
-		if (entersRoom) {
+		if (enterEvent) {
 			if (userInList < 0) {
 				const userLocation = {
 					userId: userId,
-					locations: [location],
+					locationId: locationId
 				};
-				this.userLocations.push(userLocation);
+				this.userLocation.push(userLocation);
+				return true;
 			} else {
-				if (this.userLocations[userInList].locations[0] === location) {
-					this.getPresentPeople(() => {
-					}).catch((e) => {
-						console.log('There was a problem getting the locations of the users:', e);
-					});
-				} else {
-					this.userLocations[userInList].locations[0] = location;
+				if (this.userLocation[userInList].locationId == locationId) {
+					return false;
 				}
+				this.userLocation[userInList].locationId = locationId;
+				return true;
 			}
-		} else if (!entersRoom) {
-			if (userInList > -1) {
-				if (this.userLocations[userInList].locations[0] !== location) {
-					return;
-				}
-			}
-			this.getPresentPeople(() => {
-			}).catch((e) => {
-				console.log('There was a problem getting the locations of the users:', e);
-			});
 		}
+
+		// exit event
+		if (userInList < 0) {
+			return;
+		}
+		// set to zero / nowhere
+		this.userLocation[userInList].locationId = 0;
+		return true;
 	}
 
 	/**
-	 * This function will check if the userId is already defined in the list of userLocations and returns the index.
+	 * This function will check if the userId is already defined in the list of userLocation and returns the index.
 	 */
 	checkUserId(userId) {
-		for (let i = 0; i < this.userLocations.length; i++) {
-			if (this.userLocations[i].userId === userId) {
+		for (let i = 0; i < this.userLocation.length; i++) {
+			if (this.userLocation[i].userId === userId) {
 				return i;
 			}
 		}
@@ -392,11 +464,11 @@ class CrownstoneApp extends Homey.App {
 	}
 
 	/**
-	 * This function will check if the roomId exists in the list of userLocations and returns a boolean.
+	 * This function will check if the roomId exists in the list of userLocation and returns a boolean.
 	 */
 	checkRoomId(roomId) {
-		for (let i = 0; i < this.userLocations.length; i++) {
-			if (this.userLocations[i].locations[0] === roomId) {
+		for (let i = 0; i < this.userLocation.length; i++) {
+			if (this.userLocation[i].locationId === roomId) {
 				return true;
 			}
 		}
@@ -404,89 +476,293 @@ class CrownstoneApp extends Homey.App {
 	}
 
 	/**
-	 * This function obtains all the rooms of the sphere where the user is currently located in.
+	 * Get spheres object filled.
 	 */
-	async getRooms() {
-		if (this.checkMailAndPassword()) {
-			await this.obtainSphereId(() => {
-			}).catch((e) => {
-				console.log('There was a problem getting the sphere Id:', e);
-			});
-			const rooms = await this.cloud.sphere(this.sphereId).locations();
-			if (rooms.length > 0) {
-				return this.listRooms(rooms);
-			}
-			console.log('Unable to find any rooms');
-			return [];
+	async getSpheres() {
+		this.log('Get spheres');
+		if (this.spheres.length) {
+			this.log('Spheres already obtained');
+			return;
 		}
-		return [];
+		if (this.isConfigured()) {
+			try {
+				this.spheres = await this.cloud.spheres();
+			} catch(e) {
+				this.log('Could not get spheres from the cloud', e);
+			}
+			if (!this.spheres.length) {
+				this.log('Unable to find spheres');
+			}
+		}
 	}
 
 	/**
-	 * This function returns a json list with all the rooms in the sphere.
-	 * [todo:] add custom icons
+	 * Get all possible locations. This can be done at once for all spheres.
 	 */
-	listRooms(rooms) {
+	async getLocations() {
+		this.log('Get locations');
+		if (this.locations.length) {
+			this.log('Location already obtained');
+			return;
+		}
+		if (this.isConfigured()) {
+			try {
+				this.locations = await this.cloud.locations();
+			} catch(e) {
+				this.log('Could not get locations from the cloud', e);
+			}
+			if (!this.locations.length) {
+				this.log('Unable to find locations');
+			}
+		}
+	}
+
+	/**
+	 * Get all the users per sphere. Add them to the already existing array of spheres.
+	 */
+	async getUsers() {
+		this.log('Get users');
+		if (!this.isConfigured()) {
+			this.log('Not yet configured');
+			return;
+		}
+
+		for (let i = 0; i < this.spheres.length; ++i) {
+			let sphereId = this.spheres[i].id;
+			try {
+				this.spheres[i].users = await this.cloud.sphere(sphereId).users();
+			} catch(e) {
+				this.log('Could not get users for sphere: ' + sphereId, e);
+			}
+		}
+	}
+	
+	/**
+	 * Get all the users per sphere. Add them to the already existing array of spheres.
+	 */
+	async getKeys() {
+		this.log('Get keys');
+		if (!this.isConfigured()) {
+			this.log('Not yet configured');
+			return;
+		}
+
+		for (let i = 0; i < this.spheres.length; ++i) {
+			let sphereId = this.spheres[i].id;
+			try {
+				let allKeys = await this.cloud.sphere(sphereId).keys();
+				this.spheres[i].keys = allKeys.sphereKeys;
+			} catch(e) {
+				this.log('Could not get users for sphere: ' + sphereId, e);
+			}
+		}
+	}
+
+	/**
+	 * Get all the present users per sphere. Add them to the already existing spheres object.
+	 * The cloud returns an array with [ { "userId", "locations[]" } ]
+	 */
+	async getPresence() {
+		this.log("Get presence");
+		if (this.isConfigured()) {
+			for (let i = 0; i < this.spheres.length; ++i) {
+				let sphereId = this.spheres[i].id;
+				try {
+					this.spheres[i].present = await this.cloud.sphere(sphereId).presentPeople();
+				} catch(e) {
+					this.log('Could not get presence data for sphere: ' + sphereId, e);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Get all crownstones from the cloud.
+	 */
+	async getCrownstones() {
+		this.log('Get crownstones devices');
+		if (this.isConfigured()) {
+			for (let i = 0; i < this.spheres.length; ++i) {
+				let sphereId = this.spheres[i].id;
+				if (this.spheres[i].crownstones) {
+					// just hit server only once
+					continue;
+				}
+				try {
+					this.spheres[i].crownstones = await this.cloud.sphere(sphereId).crownstones();
+				} catch(e) {
+					this.log('Could not get crownstones for sphere: ' + sphereId, e);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Extract rooms from the locations list. The location object is formatted as follows:
+	 *
+	 * ```
+	 *   {
+	 *     name: 'Living room',
+	 *     uid: 2,
+	 *     icon: 'fiCS1-living-room',
+	 *     imageId: '$imageId',
+	 *     id: '$sphereId',
+	 *     createdAt: timestamp,
+	 *     updatedAt: timestamp
+	 *   }
+	 * ```
+	 */
+	extractRooms() {
 		const roomList = [];
-		for (let i = 0; i < rooms.length; i++) {
+		if (!this.locations.length) {
+			this.log('There are no locations found!');
+			return roomList;
+		}
+
+		for (let i = 0; i < this.locations.length; i++) {
+			let location = this.locations[i];
+			let roomIcon = 'devices/' + location.icon + '.svg';
 			const room = {
-				name: rooms[i].name,
-				id: rooms[i].id,
+				name: location.name,
+				id: location.id,
+				icon: roomIcon
 			};
 			roomList.push(room);
 		}
+		this.log('List with rooms:', roomList);
 		return roomList;
 	}
 
 	/**
-	 * This function will ask for the sphere Id and return a list of all the users in the sphere.
+	 * Extract users in a list in a way that is easier to manipulate.
 	 */
-	async getUsers() {
-		if (this.checkMailAndPassword()) {
-			await this.obtainSphereId(() => {
-			}).catch((e) => {
-				console.log('There was a problem getting the sphere Id:', e);
-			});
-			const users = await this.cloud.sphere(this.sphereId).users();
-			return this.listUsers(users);
-		}
-		return [];
-	}
-
-	/**
-	 * This function returns a list of all the users in the sphere.
-	 * A default user 'somebody' is added to use in a card which will be accepted with every user check.
-	 */
-	listUsers(users) {
+	extractUsers() {
 		const userList = [];
-		const defaultUser = {
-			name: 'Somebody',
-			id: 'default',
-		};
-		userList.push(defaultUser);
-		this.addUserToList(userList, users.admins);
-		this.addUserToList(userList, users.members);
-		this.addUserToList(userList, users.guests);
-		if (userList.length > 1) {
-			return userList;
+		this.log('Get users from all spheres');
+		if (!this.spheres.length) {
+			this.log('There are no spheres found!');
 		}
-		console.log('Unable to find any users');
-		return [];
+
+		for (let i = 0; i < this.spheres.length; ++i) {
+			let users = this.spheres[i].users;
+			if (!users) {
+				this.log('No users in sphere: ', this.spheres[i].id);
+				continue;
+			}
+			this.addUsersToList(userList, users.admins);
+			this.addUsersToList(userList, users.members);
+			this.addUsersToList(userList, users.guests);
+		}
+
+		if (userList.length > 0) {
+			// add "any user" to the front of the list
+			const anyUser = {
+				name: 'Anybody',
+				id: 'default',
+			};
+			userList.unshift(anyUser);
+		} else {
+			this.log('Unable to find users');
+		}
+		this.log('List with users:', userList);
+		return userList;
 	}
 
 	/**
-	 * This function pushes json objects of the users to a user list.
+	 * This function pushes all users to the given userList, except for the ones that are already on the list.
 	 */
-	addUserToList(userList, users) {
+	addUsersToList(userList, users) {
+		if (!users) return;
+
 		for (let i = 0; i < users.length; i++) {
 			const user = {
 				name: users[i].firstName + ' ' + users[i].lastName,
 				id: users[i].id,
 			};
+			// skip if already on list
+			const checkId = item => item.id === user.id;
+			if (userList.some(checkId)) {
+				continue;
+			}
 			userList.push(user);
 		}
 	}
 
+	/**
+	 * Extract devices in a list in a way that can be presented by Homey.
+	 */
+	extractDevices() {
+		const deviceList = [];
+		this.log('Get devices from all spheres');
+		if (!this.spheres.length) {
+			this.log('There are no spheres found!');
+		}
+
+		for (let k = 0; k < this.spheres.length; ++k) {
+			let sphereId = this.spheres[k].id;
+			let crownstones = this.spheres[k].crownstones;
+
+			for (let i = 0; i < crownstones.length; ++i) {
+				let crownstone = crownstones[i];
+
+				// set crownstone.dimState
+				crownstone.dimState = false;
+				for (let j = 0; j < crownstone.abilities.length; j++) {
+					let ability = crownstone.abilities[j];
+					if (ability.type === 'dimming') {
+						if (ability.enabled) {
+							crownstone.dimState = true;
+						}
+						break;
+					}
+				}
+
+				let deviceIcon = 'devices/' + crownstone.icon + '.svg';
+				const device = {
+					name: crownstone.name,
+					data: {
+						id: crownstone.id,
+					},
+					icon: deviceIcon,
+					store: {
+						address: crownstone.address,
+						locked: crownstone.locked,
+						dimmed: crownstone.dimState,
+						activeConnection: false,
+						deleted: false,
+						sphereId: sphereId,
+					},
+				};
+				deviceList.push(device);
+			}
+		}
+		return deviceList;
+	}
+
+	extractKeys(sphereId) {
+		this.log('Get keys for sphere ' + sphereId);
+		if (!sphereId) {
+			this.log('No such sphere');
+			return;
+		}
+
+		if (!this.spheres.length) {
+			this.log('There are no spheres found!');
+		}
+
+		for (let i = 0; i < this.spheres.length; ++i) {
+			let sphere = this.spheres[i];
+			if (sphereId === sphere.id) {
+				if (sphere.keys) {
+					this.log('Return keys for sphere');
+					return sphere.keys;
+				}
+				this.log('Sphere does not contain keys!');
+				return null;
+			}
+		}
+		return null;
+	}
 }
 
 module.exports = CrownstoneApp;

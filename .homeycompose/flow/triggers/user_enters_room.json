@@ -1,29 +1,33 @@
 {
-  "id": "user_enters_room",
-  "title": {
-    "en": "User enters room",
-    "nl": "Gebruiker komt kamer binnen"
-  },
-  "args": [
-    {
-      "type": "autocomplete",
-      "name": "users",
-      "placeholder": {
-        "en": "Select a user",
-        "nl": "Selecteer een gebruiker"
-      }
+    "id": "user_enters_room",
+    "title": {
+        "en": "Someone enters room",
+        "nl": "Iemand komt kamer binnen"
     },
-    {
-      "type": "autocomplete",
-      "name": "rooms",
-      "placeholder": {
-        "en": "Select a room",
-        "nl": "Selecteer een kamer"
-      }
+    "titleFormatted": {
+        "en": "[[users]] enters [[rooms]]",
+        "nl": "[[users]] komt [[rooms]] binnen"
+    },
+    "args": [
+        {
+            "type": "autocomplete",
+            "name": "users",
+            "placeholder": {
+                "en": "Who?",
+                "nl": "Wie?"
+            }
+        },
+        {
+            "type": "autocomplete",
+            "name": "rooms",
+            "placeholder": {
+                "en": "Where?",
+                "nl": "Waar?"
+            }
+        }
+    ],
+    "hint": {
+        "en": "When a user enters a room...",
+        "nl": "Zodra iemand een kamer binnenkomt..."
     }
-  ],
-  "hint": {
-    "en": "When a user enters a room...",
-    "nl": "Wanneer een gebruiker de kamer binnen komt..."
-  }
 }

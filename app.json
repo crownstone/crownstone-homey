@@ -50,30 +50,34 @@
       {
         "id": "user_enters_room",
         "title": {
-          "en": "User enters room",
-          "nl": "Gebruiker komt kamer binnen"
+          "en": "Someone enters room",
+          "nl": "Iemand komt kamer binnen"
+        },
+        "titleFormatted": {
+          "en": "[[users]] enters [[rooms]]",
+          "nl": "[[users]] komt [[rooms]] binnen"
         },
         "args": [
           {
             "type": "autocomplete",
             "name": "users",
             "placeholder": {
-              "en": "Select a user",
-              "nl": "Selecteer een gebruiker"
+              "en": "Who?",
+              "nl": "Wie?"
             }
           },
           {
             "type": "autocomplete",
             "name": "rooms",
             "placeholder": {
-              "en": "Select a room",
-              "nl": "Selecteer een kamer"
+              "en": "Where?",
+              "nl": "Waar?"
             }
           }
         ],
         "hint": {
           "en": "When a user enters a room...",
-          "nl": "Wanneer een gebruiker de kamer binnen komt..."
+          "nl": "Zodra iemand een kamer binnenkomt..."
         }
       }
     ],
@@ -81,30 +85,34 @@
       {
         "id": "user_presence",
         "title": {
-          "en": "User !{{is|isn't}} present in the room",
-          "nl": "De gebruiker !{{is|is niet}} aanwezig in de kamer"
+          "en": "Someone !{{is|isn't}} present in the room",
+          "nl": "Iemand !{{is|is niet}} aanwezig in de kamer"
+        },
+        "titleFormatted": {
+          "en": "[[users]] !{{is|isn't}} present in the [[rooms]]",
+          "nl": "[[users]] !{{is|is niet}} aanwezig in de [[rooms]]"
         },
         "args": [
           {
             "type": "autocomplete",
             "name": "users",
             "placeholder": {
-              "en": "Select a user",
-              "nl": "Selecteer een gebruiker"
+              "en": "Who?",
+              "nl": "Wie?"
             }
           },
           {
             "type": "autocomplete",
             "name": "rooms",
             "placeholder": {
-              "en": "Select a room",
-              "nl": "Selecteer een kamer"
+              "en": "Where?",
+              "nl": "Waar?"
             }
           }
         ],
         "hint": {
           "en": "When a user is present in a room...",
-          "nl": "Wanneer een gebruiker in een kamer aanwezig is..."
+          "nl": "Wanneer iemand zich in een kamer bevindt..."
         }
       }
     ]
@@ -128,8 +136,8 @@
         }
       },
       "images": {
-        "large": "/assets/images/large-square.png",
-        "small": "/assets/images/very-small-square.png"
+        "large": "/assets/images/large.png",
+        "small": "/assets/images/small.png"
       },
       "pair": [
         {
@@ -143,20 +151,38 @@
           "id": "login_credentials",
           "template": "login_credentials",
           "options": {
-            "usernameLabel": "E-mail address",
-            "usernamePlaceholder": "crownstone.rocks@gmail.com"
+            "logo": "../../../assets/images/large-square.png",
+            "usernameLabel": {
+              "en": "E-mail address",
+              "nl": "Emailadres"
+            },
+            "usernamePlaceholder": {
+              "en": "email@address.com",
+              "nl": "email@adres.nl"
+            }
           }
         },
         {
           "id": "list_devices",
           "template": "list_devices",
           "navigation": {
+            "prev": "login_credentials",
             "next": "add_devices"
           }
         },
         {
           "id": "add_devices",
-          "template": "add_devices"
+          "template": "add_devices",
+          "navigation": {
+            "next": "done"
+          }
+        },
+        {
+          "id": "done",
+          "template": "done",
+          "navigation": {
+            "prev": "add_devices"
+          }
         }
       ],
       "id": "crownstone"

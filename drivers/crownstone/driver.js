@@ -24,92 +24,120 @@ class CrownstoneDriver extends Homey.Driver {
 	async onPair(session) {
 
 		/**
-		 * This part will determine what view to show the user based on if the user is already logged
-		 * in or not.
+		 * We call Homey.showView from the confirmation view. If a user clicks the 'next' button we want to navigate to
+		 * 'list_devices'. If a user clicks the 'logout' button, we navigate to 'login_credentials'.
 		 */
 		session.setHandler('showView', async (viewId) => {
 			if (viewId === 'loading') {
+				this.log('Loading');
 				if (this.homey.app.loginState) {
-					await session.showView('confirmation');
+					this.log('Show view confirmation');
+					try {
+						await session.showView('confirmation');
+					} catch(e) {
+						this.log('Error in showing confirmation view');
+						this.error(e);
+						throw new Error(e);
+					}
 				} else {
-					await session.showView('login_credentials');
+					this.log('Show view login credentials');
+					try {
+						await session.showView('login_credentials');
+					} catch(e) {
+						this.log('Error in showing login view');
+						this.error(e);
+						throw new Error(e);
+					}
 				}
 			}
+			if (viewId === 'login') {
+				this.log('Login or logged in');
+			}
 			if (viewId === 'login_credentials') {
+				this.log('Set fields for login form');
 				this.homey.settings.set('email', '');
 				this.homey.settings.set('password', '');
 				this.homey.app.loginState = false;
+			}
+			if (viewId === 'list_devices') {
+				this.log('List devices (view shown as template)');
+			}
+			if (viewId === 'add_devices') {
+				this.log('Add devices (view shown as template)');
+			}
+			if (viewId === 'done') {
+				this.log('Done');
 			}
 		});
 
 		/**
 		 * This view will appear when the user is not yet logged in.
 		 */
-		session.setHandler('login', async (data, callback) => {
+		session.setHandler('login', async (data) => {
+			this.log('Log in as ' + data.username);
+
 			let username = data.username;
 			let shasum = crypto.createHash('sha1');
 			shasum.update(String(data.password));
 			let passwordHash = shasum.digest('hex');
-			let loginState = await this.homey.app.setSettings(username, passwordHash);
-			if (loginState) {
-				await session.showView('loading');
-			} else if (!loginState) {
-				callback(null, false);
+			let loginState = false;
+			try {
+				loginState = await this.homey.app.setSettings(username, passwordHash);
+				if (!loginState) {
+					this.log('Failure logging in');
+					throw new Error('Failure logging in');
+					return;
+				}
+			} catch(e) {
+				this.log('Error in logging in');
+				this.error(e);
+				throw new Error(e);
 			}
+			const credentialsAreValid = Boolean(loginState);
+			this.log('CredentialsAreValid: ' + credentialsAreValid);
+
+			if (typeof credentialsAreValid !== 'boolean') {
+				throw new Error('Invalid Response');
+			}
+			return credentialsAreValid;
 		});
 
 		/**
-		 * This view will appear when the user is logged in.
+		 * This view should appear after the user has been logged in. After this 'add_devices' and 'done' are
+		 * templates from Homey and should automatically guide the user further.
 		 */
 		session.setHandler('list_devices', async (data) => {
-			if (this.homey.app.checkMailAndPassword()) {
-				console.log('Start discovering Crownstones in cloud..');
-				let sphereId = await this.homey.app.getSphereId();
-				let cloud = this.homey.app.cloud;
-				let devices = await cloud.sphere(sphereId).crownstones().catch((e) => {
-					throw new Error('Could not retrieve the Crownstones from the cloud.');
-				})
-				return listDevices(devices);
-			} else {
-				return [];
+			let deviceList = [];
+
+			if (!this.homey.app.isConfigured()) {
+				this.log('Not logged in');
+				return deviceList;
+			}
+			
+			// emit when devices are still being searched
+			session.emit('list_devices', deviceList);
+
+			// get sphere required before getting Crownstones
+			this.log('Get spheres');
+			try {
+				await this.homey.app.getSpheres();
+			} catch(e) {
+				this.error(e);
+				throw new Error(e);
+			}
+			
+			this.log('Get Crownstones from cloud..');
+			try {
+				await this.homey.app.getCrownstones();
+			} catch(e) {
+				this.error(e);
+				throw new Error(e);
 			}
 
-			/**
-			 * This function returns a json list with all the devices and their name, ID and address in
-			 * the sphere.
-			 * It will also add the locked state, dim capability, an active value and a deleted value
-			 * when a device has been deleted.
-			 */
-			function listDevices(deviceList) {
-				let dimState = false;
-				const devices = [];
-				for (let i = 0; i < deviceList.length; i++) {
-					for (let j = 0; j < deviceList[i].abilities.length; j++) {
-						if (deviceList[i].abilities[j].type === 'dimming') {
-							if (deviceList[i].abilities[j].enabled) {
-								dimState = true;
-							} else {
-								dimState = false;
-							}
-						}
-					}
-					const device = {
-						name: deviceList[i].name,
-						data: {
-							id: deviceList[i].id,
-						},
-						store: {
-							address: deviceList[i].address,
-							locked: deviceList[i].locked,
-							dimmed: dimState,
-							active: false,
-							deleted: false,
-						},
-					};
-					devices.push(device);
-				}
-				return devices;
-			}
+			this.log('Extract devices.');
+			deviceList = this.homey.app.extractDevices();
+			this.log('Return devices');
+			return deviceList;
 		});
 	}
 }

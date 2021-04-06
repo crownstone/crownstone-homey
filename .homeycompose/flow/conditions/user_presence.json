@@ -1,29 +1,33 @@
 {
-  "id": "user_presence",
-  "title": {
-    "en": "User !{{is|isn't}} present in the room",
-    "nl": "De gebruiker !{{is|is niet}} aanwezig in de kamer"
-  },
-  "args": [
-    {
-      "type": "autocomplete",
-      "name": "users",
-      "placeholder": {
-        "en": "Select a user",
-        "nl": "Selecteer een gebruiker"
-      }
+    "id": "user_presence",
+    "title": {
+        "en": "Someone !{{is|isn't}} present in the room",
+        "nl": "Iemand !{{is|is niet}} aanwezig in de kamer"
     },
-    {
-      "type": "autocomplete",
-      "name": "rooms",
-      "placeholder": {
-        "en": "Select a room",
-        "nl": "Selecteer een kamer"
-      }
+    "titleFormatted": {
+        "en": "[[users]] !{{is|isn't}} present in the [[rooms]]",
+        "nl": "[[users]] !{{is|is niet}} aanwezig in de [[rooms]]"
+    },
+    "args": [
+        {
+            "type": "autocomplete",
+            "name": "users",
+            "placeholder": {
+                "en": "Who?",
+                "nl": "Wie?"
+            }
+        },
+        {
+            "type": "autocomplete",
+            "name": "rooms",
+            "placeholder": {
+                "en": "Where?",
+                "nl": "Waar?"
+            }
+        }
+    ],
+    "hint": {
+        "en": "When a user is present in a room...",
+        "nl": "Wanneer iemand zich in een kamer bevindt..."
     }
-  ],
-  "hint": {
-    "en": "When a user is present in a room...",
-    "nl": "Wanneer een gebruiker in een kamer aanwezig is..."
-  }
 }
