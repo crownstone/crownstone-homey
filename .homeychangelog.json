@@ -1,5 +1,6 @@
 {
-  "0.0.3": {
-    "en": "Switch Crownstones using the Homey."
-  }
+	"0.0.4": {
+		"en": "Crownstone app for use with the Homey smart home hub.",
+		"nl": "Crownstone app voor gebruik met de Homey domotica hub."
+	}
 }

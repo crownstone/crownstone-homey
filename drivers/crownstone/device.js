@@ -22,8 +22,6 @@ class CrownstoneDevice extends Homey.Device {
 			return;
 		}
 
-		this.changeLockState(this.getStoreValue('locked')).catch(this.error);
-		this.changeDimCapability(this.getStoreValue('dimmed')).catch(this.error);
 		this.cloud = this.homey.app.cloud;
 		this.bluenet = new BleLib.default();
 		this.updateCrownstoneCapabilities().catch(this.error);
@@ -36,18 +34,21 @@ class CrownstoneDevice extends Homey.Device {
 
 	/**
 	 * Get all capabilities of a Crownstone from the cloud and set the corresponding values.
+	 *
+	 * Return struct with fields such as .locked and .type : 'dimming'
 	 */
 	async updateCrownstoneCapabilities() {
 		if (!this.homey.app.loggedIn) {
 			this.log("Not logged in yet, skip");
 			return;
 		}
-		// get capabibilities from the cloud
+		// get capabilities from the cloud
 		let crownstoneCapabilities = await this.cloud.crownstone(this.id).data();
 
 		// lock enabled
-		let lockedState = crownstoneCapabilities.locked;
-		await this.changeLockState(lockedState);
+		let lockEnabled = crownstoneCapabilities.locked;
+		//this.log('Set ' + this.name + ' as ' + (lockEnabled ? 'locked' : 'unlocked'));
+		await this.changeLockState(lockEnabled);
 
 		// dimmer enabled
 		for (let i = 0; i < crownstoneCapabilities.abilities.length; i++) {
@@ -75,17 +76,30 @@ class CrownstoneDevice extends Homey.Device {
 
 	/**
 	 * This method will lock or unlock the device depending on the state.
-	 * todo: change available-setting to custom lock-capability.
 	 */
-	async changeLockState(lockState) {
-		if (lockState && this.getAvailable()) {
-			this.log('Set lock lockState to true');
-			await this.setStoreValue('locked', true);
-			let msg = this.homey.__('lockedMessage');
-			await this.setUnavailable(msg);
-		} else if (!lockState && !this.getAvailable()) {
-			await this.setStoreValue('locked', false);
-			await this.setAvailable();
+	async changeLockState(lockEnabled) {
+
+		if (lockEnabled) {
+			this.setSettings({ energy_alwayson: true });
+			/*
+			if (this.getAvailable()) {
+				this.log('Lock ' + this.name);
+				let msg = this.homey.__('lockedMessage');
+				await this.setUnavailable(msg);
+				await this.setStoreValue('locked', true);
+			} else {
+				this.log('Device ' + this.name + ' is already unavailable');
+			}*/
+		} else {
+			this.setSettings({ energy_alwayson: false });
+			/*
+			if (!this.getAvailable()) {
+				this.log('Unlock ' + this.name);
+				await this.setStoreValue('locked', false);
+				await this.setAvailable();
+			} else {
+				this.log('Device ' + this.name + ' is already available');
+			}*/
 		}
 	}
 
@@ -94,15 +108,14 @@ class CrownstoneDevice extends Homey.Device {
 	 */
 	async changeDimCapability(capabilityEnabled) {
 		let currentlyEnabled = this.getCapabilities().includes('dim');
-
 		if (capabilityEnabled && !currentlyEnabled) {
-			this.log('Set dimmer capability');
-			await this.setStoreValue('dimmed', true);
+			this.log('Set dimmer capability on ' + this.name);
+			await this.setStoreValue('dimmerEnabled', true);
 			this.addCapability('dim').catch(this.error);
 		}
 		if (!capabilityEnabled && currentlyEnabled) {
-			this.log('Remove dimmer capability');
-			await this.setStoreValue('dimmed', false);
+			this.log('Remove dimmer capability from ' + this.name);
+			await this.setStoreValue('dimmerEnabled', false);
 			this.removeCapability('dim').catch(this.error);
 		}
 	}
@@ -142,7 +155,7 @@ class CrownstoneDevice extends Homey.Device {
 	 * It will use the Crownstone Cloud to switch the device, if that fails, it will use Ble instead.
 	 */
 	async onCapabilityOnoff(switchValue) {
-		//this.switchCrownstoneViaCloud(switchValue);
+		this.switchCrownstoneViaCloud(switchValue);
 
 		if (!this.homey.app.bleActive) {
 			this.log("Bluetooth is not enabled");
@@ -160,38 +173,6 @@ class CrownstoneDevice extends Homey.Device {
 			await this.bleError(e);
 		});
 		await this.setStoreValue('activeConnection', false);
-
-		/*
-		let active = this.getStoreValue('active');
-		if (!active && this.homey.app.loggedIn) {
-			await this.setStoreValue('active', true);
-			if (this.homey.app.cloudActive) {
-				await this.switchCloud(value).catch(async (e) => {
-					console.log('There was a problem switching the device using the Cloud:', e);
-					if (this.homey.app.bleActive && !activeBleConnection) {
-						activeBleConnection = true;
-						console.log('Retry connection using Ble..');
-						await this.switchBLE(value).catch(async (e) => {
-							await this.bleError(e);
-						});
-					}
-				});
-			} else if (this.homey.app.bleActive && !activeBleConnection) {
-				activeBleConnection = true;
-				await this.switchBLE(value).catch(async (e) => {
-					await this.bleError(e);
-				});
-			}
-			if (this.getCapabilities().includes('dim')) {
-				if (value) {
-					await this.setCapabilityValue('dim', 1);
-				} else if (!value) {
-					await this.setCapabilityValue('dim', 0);
-				}
-			}
-			activeBleConnection = false;
-			await this.setStoreValue('active', false);
-		} */
 	}
 
 	/**

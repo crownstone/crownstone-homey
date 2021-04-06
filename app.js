@@ -153,8 +153,19 @@ class CrownstoneApp extends Homey.App {
 		await this.getLocations();
 		await this.getUsers();
 		await this.getKeys();
-		await this.getPresence();
+		await this.getPresence(); // not used yet
 		await this.getCrownstones();
+		
+		/**
+		 * Update devices to be sure they are up to date w.r.t. state and capabilities (order of initialization
+		 * between app and devices is not set).
+		 */
+		let devices = this.homey.drivers.getDriver('crownstone').getDevices();
+		for (let i = 0; i < devices.length; ++i) {
+			let device = devices[i];
+			device.updateCrownstoneCapabilities();
+			device.updateCrownstoneState();
+		}
 	}
 
 	/**
@@ -212,49 +223,10 @@ class CrownstoneApp extends Homey.App {
 	}
 
 	/**
-	 * This function will obtain all the users and their locations in the sphere.
-	 */
-	/*
-	async getPresentPeople() {
-		if (this.loggedIn) {
-			await this.obtainSphereId(() => {
-			}).catch((e) => {
-				this.log('There was a problem getting the sphere ID:', e);
-			});
-			if (typeof this.sphereId !== 'undefined') {
-				this.userLocation = await this.cloud.sphere(this.sphereId).presentPeople();
-			}
-		}
-	} */
-
-	/**
-	 * This function will obtain the sphere and, if available, the room where the user is currently located.
-	 */
-	/*
-	async obtainSphereId(callback) {
-		const userReference = await this.cloud.me();
-		const userLocation = await userReference.currentLocation();
-		if (userLocation.length > 0) {
-			const spheres = await this.cloud.spheres();
-			if (spheres.length > 0) {
-				this.sphereId = userLocation[0].inSpheres[0].sphereId;
-				callback();
-			} else {
-				this.log('Unable to find sphere');
-			}
-		} else {
-			this.log('Unable to locate user');
-		}
-	}
-	*/
-
-	/**
 	 * This function will call the getPresentPeople-function every 30 minutes in case of missed events.
 	 */
-	//async obtainUserLocations() {
 	async pollPresenceData() {
 		setInterval(() => {
-			//this.getPresentPeople();
 			this.getPresence();
 		}, 1000 * 1800); // 30 minutes
 	}
@@ -267,7 +239,6 @@ class CrownstoneApp extends Homey.App {
 		await this.sse.stop();
 		await this.sse.loginHashed(email, password);
 		await this.sse.start(this.sseEventHandler);
-		//await this.getPresentPeople();
 	}
 
 	/**
@@ -285,7 +256,7 @@ class CrownstoneApp extends Homey.App {
 	 *   }
 	 */
 	sseEventHandler = (data) => {
-		this.log(data);
+		//this.log(data);
 		if (data.type === 'system') {
 			// e.g. stream starting
 		}
@@ -387,6 +358,19 @@ class CrownstoneApp extends Homey.App {
 		}
 
 		device.updateCrownstoneCapabilities();
+	}
+
+	/**
+	 * Update "state" of the Crownstone
+	 */
+	async updateCrownstoneState(deviceId) {
+		let device = this.getDevice(deviceId);
+		if (!device) {
+			this.log("Device " + deviceId + " cannot be found, cannot update state.");
+			return;
+		}
+
+		device.updateCrownstoneState();
 	}
 
 	/**
@@ -585,7 +569,7 @@ class CrownstoneApp extends Homey.App {
 			for (let i = 0; i < this.spheres.length; ++i) {
 				let sphereId = this.spheres[i].id;
 				if (this.spheres[i].crownstones) {
-					// just hit server only once
+					// just hit server only once, do not update complete list of Crownstones all the time
 					continue;
 				}
 				try {
@@ -705,19 +689,19 @@ class CrownstoneApp extends Homey.App {
 			for (let i = 0; i < crownstones.length; ++i) {
 				let crownstone = crownstones[i];
 
-				// set crownstone.dimState
-				crownstone.dimState = false;
+				// can this Crownstone dim or not?
+				crownstone.dimmerEnabled = false;
 				for (let j = 0; j < crownstone.abilities.length; j++) {
 					let ability = crownstone.abilities[j];
 					if (ability.type === 'dimming') {
 						if (ability.enabled) {
-							crownstone.dimState = true;
+							crownstone.dimmerEnabled = true;
 						}
 						break;
 					}
 				}
 
-				let deviceIcon = 'devices/' + crownstone.icon + '.svg';
+				let deviceIcon = 'icons/' + crownstone.icon + '.svg';
 				const device = {
 					name: crownstone.name,
 					data: {
@@ -727,7 +711,7 @@ class CrownstoneApp extends Homey.App {
 					store: {
 						address: crownstone.address,
 						locked: crownstone.locked,
-						dimmed: crownstone.dimState,
+						dimmerEnabled: crownstone.dimmerEnabled,
 						activeConnection: false,
 						deleted: false,
 						sphereId: sphereId,
@@ -739,6 +723,9 @@ class CrownstoneApp extends Homey.App {
 		return deviceList;
 	}
 
+	/**
+	 * Get keys for a particular sphere. These are used for Bluetooth LE connections.
+	 */
 	extractKeys(sphereId) {
 		this.log('Get keys for sphere ' + sphereId);
 		if (!sphereId) {
