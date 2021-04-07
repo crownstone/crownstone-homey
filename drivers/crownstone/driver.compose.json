@@ -16,8 +16,8 @@
 		}
 	},
 	"images": {
-		"large": "/assets/images/large.png",
-		"small": "/assets/images/small.png"
+		"large": "/assets/images/crownstone_logo_white_square_500x500.png",
+		"small": "/assets/images/crownstone_logo_white_square_75x75.png"
 	},
 	"pair": [
 		{
