@@ -20,14 +20,13 @@ This makes physical sense, the Bluetooth connections from the Homey only reach t
 
 You need the Homey app to install the Crownstone software from the Homey app store.
 
-![Homey user overview](doc/user_overview.jpg)
+<img src="doc/user_overview.jpg" alt="User overview in the Homey app" width="180" height="400">
 
 You can install the app like you normally would do for other apps on the Homey as well. Go to "Apps" and click the "+" sign at the top right corner. In the end you will have the app installed.
 
-![App store](doc/app_store.jpg)
-![App store search](doc/app_store_search.jpg)
-![App installed](doc/app_installed.jpg)
-
+<img src="doc/app_store.jpg" alt="Homey app store" width="180" height="400">
+<img src="doc/app_store_search.jpg" alt="Search the app store" width="180" height="400">
+<img src="doc/app_installed.jpg" alt="Have the Crownstone app installed" width="180" height="400">
 
 ## Adding devices
 
