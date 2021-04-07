@@ -1,6 +1,9 @@
 {
-	"0.0.4": {
-		"en": "Crownstone app for use with the Homey smart home hub.",
-		"nl": "Crownstone app voor gebruik met de Homey domotica hub."
-	}
+  "0.0.4": {
+    "en": "Crownstone app for use with the Homey smart home hub.",
+    "nl": "Crownstone app voor gebruik met de Homey domotica hub."
+  },
+  "0.0.5": {
+    "en": "Black logo"
+  }
 }

@@ -1,6 +1,6 @@
 {
   "id": "rocks.crownstone",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "compatibility": ">=5.0.0",
   "sdk": 3,
   "brandColor": "#003e52",
@@ -21,8 +21,8 @@
     "homey:wireless:ble"
   ],
   "images": {
-    "large": "/assets/images/large.png",
-    "small": "/assets/images/small.png"
+    "large": "/assets/images/crownstone_logo_text_black_500x350.png",
+    "small": "/assets/images/crownstone_logo_text_black_250x175.png"
   },
   "author": {
     "name": "Crownstone",
