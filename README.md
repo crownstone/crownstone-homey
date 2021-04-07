@@ -16,6 +16,18 @@ Crownstones from other locations. Make sure to activate the Crownstone App and e
 
 This makes physical sense, the Bluetooth connections from the Homey only reach the Crownstones in its vicinity.
 
+## Homey app
+
+You need the Homey app to install the Crownstone software from the Homey app store.
+
+![Homey user overview](doc/user_overview.jpg)
+
+You can install the app like you normally would do for other apps on the Homey as well. Go to "Apps" and click the "+" sign at the top right corner. In the end you will have the app installed.
+
+![App store](doc/app_store.jpg)
+![App store search](doc/app_store_search.jpg)
+![App installed](doc/app_installed.jpg)
+
 
 ## Adding devices
 
