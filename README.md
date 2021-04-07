@@ -24,82 +24,60 @@ You need the Homey app to install the Crownstone software from the Homey app sto
 
 You can install the app like you normally would do for other apps on the Homey as well. Go to "Apps" and click the "+" sign at the top right corner. In the end you will have the app installed.
 
-<img src="doc/app_store.jpg" alt="Homey app store" width="180" height="400">
-<img src="doc/app_store_search.jpg" alt="Search the app store" width="180" height="400">
-<img src="doc/app_installed.jpg" alt="Have the Crownstone app installed" width="180" height="400">
+<img src="doc/app_store.jpg" alt="Homey app store" width="180" height="400"><img src="doc/app_store_search.jpg" alt="Search the app store" width="180" height="400"><img src="doc/app_installed.jpg" alt="Have the Crownstone app installed" width="180" height="400">
+
+There is no need to configure the app, press the top left arrow to go back to the menu if you see the below screen.
+
+<img src="doc/app_configure.jpg" alt="No need to configure the app" width="180" height="400">
 
 ## Adding devices
 
-When the app is installed, and you want to add devices, go to the devices page.
+For adding devices you click the second icon at the bottom.
 
-![Homey device page](doc/homey-homepage.jpeg)
+<img src="doc/add_devices.jpg" alt="Add devices" width="180" height="400">
 
-Click on the `+` in the top right corner or on the `Add my first device` text in the middle.
+Now click on the `+` in the top right corner or on the `Add my first device` text in the middle (if it is your first device). You will have to select Crownstone and click through a few times.
 
-![Homey add device part1](doc/homey-add-device-part-1.jpeg)
+<img src="doc/add_devices_select_crownstone.jpg" alt="Add devices and select Crownstone" width="180" height="400"><img src="doc/add_devices_select_crownstone1.jpg" alt="Add devices and select Crownstone" width="180" height="400"><img src="doc/add_devices_select_crownstone2.jpg" alt="Add devices and select Crownstone" width="180" height="400">
 
-Then, select `Crownstone`.
+When adding devices for the first time, you'll be asked to log in to your Crownstone account. It will retrieve information about your Crownstone devices from the cloud.
 
-![Homey add device part2](doc/homey-add-device-part-2.jpeg)
+<img src="doc/login.jpg" alt="Login to the Crownstone servers" width="180" height="400">
 
-Crownstone only has 1 device to add, so select the `Crownstone` device.
+Enter your credentials and select the Crownstone devices you want to add.
 
-![Homey add device part3](doc/homey-add-device-part-3.jpeg)
+<img src="doc/device_list.jpg" alt="List of Crownstone devices to choose from" width="180" height="400"><img src="doc/device_being_added.jpg" alt="Devices to be added, can take a while" width="180" height="400">
 
-Then, press `Connect` to start the pairing process.
+Now you will have a list of devices, all in the `Home` zone:
 
-When adding devices for the first time, you'll be asked to log in to your Crownstone Account so the Crownstones can be obtained.
-
-![Homey login screen](doc/homey-login.jpeg)
-
-Enter your credentials and press `Log in` to continue adding devices.
-
-If you're logged in, you will see the following screen.
-
-![Homey confirmation screen](doc/homey-confirmation.jpeg)
-
-In this screen, you can choose to `continue` with your current account, or `log out` and log in with a new account after.
-
-If you press `Log out` you will return to the login screen.
-
-If you press `Continue` you will be redirected to the screen where you can add your Crownstones.
-
-![Homey select devices](doc/homey-select-devices.jpeg)
-
-In this screen you can select the devices you want to add and press `Next` to add them to your Homey.
-
+<img src="doc/devices.jpg" alt="Device overview" width="180" height="400">
 
 ## Using devices
 
-When your devices are added, you should see something like this.
+If you click a device you directly control it. You can also long-press an icon, for example to dim it.
 
-![Homey devices](doc/homey-devices.jpeg)
+<img src="doc/dim_light.jpg" alt="Dim device" width="180" height="400">
 
-In this sphere, the device called `studio` is locked, which is marked with a red triangle. You are unable to control the device from the Homey.
+There are a few settings you can change per device. For example the `zone` and what's plugged in to it.
 
-You can switch your devices on and off by pressing the devices.
+<img src="doc/device_settings.jpg" alt="Change device settings" width="180" height="400"><img src="doc/zones.jpg" alt="Choose a zone" width="180" height="400"><img src="doc/device_plugged_in.jpg" alt="Select what is plugged into the socket" width="180" height="400">
 
-There is also the ability to dim the Crownstones, when the dimming capability is also enabled in the Crownstone App.
+Crownstone can be **locked**. Those Crownstone cannot be controlled from the Homey. If you want to control such a Crownstone you will see a message like this.
 
-To dim a device, press the device and hold it until a dimming menu shows up.
+<img src="doc/locked.jpg" alt="Locked message" width="180" height="400">
 
-![Homey dimming](doc/homey-dim.jpeg)
+The result can be compared with the Crownstone app:
 
+<img src="doc/crownstone_app.jpg" alt="Locked message" width="180" height="400"><img src="doc/homey_app.jpg" alt="Locked message" width="180" height="400">
 
-## Settings
+## Flows
 
-You can select if the Crownstone should be switched using the Crownstone Cloud or using Ble.
+You can also create flows within the Homey. This works like follows.
 
-To do this, go to the `Settings`.
+<img src="doc/flow1.jpg" alt="Create a flow" width="180" height="400"><img src="doc/flow2.jpg" alt="Create a flow" width="180" height="400"><img src="doc/flow3.jpg" alt="Create a flow" width="180" height="400"><img src="doc/flow4.jpg" alt="Create a flow" width="180" height="400"><img src="doc/flow5.jpg" alt="Create a flow" width="180" height="400">
 
-![Homey settings](doc/homey-settings.jpg)
+Using flows you can have all kind of actions coupled to events such as that someone enters a room or leaves the house.
 
-Then, press the `Crownstone` text to go to the Crownstone settings menu.
+## Developer settings
 
-![Homey settings configuration](doc/homey-configuration-settings.jpeg)
-
-In this menu, you can mark the ways how Crownstones should be controlled.
-
-At least one option needs to be checked.
-
-The options are both selected by default.
+You can select if the Crownstone should be switched using the Crownstone cloud or using Bluetooth LE. The latter is an experimental setting and should not be used yet. By default only the cloud is used.
