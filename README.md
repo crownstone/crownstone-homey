@@ -1,20 +1,20 @@
 # Homey Crownstone App
 
-A Crownstone app to integrate with the Homey smart home hub.
+A Crownstone app that integrates with the [Homey](https://homey.app/) smart home hub. Here you can find a step-by-step tutorial to get started with the app.
 
-Here you can find the step-by-step tutorial to get started with the app.
-
-## Home
+## Spheres
 
 The Homey does not have a concept of multiple homes. This is quite logical, because it is likely to be placed in one
 physical location. Crownstones however are a network of devices that you can install in your own home, but also in
-your garage, your holiday home, at your grandmother's, etc. Each home contains a **sphere** of Crownstones.
+your garage, your holiday home, at your grandmother's, etc. In the Crownstone system a physical collection of Crownstone is represented by the concept **sphere**.
 
-When installing the Crownstone app on the Homey, this app will query the Crownstone servers for your current location.
-The discovery process will only return the Crownstones from this particular location. You will not be able to see
-Crownstones from other locations. Make sure to activate the Crownstone App and enable location to obtain the Crownstones.
+When installig the Crownstone app you will get access to all the spheres you have access to. This has three reasons:
 
-This makes physical sense, the Bluetooth connections from the Homey only reach the Crownstones in its vicinity.
+1. This is how it is done for Home Assistant, Alexa, Google Home, and all other smart home hubs.
+2. If it is possible to remotely control other spheres we want to enable that for the user. This is not possible yet, though!
+3. We do not want to bother people with selecting particular spheres.
+
+Let's go in detail now.
 
 ## Homey app
 
@@ -24,7 +24,7 @@ You need the Homey app to install the Crownstone software from the Homey app sto
 
 You can install the app like you normally would do for other apps on the Homey as well. Go to "Apps" and click the "+" sign at the top right corner. In the end you will have the app installed.
 
-<img src="doc/app_store.jpg" alt="Homey app store" width="180" height="400"><img src="doc/app_store_search.jpg" alt="Search the app store" width="180" height="400"><img src="doc/app_installed.jpg" alt="Have the Crownstone app installed" width="180" height="400">
+<img src="doc/app_store.jpg" alt="Homey app store" width="180" height="400"> <img src="doc/app_store_search.jpg" alt="Search the app store" width="180" height="400"> <img src="doc/app_installed.jpg" alt="Have the Crownstone app installed" width="180" height="400">
 
 There is no need to configure the app, press the top left arrow to go back to the menu if you see the below screen.
 
@@ -38,7 +38,7 @@ For adding devices you click the second icon at the bottom.
 
 Now click on the `+` in the top right corner or on the `Add my first device` text in the middle (if it is your first device). You will have to select Crownstone and click through a few times.
 
-<img src="doc/add_devices_select_crownstone.jpg" alt="Add devices and select Crownstone" width="180" height="400"><img src="doc/add_devices_select_crownstone1.jpg" alt="Add devices and select Crownstone" width="180" height="400"><img src="doc/add_devices_select_crownstone2.jpg" alt="Add devices and select Crownstone" width="180" height="400">
+<img src="doc/add_devices_select_crownstone.jpg" alt="Add devices and select Crownstone" width="180" height="400"> <img src="doc/add_devices_select_crownstone1.jpg" alt="Add devices and select Crownstone" width="180" height="400"> <img src="doc/add_devices_select_crownstone2.jpg" alt="Add devices and select Crownstone" width="180" height="400">
 
 When adding devices for the first time, you'll be asked to log in to your Crownstone account. It will retrieve information about your Crownstone devices from the cloud.
 
@@ -46,7 +46,7 @@ When adding devices for the first time, you'll be asked to log in to your Crowns
 
 Enter your credentials and select the Crownstone devices you want to add.
 
-<img src="doc/device_list.jpg" alt="List of Crownstone devices to choose from" width="180" height="400"><img src="doc/device_being_added.jpg" alt="Devices to be added, can take a while" width="180" height="400">
+<img src="doc/device_list.jpg" alt="List of Crownstone devices to choose from" width="180" height="400"> <img src="doc/device_being_added.jpg" alt="Devices to be added, can take a while" width="180" height="400">
 
 Now you will have a list of devices, all in the `Home` zone:
 
@@ -60,7 +60,7 @@ If you click a device you directly control it. You can also long-press an icon, 
 
 There are a few settings you can change per device. For example the `zone` and what's plugged in to it.
 
-<img src="doc/device_settings.jpg" alt="Change device settings" width="180" height="400"><img src="doc/zones.jpg" alt="Choose a zone" width="180" height="400"><img src="doc/device_plugged_in.jpg" alt="Select what is plugged into the socket" width="180" height="400">
+<img src="doc/device_settings.jpg" alt="Change device settings" width="180" height="400"> <img src="doc/zones.jpg" alt="Choose a zone" width="180" height="400"> <img src="doc/device_plugged_in.jpg" alt="Select what is plugged into the socket" width="180" height="400">
 
 Crownstone can be **locked**. Those Crownstone cannot be controlled from the Homey. If you want to control such a Crownstone you will see a message like this.
 
@@ -68,13 +68,13 @@ Crownstone can be **locked**. Those Crownstone cannot be controlled from the Hom
 
 The result can be compared with the Crownstone app:
 
-<img src="doc/crownstone_app.jpg" alt="Locked message" width="180" height="400"><img src="doc/homey_app.jpg" alt="Locked message" width="180" height="400">
+<img src="doc/crownstone_app.jpg" alt="Locked message" width="180" height="400"> <img src="doc/homey_app.jpg" alt="Locked message" width="180" height="400">
 
 ## Flows
 
 You can also create flows within the Homey. This works like follows.
 
-<img src="doc/flow1.jpg" alt="Create a flow" width="180" height="400"><img src="doc/flow2.jpg" alt="Create a flow" width="180" height="400"><img src="doc/flow3.jpg" alt="Create a flow" width="180" height="400"><img src="doc/flow4.jpg" alt="Create a flow" width="180" height="400"><img src="doc/flow5.jpg" alt="Create a flow" width="180" height="400">
+<img src="doc/flow1.jpg" alt="Create a flow" width="180" height="400"> <img src="doc/flow2.jpg" alt="Create a flow" width="180" height="400"> <img src="doc/flow3.jpg" alt="Create a flow" width="180" height="400"> <img src="doc/flow4.jpg" alt="Create a flow" width="180" height="400"> <img src="doc/flow5.jpg" alt="Create a flow" width="180" height="400">
 
 Using flows you can have all kind of actions coupled to events such as that someone enters a room or leaves the house.
 
