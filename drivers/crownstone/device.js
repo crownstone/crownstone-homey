@@ -80,6 +80,7 @@ class CrownstoneDevice extends Homey.Device {
 	async changeLockState(lockEnabled) {
 
 		if (lockEnabled) {
+			// REVIEW: This setting does not sound like something related to energy, whats the logic here?
 			this.setSettings({ energy_alwayson: true });
 			/*
 			if (this.getAvailable()) {
@@ -90,7 +91,8 @@ class CrownstoneDevice extends Homey.Device {
 			} else {
 				this.log('Device ' + this.name + ' is already unavailable');
 			}*/
-		} else {
+		}
+		else {
 			this.setSettings({ energy_alwayson: false });
 			/*
 			if (!this.getAvailable()) {
@@ -111,11 +113,13 @@ class CrownstoneDevice extends Homey.Device {
 		if (capabilityEnabled && !currentlyEnabled) {
 			this.log('Set dimmer capability on ' + this.name);
 			await this.setStoreValue('dimmerEnabled', true);
+			// REVIEW: Why is this not awaited?
 			this.addCapability('dim').catch(this.error);
 		}
 		if (!capabilityEnabled && currentlyEnabled) {
 			this.log('Remove dimmer capability from ' + this.name);
 			await this.setStoreValue('dimmerEnabled', false);
+			// REVIEW: Why is this not awaited?
 			this.removeCapability('dim').catch(this.error);
 		}
 	}
@@ -198,7 +202,8 @@ class CrownstoneDevice extends Homey.Device {
 		if (switchValue) {
 			this.log('Turn on "' + this.name + '"');
 			await this.cloud.crownstone(this.id).turnOn();
-		} else {
+		}
+		else {
 			this.log('Turn off "' + this.name + '"');
 			await this.cloud.crownstone(this.id).turnOff();
 		}
@@ -221,6 +226,7 @@ class CrownstoneDevice extends Homey.Device {
 			return;
 		}
 
+		// REVIEW: This can throw, take some error handling into account.
 		await this.bluenet.connect(homeyAdvertisement);
 		await this.bluenet.control.setSwitchState((switchValue ? 1 : 0));
 		await this.bluenet.control.disconnect();
@@ -230,6 +236,7 @@ class CrownstoneDevice extends Homey.Device {
 	/**
 	 * This method will obtain the user keys from the cloud and will load them to the Bluenet settings.
 	 */
+	// REVIEW: getKeys has a side effect: you load the keys into the lib. Change the function name to reflect what it does.
 	getKeys(sphereId) {
 		this.log('Obtaining the keys..');
 		// get keys previously obtained from app

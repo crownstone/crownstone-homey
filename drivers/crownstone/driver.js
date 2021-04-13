@@ -34,16 +34,19 @@ class CrownstoneDriver extends Homey.Driver {
 					this.log('Show view confirmation');
 					try {
 						await session.showView('confirmation');
-					} catch(e) {
+					}
+					catch(e) {
 						this.log('Error in showing confirmation view');
 						this.error(e);
 						throw new Error(e);
 					}
-				} else {
+				}
+				else {
 					this.log('Show view login credentials');
 					try {
 						await session.showView('login_credentials');
-					} catch(e) {
+					}
+					catch(e) {
 						this.log('Error in showing login view');
 						this.error(e);
 						throw new Error(e);
@@ -51,21 +54,26 @@ class CrownstoneDriver extends Homey.Driver {
 				}
 			}
 			if (viewId === 'login') {
+				// REVIEW: Should this not show a view? Why are some showing in this list, and others with their own handlers?
 				this.log('Login or logged in');
 			}
 			if (viewId === 'login_credentials') {
+				// REVIEW: Should this not show a view? Why are some showing in this list, and others with their own handlers?
 				this.log('Set fields for login form');
 				this.homey.settings.set('email', '');
 				this.homey.settings.set('password', '');
 				this.homey.app.loginState = false;
 			}
 			if (viewId === 'list_devices') {
+				// REVIEW: Should this not show a view? Why are some showing in this list, and others with their own handlers?
 				this.log('List devices (view shown as template)');
 			}
 			if (viewId === 'add_devices') {
+				// REVIEW: Should this not show a view? Why are some showing in this list, and others with their own handlers?
 				this.log('Add devices (view shown as template)');
 			}
 			if (viewId === 'done') {
+				// REVIEW: Should this not show a view? Why are some showing in this list, and others with their own handlers?
 				this.log('Done');
 			}
 		});
@@ -88,14 +96,18 @@ class CrownstoneDriver extends Homey.Driver {
 					throw new Error('Failure logging in');
 					return;
 				}
-			} catch(e) {
+			}
+			catch(e) {
 				this.log('Error in logging in');
 				this.error(e);
 				throw new Error(e);
 			}
+			// REVIEW: This cast should not be required.
 			const credentialsAreValid = Boolean(loginState);
 			this.log('CredentialsAreValid: ' + credentialsAreValid);
 
+			// REVIEW: This is not how we check for errors. Either the login state is a boolean, or an error should be thrown by the setSettings.
+			// This dirty response check implies a bad implementation.
 			if (typeof credentialsAreValid !== 'boolean') {
 				throw new Error('Invalid Response');
 			}
@@ -121,15 +133,18 @@ class CrownstoneDriver extends Homey.Driver {
 			this.log('Get spheres');
 			try {
 				await this.homey.app.getSpheres();
-			} catch(e) {
+			}
+			catch(e) {
 				this.error(e);
+				// REVIEW: Why is the error re-wrapped in an Error object? Do we throw other things?
 				throw new Error(e);
 			}
 			
 			this.log('Get Crownstones from cloud..');
 			try {
 				await this.homey.app.getCrownstones();
-			} catch(e) {
+			}
+			catch(e) {
 				this.error(e);
 				throw new Error(e);
 			}
