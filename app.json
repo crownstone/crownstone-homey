@@ -22,8 +22,9 @@
     "homey:wireless:ble"
   ],
   "images": {
-    "large": "/assets/images/crownstone_logo_text_black_500x350.png",
-    "small": "/assets/images/crownstone_logo_text_black_250x175.png"
+    "small": "/assets/images/crownstone_app_image_250x175.png",
+    "large": "/assets/images/crownstone_app_image_500x350.png",
+    "xlarge": "/assets/images/crownstone_app_image_1000x700.png"
   },
   "author": {
     "name": "Crownstone",
@@ -136,8 +137,9 @@
         }
       },
       "images": {
-        "large": "/assets/images/crownstone_logo_white_square_500x500.png",
-        "small": "/assets/images/crownstone_logo_white_square_75x75.png"
+        "small": "/assets/images/crownstone_driver_75x75.png",
+        "large": "/assets/images/crownstone_driver_500x500.png",
+        "xlarge": "/assets/images/crownstone_driver_1000x1000.png"
       },
       "pair": [
         {

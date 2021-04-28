@@ -14,7 +14,7 @@ class CrownstoneDriver extends Homey.Driver {
 	 * This method is called when the Driver is initialized.
 	 */
 	onInit() {
-		this.log('Crownstone driver has been initialized');
+		console.log('Crownstone driver has been initialized');
 	}
 
 	/**
@@ -26,55 +26,52 @@ class CrownstoneDriver extends Homey.Driver {
 		/**
 		 * We call Homey.showView from the confirmation view. If a user clicks the 'next' button we want to navigate to
 		 * 'list_devices'. If a user clicks the 'logout' button, we navigate to 'login_credentials'.
+		 *
+		 * Note that for a lot of views there is already a default Homey view defined.
 		 */
 		session.setHandler('showView', async (viewId) => {
 			if (viewId === 'loading') {
-				this.log('Loading');
+				console.log('Loading');
 				if (this.homey.app.loginState) {
-					this.log('Show view confirmation');
+					console.log('Show view confirmation');
 					try {
 						await session.showView('confirmation');
 					}
 					catch(e) {
-						this.log('Error in showing confirmation view');
+						console.log('Error in showing confirmation view');
 						this.error(e);
-						throw new Error(e);
+						throw e;
 					}
 				}
 				else {
-					this.log('Show view login credentials');
+					console.log('Show view login credentials');
 					try {
 						await session.showView('login_credentials');
 					}
 					catch(e) {
-						this.log('Error in showing login view');
+						console.log('Error in showing login view');
 						this.error(e);
-						throw new Error(e);
+						throw e;
 					}
 				}
 			}
 			if (viewId === 'login') {
-				// REVIEW: Should this not show a view? Why are some showing in this list, and others with their own handlers?
-				this.log('Login or logged in');
+				console.log('Login or logged in');
 			}
 			if (viewId === 'login_credentials') {
-				// REVIEW: Should this not show a view? Why are some showing in this list, and others with their own handlers?
-				this.log('Set fields for login form');
+				console.log('Set fields for login form');
 				this.homey.settings.set('email', '');
 				this.homey.settings.set('password', '');
 				this.homey.app.loginState = false;
 			}
 			if (viewId === 'list_devices') {
-				// REVIEW: Should this not show a view? Why are some showing in this list, and others with their own handlers?
-				this.log('List devices (view shown as template)');
+				console.log('List devices (view shown as template)');
 			}
 			if (viewId === 'add_devices') {
-				// REVIEW: Should this not show a view? Why are some showing in this list, and others with their own handlers?
-				this.log('Add devices (view shown as template)');
+				console.log('Add devices (view shown as template)');
 			}
 			if (viewId === 'done') {
-				// REVIEW: Should this not show a view? Why are some showing in this list, and others with their own handlers?
-				this.log('Done');
+				console.log('Done');
 			}
 		});
 
@@ -82,36 +79,30 @@ class CrownstoneDriver extends Homey.Driver {
 		 * This view will appear when the user is not yet logged in.
 		 */
 		session.setHandler('login', async (data) => {
-			this.log('Log in as ' + data.username);
+			console.log('Log in as ' + data.username);
 
 			let username = data.username;
 			let shasum = crypto.createHash('sha1');
 			shasum.update(String(data.password));
 			let passwordHash = shasum.digest('hex');
-			let loginState = false;
+			let loggedIn = false;
 			try {
-				loginState = await this.homey.app.setSettings(username, passwordHash);
-				if (!loginState) {
-					this.log('Failure logging in');
-					throw new Error('Failure logging in');
-					return;
-				}
+				loggedIn = await this.homey.app.setSettings(username, passwordHash);
 			}
 			catch(e) {
-				this.log('Error in logging in');
+				console.log('Error in logging in');
 				this.error(e);
-				throw new Error(e);
+				throw e;
 			}
-			// REVIEW: This cast should not be required.
-			const credentialsAreValid = Boolean(loginState);
-			this.log('CredentialsAreValid: ' + credentialsAreValid);
 
-			// REVIEW: This is not how we check for errors. Either the login state is a boolean, or an error should be thrown by the setSettings.
-			// This dirty response check implies a bad implementation.
-			if (typeof credentialsAreValid !== 'boolean') {
-				throw new Error('Invalid Response');
+			if (!loggedIn) {
+				console.log('Failure logging in');
+				let e = new Error('Failure logging in');
+				this.error(e);
+				throw e;
 			}
-			return credentialsAreValid;
+
+			return loggedIn;
 		});
 
 		/**
@@ -121,8 +112,8 @@ class CrownstoneDriver extends Homey.Driver {
 		session.setHandler('list_devices', async (data) => {
 			let deviceList = [];
 
-			if (!this.homey.app.isConfigured()) {
-				this.log('Not logged in');
+			if (!this.homey.app.loggedIn) {
+				console.log('Not logged in');
 				return deviceList;
 			}
 			
@@ -130,28 +121,27 @@ class CrownstoneDriver extends Homey.Driver {
 			session.emit('list_devices', deviceList);
 
 			// get sphere required before getting Crownstones
-			this.log('Get spheres');
+			console.log('Get spheres');
 			try {
-				await this.homey.app.getSpheres();
+				await this.homey.app.syncer.getSpheres();
 			}
 			catch(e) {
 				this.error(e);
-				// REVIEW: Why is the error re-wrapped in an Error object? Do we throw other things?
-				throw new Error(e);
+				throw e;
 			}
 			
-			this.log('Get Crownstones from cloud..');
+			console.log('Get Crownstones from cloud..');
 			try {
-				await this.homey.app.getCrownstones();
+				await this.homey.app.syncer.getCrownstones();
 			}
 			catch(e) {
 				this.error(e);
-				throw new Error(e);
+				throw e;
 			}
 
-			this.log('Extract devices.');
-			deviceList = this.homey.app.extractDevices();
-			this.log('Return devices');
+			console.log('Extract devices');
+			deviceList = this.homey.app.mapper.extractDevices();
+			console.log('Return devices');
 			return deviceList;
 		});
 	}

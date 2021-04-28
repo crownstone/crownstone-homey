@@ -16,8 +16,9 @@
 		}
 	},
 	"images": {
-		"large": "/assets/images/crownstone_logo_white_square_500x500.png",
-		"small": "/assets/images/crownstone_logo_white_square_75x75.png"
+		"small" : "/assets/images/crownstone_driver_75x75.png",
+		"large" : "/assets/images/crownstone_driver_500x500.png",
+		"xlarge": "/assets/images/crownstone_driver_1000x1000.png"
 	},
 	"pair": [
 		{

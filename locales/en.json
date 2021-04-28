@@ -1,7 +1,8 @@
 {
 	"settings": {
 		"title": "Crownstone configuration",
-		"intro": "Crownstones can be controlled over the internet. This is via de Crownstone app. That is the most robust and fastest method. The Crownstone app can be running in the background on your phone, as long as Bluetooth is enabled. The Crownstones can also be controlled directly over Bluetooth, but they will have to be close to the Homey. Bluetooth on the Homey is still in development and that means for example that a command can take up to 10 seconds.",
+		"intro": "Crownstones can be controlled over the internet. This is via de Crownstone app. That is the most robust and fastest method. The Crownstone app can be running in the background on your phone, as long as Bluetooth is enabled. The Crownstones can also be controlled directly over Bluetooth, but they will have to be close to the Homey. Bluetooth on the Homey is still in development and that means for example that a command can take up to 10 seconds. This is why this is not yet enabled.",
+		"devices": "Go to main window in the Homey app, select Devices, and click on the plus sign to add Crownstones",
 		"checkboxtitle": "Select how you would want to control the Crownstones.",
 		"blewarning": "Again, the Bluetooth LE connections are experimental. Do not use if you are not certain what it does.",
 		"next": "Continue",

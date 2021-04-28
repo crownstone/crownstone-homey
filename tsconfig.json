@@ -1,0 +1,19 @@
+{
+	"extends": "@tsconfig/node12/tsconfig.json",
+	"compilerOptions": {
+		"outDir": "build/",
+		"sourceMap": true,
+		"strictPropertyInitialization": false,
+		"downlevelIteration": true,
+		"target": "es6",
+		"module": "commonjs"
+	},
+	"include": [
+		"node_modules/crownstone-core/src/declarations/declarations.d.ts",
+		"node_modules/crownstone-cloud/src/declarations/declarations.d.ts",
+		"node_modules/crownstone-cloud/src/declarations/cloudTypes.d.ts",
+		"node_modules/crownstone-cloud/src/declarations/types.d.ts",
+		"source/homeyTypes.d.ts",
+		"**/**/*"
+	]
+}

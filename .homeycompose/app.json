@@ -21,25 +21,26 @@
     "homey:wireless:ble"
   ],
   "images": {
-    "large": "/assets/images/crownstone_logo_text_black_500x350.png",
-    "small": "/assets/images/crownstone_logo_text_black_250x175.png"
+    "small" : "/assets/images/crownstone_app_image_250x175.png",
+    "large" : "/assets/images/crownstone_app_image_500x350.png",
+    "xlarge": "/assets/images/crownstone_app_image_1000x700.png"
   },
   "author": {
-    "name": "Crownstone",
+    "name" : "Crownstone",
     "email": "ask@crownstone.rocks"
   },
   "contributor": {
     "developers": [
       {
-        "name": "Alex de Mulder",
+        "name" : "Alex de Mulder",
         "email": "alex@crownstone.rocks"
       },
       {
-        "name": "Anne van Rossum",
+        "name" : "Anne van Rossum",
         "email": "anne@crownstone.rocks"
       },
       {
-        "name": "Mart-Jan Koedam",
+        "name" : "Mart-Jan Koedam",
         "email": "martjan.koedam@gmail.com"
       }
     ]

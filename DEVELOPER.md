@@ -47,6 +47,12 @@ There are a few situations in which the app breaks functionality for current use
 
 In the [Documentation](https://apps-sdk-v3.developer.athom.com/tutorial-App%20Development%20Guidelines.html) of Athom, the development guidelines are explained and it tells you what to do when updating code functionality as shown above. 
 
+## Some idiosyncrasies
+
+The files `.homeycompose/app.json` and `drivers/crownstone/driver.compose.json` have a field `images`. These are 
+pictures that are shown on the Homey store. The app and driver icons are **not** in this json file. They are indirectly
+picked up through hardcoded paths and filenames such `assets/icon.svg` and `drivers/crownstone/assets/icon.svg`.
+
 ## Dependencies
 
 The Crownstone App is depending on 3 libraries:
