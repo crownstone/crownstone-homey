@@ -14,6 +14,7 @@
 		"node_modules/crownstone-cloud/src/declarations/cloudTypes.d.ts",
 		"node_modules/crownstone-cloud/src/declarations/types.d.ts",
 		"source/homeyTypes.d.ts",
+		"source/crownstoneTypes.d.ts",
 		"**/**/*"
 	]
 }

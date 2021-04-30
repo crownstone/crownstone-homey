@@ -2,28 +2,34 @@ import sourceMapSupport from 'source-map-support';
 sourceMapSupport.install();
 
 import Homey from 'homey';
-import { Cache } from './source/cache';
-import { Syncer } from './source/syncer';
+import { SlowCache } from './source/slowCache';
+import { FastCache } from './source/fastCache';
+import { Mirror } from './source/mirror';
 import { Mapper } from './source/mapper';
 import { Handler } from './source/handler';
+import { DeviceManager } from './source/deviceManager';
+import { ServerEvents } from './source/serverEvents';
 import { CrownstoneCloud } from 'crownstone-cloud';
 import { CrownstoneSSE } from 'crownstone-sse';
+
+const DEFAULT_POLL_PRESENCE_INTERVAL_MINUTES = 30;
 
 /**
  * The Crownstone app gets data about so-called spheres, rooms, and devices from the Crownstone cloud. 
  * The user fills in username and password. The latter is stored locally in the form of a hash.
  */
-class CrownstoneApp extends Homey.App {
+class CrownstoneApp extends Homey.App implements crownstone_App {
 
-	cache: Cache;
+	slowCache: SlowCache;
+	fastCache: FastCache;
 	cloud: CrownstoneCloud;
 	sse: CrownstoneSSE;
-	syncer: Syncer;
+	mirror: Mirror;
 	mapper: Mapper;
 	handler: Handler;
+	deviceManager: DeviceManager;
+	serverEvents: ServerEvents;
 	loggedIn: boolean;
-	useCloudConnection: any;
-	useBleConnection: any;
 	pollPresenceInterval: number;
 	pollPresenceFunction: NodeJS.Timeout;
 
@@ -35,11 +41,13 @@ class CrownstoneApp extends Homey.App {
 		console.log('Initialize Crownstone app');
 		this.cloud = new CrownstoneCloud();
 		this.sse = new CrownstoneSSE();
-		this.cache = new Cache();
-		this.syncer = new Syncer(this.cloud, this.cache);
-		this.mapper = new Mapper(this.cache);
+		this.slowCache = new SlowCache();
+		this.mirror = new Mirror(this.cloud, this.slowCache);
+		this.mapper = new Mapper(this.slowCache, this.fastCache);
 		// @ts-ignore
-		this.handler = new Handler(this.homey, this.mapper);
+		this.handler = new Handler(this.homey, this.fastCache);
+		this.deviceManager = new DeviceManager(this.homey);
+		this.serverEvents = new ServerEvents(this, this.sse);
 
 		// Disable logging for the cloud (logs every request and response)
 		this.cloud.log.config.setLevel('none');
@@ -60,15 +68,10 @@ class CrownstoneApp extends Homey.App {
 		console.log('Login to servers');
 		await this.synchronizeCloud();
 
-		this.pollPresenceInterval = 30;
+		this.pollPresenceInterval = DEFAULT_POLL_PRESENCE_INTERVAL_MINUTES;
 		await this.pollPresenceData();
 
 		this.handler.onInit();
-	}
-
-	getInternationalizedMessage(messageId: string) {
-		// @ts-ignore
-		return this.homey.__(messageId);
 	}
 
 	/**
@@ -89,13 +92,10 @@ class CrownstoneApp extends Homey.App {
 		};
 
 		console.log('Obtain all data from the cloud');
-		await this.syncer.getSpheres();
-		await this.syncer.getLocations();
-		await this.syncer.getUsers();
-		await this.syncer.getPresence();
-		await this.syncer.getCrownstones();
-		
-		this.updateDevices();
+		this.mirror.getAll();
+
+		// update homey devices
+		this.deviceManager.updateDevices();
 	}
 
 	/**
@@ -148,14 +148,14 @@ class CrownstoneApp extends Homey.App {
 	async setupConnections(email: string, password: string) {
 		this.loggedIn = false;
 		try {
-			await this.syncer.login(email, password);
+			await this.mirror.login(email, password);
 		}
 		catch(e) {
 			console.log('There was a problem logging into the Crownstone cloud:', e);
 			return;
 		}
 		try {
-			await this.loginToEventServer(email, password);
+			await this.serverEvents.login(email, password);
 		}
 		catch(e) {
 			console.log('There was a problem making a connection with the event server:', e);
@@ -171,87 +171,10 @@ class CrownstoneApp extends Homey.App {
 	 */
 	async pollPresenceData() {
 		this.pollPresenceFunction = setInterval(() => {
-			this.syncer.getPresence();
+			this.mirror.getPresence();
 		}, 1000 * 60 * this.pollPresenceInterval);
 	}
 
-	/**
-	 * This function will stop the code that listens to SSE events from the SSE server, authenticate and start
-	 * listening again.
-	 */
-	async loginToEventServer(email: string, password: string) {
-		await this.sse.stop();
-		await this.sse.loginHashed(email, password);
-		await this.sse.start(this.sseEventHandler);
-	}
-
-	/**
-	 * The sseEventHandler receives events from the sse-server and fires the runLocationTrigger-function
-	 * when a user enters or leaves a room.
-	 * todo: when the state of a Crownstone changes outside of the app, update the capabilityValue.
-	 *
-	 * Incoming events from the event server are of form (exit event example):
-	 *   {
-	 *     type: 'presence',
-	 *     subType: 'exitLocation',
-	 *     sphere: { id: '$sphereId', name: '$sphereName', uid: 1 },
-	 *     location: { id: '$locationId', name: '$locationName' },
-	 *     user: { id: '$userId', name: '$userName' }
-	 *   }
-	 */
-	sseEventHandler = (data: any) => {
-		//console.log(data);
-		if (data.type === 'system') {
-			// e.g. stream starting
-		}
-		if (data.type === 'presence') {
-			if (data.subType === 'enterLocation') {
-				this.runLocationTrigger(data, true);
-			}
-			if (data.subType === 'exitLocation') {
-				this.runLocationTrigger(data, false);
-			}
-		}
-		// deletion and addition of Crownstones
-		if (data.type === 'dataChange') {
-			if (data.subType === 'stones') {
-				if (data.operation === 'update') {
-					console.log('Data update event');
-					let deviceId = data.changedItem.id;
-					this.updateCrownstoneCapabilities(deviceId).catch(this.error);
-				}
-				if (data.operation === 'delete') {
-					console.log('Data deletion event');
-					let deviceId = data.changedItem.id;
-					this.deleteDevice(deviceId).catch(this.error);
-				}
-			}
-		}
-		if (data.type === 'abilityChange') {
-			if (data.subType === 'dimming') {
-				console.log('Ability change event');
-				let deviceId = data.stone.id;
-				let dimAbilityState = data.ability.enabled;
-				this.setDimmingAbilityState(deviceId, dimAbilityState).catch(this.error);
-			}
-		}
-		if (data.type === 'switchStateUpdate') {
-			if (data.subType === 'stone') {
-				console.log('Update status of Crownstone');
-				let deviceId = data.crownstone.id;
-				let device = this.getDevice(deviceId);
-				if (device) {
-					// @ts-ignore
-					device.changeOnOffStatus(data.crownstone.percentage);
-				}
-			}
-		}
-		if (data.type === 'command') {
-			if (data.subType === 'multiSwitch') {
-				// this is the command we should rather react to a switchStateUpdate
-			}
-		}
-	};
 	
 	/**
 	 * This function will update the user locations and fire the trigger for the flows that use this as event.
@@ -263,113 +186,9 @@ class CrownstoneApp extends Homey.App {
 		let location = data.location;
 		if (!enterEvent) {
 			console.log("Ignore exit events (for now)");
+			return;
 		}
 		await this.handler.moveUser(user, location);
-	}
-
-
-	/********************************** Interface with Crownstone device driver **************************************/
-
-	/**
-	 * Get the Homey device from the Crownstone driver given a device id.
-	 */
-	getDevice(deviceId: string) {
-		let driver;
-		try {
-			// @ts-ignore
-			driver = this.homey.drivers.getDriver('crownstone');
-		} catch(e) {
-			console.log('Driver not (yet) available');
-			return;
-		}
-		let data = { id: deviceId };
-		let device = driver.getDevice(data);
-		return device;
-	}
-
-	/**
-	 * Update devices to be sure they are up to date w.r.t. state and capabilities. The order of initialization
-	 * in version 3 of Homey should be first app and then devices.
-	 */
-	updateDevices() {
-		let driver;
-		try {
-			// @ts-ignore
-			driver = this.homey.drivers.getDriver('crownstone');
-		} catch(e) {
-			console.log('Driver not (yet) available');
-			return;
-		}
-		let devices = driver.getDevices();
-		for (let i = 0; i < devices.length; ++i) {
-			let device = devices[i];
-			// @ts-ignore
-			device.updateCrownstoneCapabilities();
-			// @ts-ignore
-			device.updateCrownstoneState();
-		}
-	}
-
-	/**
-	 * Update dimming ability setting of a particular Crownstone within Homey.
-	 */
-	async setDimmingAbilityState(deviceId: string, dimAbilityState: boolean) {
-		let device = this.getDevice(deviceId);
-		if (!device) {
-			console.log("Device " + deviceId + " cannot be found");
-			return;
-		}
-	
-		try {
-			// @ts-ignore
-			await device.changeDimCapability(dimAbilityState);
-		}
-		catch(e) {
-			console.log('There was a problem updating the dimming capability of a device:', e);
-		};
-	}
-
-	/**
-	 * Update "locked" information about Crownstone by updating all capabilities from the cloud (it is a single call).
-	 */
-	async updateCrownstoneCapabilities(deviceId: string) {
-		let device = this.getDevice(deviceId);
-		if (!device) {
-			console.log("Device " + deviceId + " cannot be found, cannot lock.");
-			return;
-		}
-
-		// @ts-ignore
-		device.updateCrownstoneCapabilities();
-	}
-
-	/**
-	 * Update "state" of the Crownstone
-	 */
-	async updateCrownstoneState(deviceId: string) {
-		let device = this.getDevice(deviceId);
-		if (!device) {
-			console.log("Device " + deviceId + " cannot be found, cannot update state.");
-			return;
-		}
-
-		// @ts-ignore
-		device.updateCrownstoneState();
-	}
-
-	/**
-	 * This function will set the device as unavailable, since there is no method to delete a device from
-	 * the app yet.
-	 */
-	async deleteDevice(deviceId: string) {
-		let device = this.getDevice(deviceId);
-		if (!device) {
-			console.log("Device " + deviceId + " cannot be found, cannot delete it.");
-			return;
-		}
-		let msg = this.getInternationalizedMessage('deletedMessage');
-		await device.setUnavailable(msg);
-		await device.setStoreValue('deleted', true);
 	}
 
 }

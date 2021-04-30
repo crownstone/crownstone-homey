@@ -1,7 +1,7 @@
 interface homey_Room {
-	id: string,
-	name: string,
-	icon: string,
+	id: string;
+	name: string;
+	icon: string;
 }
 
 interface homey_User {
@@ -9,8 +9,19 @@ interface homey_User {
 	name: string;
 }
 
-type user_in_room = Record<user_id, location_id>;
-
-interface Crownstone_Device extends Device {
-
+interface homey_Device {
+	name: string;
+	data: {
+		id: string;
+	}
+	icon: string;
+	store: {
+		address: string;
+		locked: boolean;
+		dimmerEnabled: boolean;
+		activeConnection: boolean;
+		deleted: boolean;
+		sphereId: string;
+	}
 }
+

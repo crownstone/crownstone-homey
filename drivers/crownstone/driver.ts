@@ -1,27 +1,30 @@
-'use strict';
-
-const Homey = require('homey');
-const crypto = require('crypto');
+import Homey, { PairSession } from 'homey';
+import crypto from 'crypto';
 
 /**
  * The driver is called to list the devices when a user starts to use the app for the first time. It will query
  * the cloud for a list of Crownstone devices. For that it will get a particular sphere (indicated by the location
  * of the user's smartphone).
  */
-class CrownstoneDriver extends Homey.Driver {
+class CrownstoneDriver extends Homey.Driver implements crownstone_Driver {
+
+	app: crownstone_App;
 
 	/**
 	 * This method is called when the Driver is initialized.
 	 */
-	onInit() {
+	async onInit() {
 		console.log('Crownstone driver has been initialized');
+
+		// @ts-ignore
+		this.app = this.homey.app;
 	}
 
 	/**
 	 * This method will control the views which are shown to the user.
 	 * The session property passed in onPair can control the front-end programmatically.
 	 */
-	async onPair(session) {
+	async onPair(session: PairSession) {
 
 		/**
 		 * We call Homey.showView from the confirmation view. If a user clicks the 'next' button we want to navigate to
@@ -32,9 +35,10 @@ class CrownstoneDriver extends Homey.Driver {
 		session.setHandler('showView', async (viewId) => {
 			if (viewId === 'loading') {
 				console.log('Loading');
-				if (this.homey.app.loginState) {
+				if (this.app.loggedIn) {
 					console.log('Show view confirmation');
 					try {
+						// @ts-ignore
 						await session.showView('confirmation');
 					}
 					catch(e) {
@@ -46,6 +50,7 @@ class CrownstoneDriver extends Homey.Driver {
 				else {
 					console.log('Show view login credentials');
 					try {
+						// @ts-ignore
 						await session.showView('login_credentials');
 					}
 					catch(e) {
@@ -62,7 +67,7 @@ class CrownstoneDriver extends Homey.Driver {
 				console.log('Set fields for login form');
 				this.homey.settings.set('email', '');
 				this.homey.settings.set('password', '');
-				this.homey.app.loginState = false;
+				this.app.loggedIn = false;
 			}
 			if (viewId === 'list_devices') {
 				console.log('List devices (view shown as template)');
@@ -87,7 +92,8 @@ class CrownstoneDriver extends Homey.Driver {
 			let passwordHash = shasum.digest('hex');
 			let loggedIn = false;
 			try {
-				loggedIn = await this.homey.app.setSettings(username, passwordHash);
+				// @ts-ignore
+				loggedIn = await this.app.setSettings(username, passwordHash);
 			}
 			catch(e) {
 				console.log('Error in logging in');
@@ -110,37 +116,34 @@ class CrownstoneDriver extends Homey.Driver {
 		 * templates from Homey and should automatically guide the user further.
 		 */
 		session.setHandler('list_devices', async (data) => {
-			let deviceList = [];
+			let deviceList = this.app.fastCache.deviceList;
 
-			if (!this.homey.app.loggedIn) {
+			if (!this.app.loggedIn) {
 				console.log('Not logged in');
 				return deviceList;
 			}
 			
 			// emit when devices are still being searched
+			// @ts-ignore
 			session.emit('list_devices', deviceList);
 
-			// get sphere required before getting Crownstones
-			console.log('Get spheres');
+			// get spheres and Crownstones (not needed to get everything, will delay GUI a lot)
+			console.log('Get spheres and Crownstones');
 			try {
-				await this.homey.app.syncer.getSpheres();
+				await this.app.mirror.getSpheres();
+				await this.app.mirror.getCrownstones();
 			}
 			catch(e) {
 				this.error(e);
 				throw e;
-			}
-			
-			console.log('Get Crownstones from cloud..');
-			try {
-				await this.homey.app.syncer.getCrownstones();
-			}
-			catch(e) {
-				this.error(e);
-				throw e;
+				return deviceList;
 			}
 
-			console.log('Extract devices');
-			deviceList = this.homey.app.mapper.extractDevices();
+			console.log('Map devices to proper struct');
+			this.app.mapper.mapDevices();
+
+			// Return list of devices
+			deviceList = this.app.fastCache.deviceList;
 			console.log('Return devices');
 			return deviceList;
 		});

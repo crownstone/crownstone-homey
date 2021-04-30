@@ -1,24 +1,22 @@
-import { Cache } from './cache';
+import { SlowCache } from './slowCache';
+import { FastCache } from './fastCache';
 
 /**
- * Maps structs to entities that Homey understands.
+ * Maps structs to entities that Homey understands. Gets them from the slow cache and stores them in the fast cache.
  *
  */
 export class Mapper {
 
-	cache: Cache;
+	slowCache: SlowCache;
+	fastCache: FastCache;
 
-	roomList: homey_Room[];
-	userList: homey_User[];
-
-	constructor(cache: Cache) {
-		this.cache = cache;
-		this.roomList = [];
-		this.userList = [];
+	constructor(slowCache: SlowCache, fastCache: FastCache) {
+		this.slowCache = slowCache;
+		this.fastCache = fastCache;
 	}
 
 	/**
-	 * Extract rooms from the locations list. The location object is formatted as follows:
+	 * Map rooms from the locations list. The location object is formatted as follows:
 	 *
 	 * ```
 	 *   {
@@ -32,54 +30,58 @@ export class Mapper {
 	 *   }
 	 * ```
 	*/
-	extractRooms() {
-		this.roomList = [];
-		if (!this.cache.locationsAvailable()) {
+	mapRooms() {
+		// clear cache
+		this.fastCache.roomList = [];
+
+		if (!this.slowCache.locationsAvailable()) {
 			console.log('There are no locations found!');
-			return this.roomList;
+			return false;
 		}
 
-		for (const locationId in this.cache.locations) {
-			const location = this.cache.locations[locationId];
+		for (const locationId in this.slowCache.locations) {
+			const location = this.slowCache.locations[locationId];
 			let roomIcon = 'icons/' + location.icon + '.svg';
 			const room = {
 				name: location.name,
 				id: location.id,
 				icon: roomIcon
 			};
-			this.roomList.push(room);
+			this.fastCache.roomList.push(room);
 		}
-		console.log('List with rooms:', this.roomList);
-		return this.roomList;
+		console.log('List with rooms:', this.fastCache.roomList);
+		return true;
 	}
 
 	/**
-	 * Extract users in a list in a way that is easier to manipulate.
+	 * Map users in a list in a way that is easier to manipulate.
 	 */
-	extractUsers() {
-		this.userList = [];
+	mapUsers() {
+		// clear cache
+		this.fastCache.userList = [];
+
 		console.log('Get users from all spheres');
-		if (!this.cache.spheresAvailable()) {
+		if (!this.slowCache.spheresAvailable()) {
 			console.log('There are no spheres found!');
-			return;
+			return false;
 		}
 
 		// iterate over each sphere and add admins, members, and guests to the user list
-		for (const sphereId in this.cache.sphereUsers) {
-			const sphereUsers = this.cache.sphereUsers[sphereId];
+		for (const sphereId in this.slowCache.sphereUsers) {
+			const sphereUsers = this.slowCache.sphereUsers[sphereId];
 			if (!sphereUsers) {
 				console.log('No users in sphere: ' + sphereId);
 				continue;
 			}
-			this.addUsersToList(this.userList, sphereUsers.admins);
-			this.addUsersToList(this.userList, sphereUsers.members);
-			this.addUsersToList(this.userList, sphereUsers.guests);
+			this._addUsersToList(this.fastCache.userList, sphereUsers.admins);
+			this._addUsersToList(this.fastCache.userList, sphereUsers.members);
+			this._addUsersToList(this.fastCache.userList, sphereUsers.guests);
 		}
 
 		// return empty list if there are no users found
-		if (this.userList.length == 0) {
+		if (this.fastCache.userList.length == 0) {
 			console.log('Unable to find users');
-			return this.userList;
+			return this.fastCache.userList;
 		}
 
 		// add "any user" to the front of the list
@@ -87,15 +89,15 @@ export class Mapper {
 			name: 'Anybody',
 			id: 'default',
 		};
-		this.userList.unshift(anyUser);
-		console.log('List with users:', this.userList);
-		return this.userList;
+		this.fastCache.userList.unshift(anyUser);
+		console.log('List with users:', this.fastCache.userList);
+		return true;
 	}
 
 	/**
-	 * A helper function for extractUsers. This pushes all not-yet existing users to the given userList.
+	 * A helper function for mapUsers. This pushes all not-yet existing users to the given userList.
 	 */
-	addUsersToList(userList: homey_User[], users: cloud_UserData[]) {
+	_addUsersToList(userList: homey_User[], users: cloud_UserData[]) {
 		if (!users) return;
 
 		for (let i = 0; i < users.length; i++) {
@@ -104,7 +106,7 @@ export class Mapper {
 				id: users[i].id,
 			};
 			// skip if already on list
-			const checkId = (item: { id: string; }) => item.id === user.id;
+			const checkId = (item: { id: string }) => { return item.id === user.id; }
 			if (userList.some(checkId)) {
 				continue;
 			}
@@ -113,89 +115,98 @@ export class Mapper {
 	}
 	
 	/**
-	 * Extract Crownstone devices in a list in such a way that it can be presented by Homey.
+	 * Map Crownstone devices in such a way that it can be presented by Homey.
 	 */
-	extractDevices() {
-		const deviceList = [];
+	mapDevices(): boolean {
+		// clear cache
+		this.fastCache.deviceList = [];
+
 		console.log('Get devices from all spheres');
-		if (!this.cache.spheresAvailable()) {
+		if (!this.slowCache.spheresAvailable()) {
 			console.log('There are no spheres found!');
+			return false;
 		}
 
-		for (const sphereId in this.cache.sphereStones) {
-			const crownstones = this.cache.sphereStones[sphereId];
+		for (const sphereId in this.slowCache.sphereStones) {
+			// do just ignore result for now, empty spheres are fine
+			this.mapDevicesInSphere(sphereId);
+		}
+		return true;
+	}
 
-			for (let i = 0; i < crownstones.length; ++i) {
-				let crownstone = crownstones[i];
+	/**
+	 * Map Crownstone devices for a particular sphere
+	 */
+	mapDevicesInSphere(sphereId: string): boolean {
+		const crownstones = this.slowCache.sphereStones[sphereId];
+		if (!crownstones) {
+			console.log('No devices in sphere' + sphereId);
+			return false;
+		}
 
-				// get dimming ability from abilities (default false)
-				let dimmingEnabled = false;
-				if (crownstone.abilities) {
-					for (let j = 0; j < crownstone.abilities.length; j++) {
-						let ability = crownstone.abilities[j];
-						if (ability.type === 'dimming') {
-							if (ability.enabled) {
-								dimmingEnabled = true;
-							}
-							break;
-						}
+		for (let i = 0; i < crownstones.length; ++i) {
+			let crownstone = crownstones[i];
+			let device = this._getDevice(crownstone);
+			this.fastCache.deviceList.push(device);
+		}
+		return true;
+	}
+
+	/**
+	 * Map only a specific Crownstone. This is not efficient to use in a loop. Use mapDevicesInSphere for this.
+	 * However, it is more efficient if you only need to update a single Crownstone.
+	 */
+	mapDeviceInSphere(sphereId: string, deviceId: string): boolean {
+		const crownstones = this.slowCache.sphereStones[sphereId];
+		if (!crownstones) {
+			console.log('No devices in sphere' + sphereId);
+			return false;
+		}
+
+		for (let i = 0; i < crownstones.length; ++i) {
+			let crownstone = crownstones[i];
+			if (crownstone.id != deviceId) {
+				continue;
+			}
+
+			let device = this._getDevice(crownstone);
+			this.fastCache.updateDevice(device);
+		}
+		return true;
+	}
+
+	_getDevice(crownstone: any): homey_Device {
+		// get dimming ability from abilities (default false)
+		let dimmingEnabled = false;
+		if (crownstone.abilities) {
+			for (let j = 0; j < crownstone.abilities.length; j++) {
+				let ability = crownstone.abilities[j];
+				if (ability.type === 'dimming') {
+					if (ability.enabled) {
+						dimmingEnabled = true;
 					}
+					break;
 				}
-
-				let deviceIcon = 'icons/' + crownstone.icon + '.svg';
-				const device = {
-					name: crownstone.name,
-					data: {
-						id: crownstone.id,
-					},
-					icon: deviceIcon,
-					store: {
-						address: crownstone.address,
-						locked: crownstone.locked,
-						dimmerEnabled: dimmingEnabled,
-						activeConnection: false,
-						deleted: false,
-						sphereId: sphereId,
-					},
-				};
-				deviceList.push(device);
 			}
 		}
-		return deviceList;
-	}
-	
-	/**
-	 * Operates on the roomList array in this class. Alternatively, we could get it out of the cache. However, this
-	 * implementation makes it similar to userExists.
-	 */
-	roomIndex(roomId: string) {
-		for (let i = 0; i < this.roomList.length; ++i) {
-			if (this.roomList[i].id == roomId) {
-				return i;
-			}
-		}
-		return -1;
-	}
 
-	/**
-	 * Operates on the userList array in this class. Alternatively, we could iterate over the cache (sphereUsers and
-	 * then per sphere admins, users, guests, etc.). The latter is more cumbersome.
-	 */
-	userIndex(userId: string) {
-		for (let i = 0; i < this.userList.length; ++i) {
-			if (this.userList[i].id == userId) {
-				return i;
-			}
-		}
-		return -1;
-	}
-
-	roomExists(roomId: string) {
-		return (this.roomIndex(roomId) >= 0);
-	}
-
-	userExists(userId: string) {
-		return (this.userIndex(userId) >= 0);
+		let deviceIcon = 'icons/' + crownstone.icon + '.svg';
+		const device = {
+			name: crownstone.name,
+			data: {
+				id: crownstone.id,
+			},
+			icon: deviceIcon,
+			store: {
+				address: crownstone.address,
+				locked: crownstone.locked,
+				dimmerEnabled: dimmingEnabled,
+				activeConnection: false,
+				deleted: false,
+				sphereId: crownstone.sphereId,
+			},
+		};
+		return device;
 	}
 }
 

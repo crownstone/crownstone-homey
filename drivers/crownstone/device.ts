@@ -1,9 +1,10 @@
-const Homey = require('homey');
+import Homey from 'homey';
 
-class CrownstoneDevice extends Homey.Device {
+class CrownstoneDevice extends Homey.Device implements crownstone_Device {
 
 	id: string;
 	name: string;
+	app: crownstone_App;
 
 	/**
 	 * This method is called when the Device is initialized.
@@ -12,7 +13,7 @@ class CrownstoneDevice extends Homey.Device {
 	 * changed.
 	 */
 	async onInit() {
-
+		// @ts-ignore
 		this.id = this.getData().id;
 		this.name = this.getName();
 
@@ -22,7 +23,8 @@ class CrownstoneDevice extends Homey.Device {
 			return;
 		}
 
-		this.cloud = this.homey.app.cloud;
+		// @ts-ignore
+		this.app = this.homey.app;
 		await this.updateCrownstoneCapabilities();
 		await this.updateCrownstoneState();
 		this.registerCapabilityListener('onoff', this.onCapabilityOnoff.bind(this));
@@ -30,18 +32,20 @@ class CrownstoneDevice extends Homey.Device {
 		console.log('Initialized "' + this.name + '" (id=' + this.id + ')');
 	}
 
+
+
 	/**
 	 * Get all capabilities of a Crownstone from the cloud and set the corresponding values.
 	 *
 	 * Return struct with fields such as .locked and .type : 'dimming'
 	 */
 	async updateCrownstoneCapabilities() {
-		if (!this.homey.app.loggedIn) {
+		if (!this.app.loggedIn) {
 			console.log("Not logged in yet, skip");
 			return;
 		}
 		// get capabilities from the cloud
-		let crownstoneCapabilities = await this.cloud.crownstone(this.id).data();
+		let crownstoneCapabilities = await this.app.cloud.crownstone(this.id).data();
 
 		// set lock to enabled/disabled
 		let lockEnabled = crownstoneCapabilities.locked;
@@ -62,13 +66,13 @@ class CrownstoneDevice extends Homey.Device {
 	 * Get the state of a Crownstone from a cloud and update the Homey app with this state information.
 	 */
 	async updateCrownstoneState() {
-		if (!this.homey.app.loggedIn) {
+		if (!this.app.loggedIn) {
 			console.log("Not logged in yet, skip");
 			return;
 		}
 
 		// switch state
-		let currentSwitchState = await this.cloud.crownstone(this.id).currentSwitchState();
+		let currentSwitchState = await this.app.cloud.crownstone(this.id).currentSwitchState();
 		await this.changeOnOffStatus(currentSwitchState);
 	}
 
@@ -145,13 +149,13 @@ class CrownstoneDevice extends Homey.Device {
 	 * It will use the cloud to dim the Crownstone.
 	 */
 	async onCapabilityDim(dimValue: number) {
-		if (!this.homey.app.loggedIn) {
+		if (!this.app.loggedIn) {
 			console.log("Not logged in yet");
 			return;
 		}
 		let percentage = dimValue * 100;
 		console.log("Set dimmer level in cloud to " + percentage);
-		await this.cloud.crownstone(this.id).setSwitch(percentage);
+		await this.app.cloud.crownstone(this.id).setSwitch(percentage);
 	}
 
 	/**
@@ -159,7 +163,7 @@ class CrownstoneDevice extends Homey.Device {
 	 * It will use the Crownstone Cloud to switch the device.
 	 */
 	async onCapabilityOnoff(switchValue: number) {
-		if (!this.homey.app.loggedIn) {
+		if (!this.app.loggedIn) {
 			console.log("Not logged in yet");
 			return;
 		}
@@ -167,11 +171,11 @@ class CrownstoneDevice extends Homey.Device {
 
 		if (switchValue) {
 			console.log('Turn on "' + this.name + '"');
-			await this.cloud.crownstone(this.id).turnOn();
+			await this.app.cloud.crownstone(this.id).turnOn();
 		}
 		else {
 			console.log('Turn off "' + this.name + '"');
-			await this.cloud.crownstone(this.id).turnOff();
+			await this.app.cloud.crownstone(this.id).turnOff();
 		}
 	}
 

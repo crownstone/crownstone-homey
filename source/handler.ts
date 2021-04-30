@@ -1,4 +1,4 @@
-import { Mapper } from './mapper';
+import { FastCache } from './fastCache';
 
 /**
  * Handles incoming Homey events and updates Homey the other way around as well.
@@ -7,15 +7,15 @@ import { Mapper } from './mapper';
  */
 export class Handler {
 	homey: any;
-	mapper: Mapper;
+	fastCache: FastCache;
 	presenceTrigger: any;
 	presenceCondition: any;
 	
 	presence: user_in_room = {};
 
-	constructor(homey: any, mapper: Mapper) {
+	constructor(homey: any, fastCache: FastCache) {
 		this.homey = homey;
-		this.mapper = mapper;
+		this.fastCache = fastCache;
 	}
 
 	onInit() {
@@ -55,7 +55,7 @@ export class Handler {
 
 			// run the flow if the room exists (and no specific user has been specified)
 			if (userId === 'default') {
-				return this.mapper.roomExists(roomId);
+				return this.fastCache.roomExists(roomId);
 			}
 
 			return (this.presence[userId] === roomId);
@@ -66,8 +66,8 @@ export class Handler {
 		 * This code returns a list of rooms in a sphere which is shown to the user.
 		 */
 		this.presenceTrigger.getArgument('rooms').registerAutocompleteListener(() => {
-			console.log('Extract rooms for presence trigger');
-			return this.mapper.extractRooms();
+			console.log('Get rooms for presence trigger');
+			return this.fastCache.roomList;
 		});
 
 		/**
@@ -75,8 +75,8 @@ export class Handler {
 		 * This code returns a list of users in a sphere.
 		 */
 		this.presenceTrigger.getArgument('users').registerAutocompleteListener(() => {
-			console.log('Extract users for presence trigger');
-			return this.mapper.extractUsers();
+			console.log('Get users for presence trigger');
+			return this.fastCache.userList;
 		});
 
 		/**
@@ -84,8 +84,8 @@ export class Handler {
 		 * This code returns a list of rooms in a sphere.
 		 */
 		this.presenceCondition.getArgument('rooms').registerAutocompleteListener(() => {
-			console.log('Extract rooms for presence condition');
-			return this.mapper.extractRooms();
+			console.log('Get rooms for presence condition');
+			return this.fastCache.roomList;
 		});
 
 		/**
@@ -93,8 +93,8 @@ export class Handler {
 		 * This code returns a list of users in a sphere.
 		 */
 		this.presenceCondition.getArgument('users').registerAutocompleteListener(() => {
-			console.log('Extract users for presence condition');
-			return this.mapper.extractUsers();
+			console.log('Get users for presence condition');
+			return this.fastCache.userList;
 		});
 
 	}
