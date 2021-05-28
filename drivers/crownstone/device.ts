@@ -7,10 +7,8 @@ class CrownstoneDevice extends Homey.Device implements crownstone_Device {
 	app: crownstone_App;
 
 	/**
-	 * This method is called when the Device is initialized.
-	 * It will obtain the cloud instance and the access token.
-	 * It will query an update for all the devices in case their lock-state and dim-capability was
-	 * changed.
+	 * The device initialization procedure will query app.cloud for data about the device capabilities, for example 
+	 * dim capability and lock state.
 	 */
 	async onInit() {
 		// @ts-ignore
@@ -31,8 +29,6 @@ class CrownstoneDevice extends Homey.Device implements crownstone_Device {
 		this.registerCapabilityListener('dim', this.onCapabilityDim.bind(this));
 		console.log('Initialized "' + this.name + '" (id=' + this.id + ')');
 	}
-
-
 
 	/**
 	 * Get all capabilities of a Crownstone from the cloud and set the corresponding values.
@@ -137,7 +133,8 @@ class CrownstoneDevice extends Homey.Device implements crownstone_Device {
 		if (this.getCapabilities().includes('dim')) {
 			console.log('Set "' + this.name + '" to dim state ' + switchState);
 			await this.setCapabilityValue('dim', switchState/100);
-			return;
+			// we will also turn it on/off as well
+			// return;
 		}
 		let turnOn = (switchState > 0);
 		console.log('Set "' + this.name + '" to switch state ' + (turnOn ? 'ON' : 'OFF'));
@@ -180,15 +177,15 @@ class CrownstoneDevice extends Homey.Device implements crownstone_Device {
 	}
 
 	/**
-	 * this method is called when the Device is added.
+	 * Homey has added the device, just log.
 	 */
-	onAdded() {
-		console.log(this.getName() + ' has been added.');
-	}
+	//onAdded() {
+	//	console.log(this.getName() + ' has been added.');
+	//}
 
 	/**
-	 * this method is called when the Device is deleted.
-	 * */
+	 * Homey has deleted the device, just log.
+	 */
 	onDeleted() {
 		console.log(this.getName() + ' has been deleted.');
 	}

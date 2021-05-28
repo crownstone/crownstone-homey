@@ -16,9 +16,15 @@ export class Handler {
 	constructor(homey: any, fastCache: FastCache) {
 		this.homey = homey;
 		this.fastCache = fastCache;
+
+		// We can just initialize in the constructor for this class
+		this.onInit();
 	}
 
 	onInit() {
+
+		console.log('Initialize handler');
+
 		this.presenceTrigger = this.homey.flow.getTriggerCard('user_enters_room');
 		this.presenceCondition = this.homey.flow.getConditionCard('user_presence');
 
@@ -100,7 +106,7 @@ export class Handler {
 	}
 
 	/**
-	 * Moves a user from room to another.
+	 * Moves a user from one room to another.
 	 */
 	async moveUser(user: homey_User, room: homey_Room) {
 		let roomId = this.presence[user.id];

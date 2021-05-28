@@ -63,23 +63,25 @@ export class ServerEvents {
 				case 'create': {
 					console.log('Create Crownstone event');
 					console.log(data);
+					// note that we do all this, but Homey does not support auto-creation of devices
 					let deviceId = data.changedItem.id;
 					// we get the new item from the cloud
 					let sphereUid = data.sphere.uid;
-					let sphereId = this.app.slowCache.sphereByUid(data.sphere.uid);
-					if (sphereId) {
-						this.app.mirror.getCrownstone(sphereId, deviceId);
+					let sphere = this.app.slowCache.sphereByUid(data.sphere.uid);
+					if (sphere) {
+						this.app.mirror.getCrownstone(sphere.sphereId, deviceId);
 					} else {
 						// just get all spheres and devices
 						this.app.mirror.getSpheres();
 						this.app.mirror.getDevices();
 					}
-					this.app.mapper
-					//this.app.deviceManager.addDevice(deviceId);
+					this.app.mapper.mapDevices();
+					this.app.deviceManager.addDevice(deviceId);
 					break;
 				}
 				case 'update': {
 					console.log('Update Crownstone event');
+					console.log(data);
 					let deviceId = data.changedItem.id;
 					this.app.deviceManager.updateCrownstoneCapabilities(deviceId);
 					break;

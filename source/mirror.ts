@@ -50,7 +50,7 @@ export class Mirror {
 			return;
 		}
 
-		console.log('Get spheres');
+		console.log('Get spheres for slow cache');
 		//if (this.slowCache.spheres) {
 		//	console.log('Spheres already obtained');
 		//	return;
@@ -141,6 +141,11 @@ export class Mirror {
 		}
 		console.log('Get users');
 
+		if (!this.slowCache.spheres) {
+			console.log('No spheres in slow cache');
+			return;
+		}
+
 		for (const sphereId in this.slowCache.spheres) {
 
 			if (this.slowCache.sphereUsers && this.slowCache.sphereUsers[sphereId]) {
@@ -149,6 +154,7 @@ export class Mirror {
 			}
 
 			try {
+				console.log('Get users for sphere ' + sphereId);
 				const users = await this.cloud.sphere(sphereId).users();
 				this.slowCache.sphereUsers[sphereId] = users;
 			}
@@ -169,7 +175,12 @@ export class Mirror {
 			return;
 		}
 		console.log("Get presence");
-		
+
+		if (!this.slowCache.spheres) {
+			console.log('No spheres in slow cache');
+			return;
+		}
+
 		for (const sphereId in this.slowCache.spheres) {
 			
 			if (this.slowCache.spherePresence && this.slowCache.spherePresence[sphereId]) {
@@ -192,7 +203,9 @@ export class Mirror {
 	 */
 	async getCrownstone(sphereId: string, crownstoneId: string) {
 
+		console.log("Get in sphere " + sphereId + " the Crownstone " + crownstoneId);
 		let sphere = this.slowCache.spheres[sphereId];
+		console.log(sphere);
 
 		if (!sphere) {
 			// TODO: this gets all spheres from the cloud (not just the one that needs updated)

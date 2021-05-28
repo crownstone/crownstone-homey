@@ -143,7 +143,7 @@
       },
       "pair": [
         {
-          "id": "loading",
+          "id": "starting",
           "template": "loading"
         },
         {
@@ -169,22 +169,16 @@
           "template": "list_devices",
           "navigation": {
             "prev": "login_credentials",
-            "next": "add_devices"
+            "next": "loading"
           }
+        },
+        {
+          "id": "loading",
+          "template": "loading"
         },
         {
           "id": "add_devices",
-          "template": "add_devices",
-          "navigation": {
-            "next": "done"
-          }
-        },
-        {
-          "id": "done",
-          "template": "done",
-          "navigation": {
-            "prev": "add_devices"
-          }
+          "template": "add_devices"
         }
       ],
       "id": "crownstone"

@@ -27,7 +27,12 @@ export class DeviceManager {
 			return;
 		}
 		let data = { id: deviceId };
-		let device = driver.getDevice(data);
+		let device = null;
+		try {
+			device = driver.getDevice(data);
+		} catch(e) {
+			console.log('Driver error for device ' + deviceId + ' (likely not known)');
+		}
 		return device;
 	}
 
@@ -112,7 +117,20 @@ export class DeviceManager {
 			return;
 		}
 		let msg = this.getInternationalizedMessage('deletedMessage');
-		await device.setUnavailable(msg);
-		await device.setStoreValue('deleted', true);
+		try {
+			console.log('Set device to deleted/unavailable');
+			await device.setUnavailable(msg);
+			await device.setStoreValue('deleted', true);
+		} catch(e) {
+			console.log(e);
+		}
+	}
+
+	/**
+	 * Add a new device.
+	 */
+	async addDevice(deviceId: string) {
+		// the user has to add a device manually
+		console.log("Homey does not allow the software to automatically add a device");
 	}
 }

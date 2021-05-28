@@ -9,6 +9,7 @@
 		"logout": "Log uit",
 		"submit": "Bevestigen",
 		"lockedMessage": "Deze Crownstone is expres vergrendeld en daarmee niet 'beschikbaar'. Ontgrendel de Crownstone in de Crownstone app als je deze toch wil bedienen.",
-		"deletedMessage": "Deze Crownstone is verwijderd."
+		"deletedMessage": "Deze Crownstone is verwijderd.",
+		"failureLoggingIn": "Fout bij het inloggen, probeer alstublieft opnieuw."
 	}
 }

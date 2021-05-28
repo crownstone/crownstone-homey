@@ -9,6 +9,7 @@
 		"logout": "Log out",
 		"submit": "Submit",
 		"lockedMessage": "This device is unavailable because it is locked on purpose. Unlock your device in the Crownstone app if you want to control it",
-		"deletedMessage": "This device has been deleted."
+		"deletedMessage": "This device has been deleted.",
+		"failureLoggingIn": "Failure logging in. Please, try again."
 	}
 }

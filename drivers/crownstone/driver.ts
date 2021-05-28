@@ -21,10 +21,20 @@ class CrownstoneDriver extends Homey.Driver implements crownstone_Driver {
 	}
 
 	/**
+	 * Get the message for the user as defined in locales/(lang}.json given an identifier.
+	 */
+	getInternationalizedMessage(messageId: string) {
+		// @ts-ignore
+		return this.homey.__(messageId);
+	}
+
+	/**
 	 * This method will control the views which are shown to the user.
 	 * The session property passed in onPair can control the front-end programmatically.
 	 */
 	async onPair(session: PairSession) {
+		
+		console.log('Crownstone driver pairing session');
 
 		/**
 		 * We call Homey.showView from the confirmation view. If a user clicks the 'next' button we want to navigate to
@@ -33,8 +43,8 @@ class CrownstoneDriver extends Homey.Driver implements crownstone_Driver {
 		 * Note that for a lot of views there is already a default Homey view defined.
 		 */
 		session.setHandler('showView', async (viewId) => {
-			if (viewId === 'loading') {
-				console.log('Loading');
+			if (viewId === 'starting') {
+				console.log('Starting');
 				if (this.app.loggedIn) {
 					console.log('Show view confirmation');
 					try {
@@ -42,6 +52,7 @@ class CrownstoneDriver extends Homey.Driver implements crownstone_Driver {
 						await session.showView('confirmation');
 					}
 					catch(e) {
+						// The error we get, we pass through to the user (unchanged).
 						console.log('Error in showing confirmation view');
 						this.error(e);
 						throw e;
@@ -54,6 +65,7 @@ class CrownstoneDriver extends Homey.Driver implements crownstone_Driver {
 						await session.showView('login_credentials');
 					}
 					catch(e) {
+						// The error we get, we pass through to the user (unchanged).
 						console.log('Error in showing login view');
 						this.error(e);
 						throw e;
@@ -72,8 +84,20 @@ class CrownstoneDriver extends Homey.Driver implements crownstone_Driver {
 			if (viewId === 'list_devices') {
 				console.log('List devices (view shown as template)');
 			}
+			if (viewId === 'loading') {
+				console.log('Loading the rest of cloud data');
+				await this.app.mirror.getLocations();
+				await this.app.mirror.getUsers();
+				await this.app.mirror.getPresence();
+				this.app.mapper.mapRooms();
+				this.app.mapper.mapUsers();
+				// @ts-ignore
+				await session.nextView();
+			}
 			if (viewId === 'add_devices') {
 				console.log('Add devices (view shown as template)');
+				// @ts-ignore
+				await session.nextView();
 			}
 			if (viewId === 'done') {
 				console.log('Done');
@@ -96,6 +120,7 @@ class CrownstoneDriver extends Homey.Driver implements crownstone_Driver {
 				loggedIn = await this.app.setSettings(username, passwordHash);
 			}
 			catch(e) {
+				// The error we get, we pass through to the user (unchanged).
 				console.log('Error in logging in');
 				this.error(e);
 				throw e;
@@ -103,8 +128,8 @@ class CrownstoneDriver extends Homey.Driver implements crownstone_Driver {
 
 			if (!loggedIn) {
 				console.log('Failure logging in');
-				let e = new Error('Failure logging in');
-				this.error(e);
+				this.getInternationalizedMessage('failureLoggingIn');
+				let e = new Error('Failure logging in. Please, try again.');
 				throw e;
 			}
 
@@ -138,10 +163,10 @@ class CrownstoneDriver extends Homey.Driver implements crownstone_Driver {
 				throw e;
 				return deviceList;
 			}
-
+			
 			console.log('Map devices to proper struct');
 			this.app.mapper.mapDevices();
-
+			
 			// Return list of devices
 			deviceList = this.app.fastCache.deviceList;
 			console.log('Return devices');

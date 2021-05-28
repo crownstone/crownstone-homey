@@ -42,6 +42,7 @@ class CrownstoneApp extends Homey.App implements crownstone_App {
 		this.cloud = new CrownstoneCloud();
 		this.sse = new CrownstoneSSE();
 		this.slowCache = new SlowCache();
+		this.fastCache = new FastCache();
 		this.mirror = new Mirror(this.cloud, this.slowCache);
 		this.mapper = new Mapper(this.slowCache, this.fastCache);
 		// @ts-ignore
@@ -71,7 +72,7 @@ class CrownstoneApp extends Homey.App implements crownstone_App {
 		this.pollPresenceInterval = DEFAULT_POLL_PRESENCE_INTERVAL_MINUTES;
 		await this.pollPresenceData();
 
-		this.handler.onInit();
+		//this.handler.onInit();
 	}
 
 	/**
@@ -92,10 +93,15 @@ class CrownstoneApp extends Homey.App implements crownstone_App {
 		};
 
 		console.log('Obtain all data from the cloud');
-		this.mirror.getAll();
+		await this.mirror.getAll();
+		
+		console.log('Map all items from the slow to the fast cache');
+		await this.mapper.mapAll();
 
 		// update homey devices
 		this.deviceManager.updateDevices();
+		
+
 	}
 
 	/**

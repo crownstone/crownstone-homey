@@ -16,6 +16,15 @@ export class Mapper {
 	}
 
 	/**
+	 * Map all units from slow cache to fast cache.
+	 */
+	mapAll() {
+		this.mapRooms();
+		this.mapUsers();
+		this.mapDevices();
+	}
+
+	/**
 	 * Map rooms from the locations list. The location object is formatted as follows:
 	 *
 	 * ```
