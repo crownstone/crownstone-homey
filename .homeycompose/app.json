@@ -1,6 +1,6 @@
 {
   "id": "rocks.crownstone",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "compatibility": ">=5.0.0",
   "sdk": 3,
   "brandColor": "#003e52",
@@ -19,29 +19,29 @@
     "homey:wireless:ble"
   ],
   "images": {
-    "small" : "/assets/images/crownstone_app_image_250x175.png",
-    "large" : "/assets/images/crownstone_app_image_500x350.png",
+    "small": "/assets/images/crownstone_app_image_250x175.png",
+    "large": "/assets/images/crownstone_app_image_500x350.png",
     "xlarge": "/assets/images/crownstone_app_image_1000x700.png"
   },
   "source": "https://github.com/crownstone/crownstone-homey",
   "homepage": "https://crownstone.rocks",
   "support": "https://crownstone.rocks/support",
   "author": {
-    "name" : "Crownstone",
+    "name": "Crownstone",
     "email": "ask@crownstone.rocks"
   },
   "contributor": {
     "developers": [
       {
-        "name" : "Alex de Mulder",
+        "name": "Alex de Mulder",
         "email": "alex@crownstone.rocks"
       },
       {
-        "name" : "Anne van Rossum",
+        "name": "Anne van Rossum",
         "email": "anne@crownstone.rocks"
       },
       {
-        "name" : "Mart-Jan Koedam",
+        "name": "Mart-Jan Koedam",
         "email": "martjan.koedam@gmail.com"
       }
     ]
