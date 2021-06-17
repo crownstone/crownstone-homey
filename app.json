@@ -10,15 +10,13 @@
     "nl": "Crownstone"
   },
   "description": {
-    "en": "Crownstones can switch devices, dim lights, measure power consumption, and localize people.",
-    "nl": "Crownstones kunnen apparaten schakelen, lichten dimmen, stroom meten en binnenshuis de positie bepalen van mensen."
+    "en": "Your presence makes a difference",
+    "nl": "Jouw aanwezigheid maakt het verschil"
   },
   "category": [
     "localization"
   ],
   "permissions": [
-    "homey:manager:speech-output",
-    "homey:manager:ledring",
     "homey:wireless:ble"
   ],
   "images": {
@@ -26,6 +24,9 @@
     "large": "/assets/images/crownstone_app_image_500x350.png",
     "xlarge": "/assets/images/crownstone_app_image_1000x700.png"
   },
+  "source": "https://github.com/crownstone/crownstone-homey",
+  "homepage": "https://crownstone.rocks",
+  "support": "https://crownstone.rocks/support",
   "author": {
     "name": "Crownstone",
     "email": "ask@crownstone.rocks"

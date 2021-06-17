@@ -2,6 +2,15 @@
 
 A Crownstone app to integrate with Homey. The Crownstone App refers to the app from Crownstone that runs on the Homey.
 
+## Preparation
+
+Set up your system to support Homey development.
+
+```
+npm install -g homey
+npm install -g typescript
+```
+
 ## Development
 
 A Homey App is software that runs on Homey.
