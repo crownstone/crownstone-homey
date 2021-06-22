@@ -41,21 +41,35 @@ class CrownstoneDevice extends Homey.Device implements crownstone_Device {
 			return;
 		}
 		// get capabilities from the cloud
-		let crownstoneCapabilities = await this.app.cloud.crownstone(this.id).data();
+		try {
+			let crownstoneCapabilities = await this.app.cloud.crownstone(this.id).data();
+		
+			// set lock to enabled/disabled
+			let lockEnabled = crownstoneCapabilities.locked;
+			console.log('Set ' + this.name + ' as ' + (lockEnabled ? 'locked' : 'unlocked'));
+			await this.changeLockState(lockEnabled);
 
-		// set lock to enabled/disabled
-		let lockEnabled = crownstoneCapabilities.locked;
-		console.log('Set ' + this.name + ' as ' + (lockEnabled ? 'locked' : 'unlocked'));
-		await this.changeLockState(lockEnabled);
-
-		// set dimmer to enabled/disabled
-		for (let i = 0; i < crownstoneCapabilities.abilities.length; i++) {
-			let capability = crownstoneCapabilities.abilities[i];
-			if (capability.type === 'dimming') {
-				await this.changeDimCapability(capability.enabled);
-				break;
+			// set dimmer to enabled/disabled
+			for (let i = 0; i < crownstoneCapabilities.abilities.length; i++) {
+				let capability = crownstoneCapabilities.abilities[i];
+				if (capability.type === 'dimming') {
+					await this.changeDimCapability(capability.enabled);
+					break;
+				}
+			}
+		} catch(e) {
+			console.log('Error with Crownstone: ' + this.name);
+			console.log(e);
+		
+			if (e.statusCode == 404) {
+				let msg = 'Could not find element with id: ' + this.id;
+				if (e.body && e.body.error && e.body.message && e.body.message === msg) {
+					console.log('Set Crownstone ' + this.name + ' as deleted');
+					this.setStoreValue('deleted', true);
+				}
 			}
 		}
+
 	}
 
 	/**
@@ -68,8 +82,13 @@ class CrownstoneDevice extends Homey.Device implements crownstone_Device {
 		}
 
 		// switch state
-		let currentSwitchState = await this.app.cloud.crownstone(this.id).currentSwitchState();
-		await this.changeOnOffStatus(currentSwitchState);
+		try {
+			let currentSwitchState = await this.app.cloud.crownstone(this.id).currentSwitchState();
+			await this.changeOnOffStatus(currentSwitchState);
+		} catch(e) {
+			console.log('Error with Crownstone: ' + this.name);
+			console.log(e);
+		}
 	}
 
 	/**

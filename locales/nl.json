@@ -3,6 +3,14 @@
 		"title": "Crownstone configuratie",
 		"intro": "Crownstones kunnen over het internet worden bediend. Dit gaat via de Crownstone app. Dit is de meest betrouwbare en snelle methode. De Crownstone app kan gewoon op de achtergrond draaien zo lang Bluetooth aan staat. De Crownstones kunnen ook direct via Bluetooth worden bediend, maar dan moeten ze zich wel vlak bij de Homey bevinden. Bluetooth op de Homey is nog in ontwikkeling en het zenden van een commando kan wel tot 10 seconden duren. Daarom is dit nog niet aangezet",
 		"devices": "Ga naar het hoofdscherm in de Homey app, kies Apparaten en klik op het plus teken om Crownstones toe te voegen",
+		"sampling": {
+			"title": "Tijd om te bepalen in welke kamer je je bevindt",
+			"description": "Het Crownstone systeem heb je kunnen leren in welke kamer je je bevindt. Als het over een langere tijd informatie kan gebruiken wordt het langzamer maar nauwkeuriger. Verhoog de tijd (seconden) voor een hogere nauwkeurigheid (het kan ook helpen om een kamer opnieuw te trainen in de Crownstone app)."
+		},
+		"confirmation": {
+			"title": "Crownstone account gegevens",
+			"description": "Je bent op dit moment ingelogd."
+		},
 		"checkboxtitle": "Kies hoe de commando's richting de Crownstones gaan.",
 		"blewarning": "Nogmaals, de Bluetooth LE configuratie is experimenteel en voor eigen risico!",
 		"next": "Ga verder",

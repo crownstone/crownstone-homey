@@ -13,6 +13,7 @@ import { CrownstoneCloud } from 'crownstone-cloud';
 import { CrownstoneSSE } from 'crownstone-sse';
 
 const DEFAULT_POLL_PRESENCE_INTERVAL_MINUTES = 30;
+const DEFAULT_ROOM_SWITCH_TIMEOUT_SECONDS = 3;
 
 /**
  * The Crownstone app gets data about so-called spheres, rooms, and devices from the Crownstone cloud. 
@@ -32,6 +33,8 @@ class CrownstoneApp extends Homey.App implements crownstone_App {
 	loggedIn: boolean;
 	pollPresenceInterval: number;
 	pollPresenceFunction: NodeJS.Timeout;
+	roomSwitchTimeoutSeconds: number;
+	roomSwitchFunction: NodeJS.Timeout;
 
 	/**
 	 * When the app is initialized, email and password of the Crownstone user is obtained through form data.
@@ -50,6 +53,10 @@ class CrownstoneApp extends Homey.App implements crownstone_App {
 		this.deviceManager = new DeviceManager(this.homey);
 		this.serverEvents = new ServerEvents(this, this.sse);
 
+		// get sampling repeats from settings dialog
+		this.roomSwitchTimeoutSeconds = this.homey.settings.get('samplingRepeats');
+		console.log('Set room switch timeout to ' + this.roomSwitchTimeoutSeconds);
+		
 		// Disable logging for the cloud (logs every request and response)
 		this.cloud.log.config.setLevel('none');
 
@@ -100,8 +107,6 @@ class CrownstoneApp extends Homey.App implements crownstone_App {
 
 		// update homey devices
 		this.deviceManager.updateDevices();
-		
-
 	}
 
 	/**
@@ -180,23 +185,47 @@ class CrownstoneApp extends Homey.App implements crownstone_App {
 			this.mirror.getPresence();
 		}, 1000 * 60 * this.pollPresenceInterval);
 	}
-
 	
 	/**
 	 * This function will update the user locations and fire the trigger for the flows that use this as event.
 	 * The event can be an enter or exit event.
 	 * Only an enter event will trigger the presence condition.
+	 *
+	 * The timeout is by default 3 seconds and can be user-defined (only made slower). The function will be default not
+	 * immediately translate a location trigger into a perceived move of a user. If there is another event coming in
+	 * and is fast enough it will cancel the move. This leads to the following behaviour:
+	 *
+	 *   + If the localization algorithm occassionally switches to another room it will often classify this room wrong
+	 *   once or twice and then switch back to the right room. This will remove those spurious classification events.
+	 *   + If the localization algorithm switches very often from one to another very regulary, this will cancel all
+	 *   those events (hence the system will not be able to determine in which room you are, which is true!). You can
+	 *   best then retrain the system or add a Crownstone in close proximity to one of those rooms to make it easier
+	 *   for the classifier.
+	 *   + The higher the timeout is set the slower the system responds. This works perfectly for scenarios in which
+	 *   you want the light to go on when you are in a room and it is getting dark outside. However, for instantaneous
+	 *   switching when walking into a room this might get too slow!
 	 */
 	async runLocationTrigger(data: { user: any; location: any; }, enterEvent: boolean) {
-		let user = data.user;
-		let location = data.location;
+		// ignore exit events for now
 		if (!enterEvent) {
-			console.log("Ignore exit events (for now)");
 			return;
 		}
-		await this.handler.moveUser(user, location);
-	}
 
+		// timeout at least a default number of seconds, multiply by 1000 to have it in ms
+		let timeout = this.roomSwitchTimeoutSeconds;
+		if (timeout < DEFAULT_ROOM_SWITCH_TIMEOUT_SECONDS) timeout = DEFAULT_ROOM_SWITCH_TIMEOUT_SECONDS;
+		timeout = timeout * 1000;
+
+		// cancel previous call
+		clearTimeout(this.roomSwitchFunction);
+
+		// set room to switch in X seconds
+		this.roomSwitchFunction = setTimeout(async () => {
+			let user = data.user;
+			let location = data.location;
+			await this.handler.moveUser(user, location);
+		}, timeout);
+	}
 }
 
 module.exports = CrownstoneApp;

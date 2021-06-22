@@ -12,5 +12,42 @@
 
 		<p data-i18n="settings.devices"></p>
 
+		<fieldset>
+			<h3 data-i18n="settings.sampling.title"> </h3>
+		
+			<p data-i18n="settings.sampling.description"></p>
+
+			<p>
+				<input id="repeats" type="number" value="3">
+			</p>
+			<p>
+				<button id="submit" class="right" data-i18n="settings.submit"></button>
+			</p>
+		</fieldset>
+
+		<script type="text/javascript">
+
+			// A method named 'onHomeyReady' must be present in your code
+			function onHomeyReady(Homey) {
+				// Tell Homey we're ready to be displayed
+				Homey.ready();
+
+				let submitElement = document.getElementById('submit');
+				let samplingRepeatElement = document.getElementById('repeats');
+
+				// Put earlier-stored values in labels
+				Homey.get('samplingRepeats', function (err, repeats) {
+					if (err) return Homey.alert(err);
+					samplingRepeatElement.value = repeats;
+				});
+
+				submitElement.addEventListener('click', function (e) {
+					Homey.set('samplingRepeats', samplingRepeatElement.value, function (err) {
+						if (err) return Homey.alert(err);
+					});
+					Homey.alert('Changes are saved.');
+				});
+			}
+		</script>
 	</body>
 </html>

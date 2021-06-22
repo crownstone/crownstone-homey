@@ -43,10 +43,10 @@ class CrownstoneDriver extends Homey.Driver implements crownstone_Driver {
 		 * Note that for a lot of views there is already a default Homey view defined.
 		 */
 		session.setHandler('showView', async (viewId) => {
+			console.log(viewId);
 			if (viewId === 'starting') {
-				console.log('Starting');
 				if (this.app.loggedIn) {
-					console.log('Show view confirmation');
+					console.log('Logged in, show view to confirm');
 					try {
 						// @ts-ignore
 						await session.showView('confirmation');
@@ -59,7 +59,7 @@ class CrownstoneDriver extends Homey.Driver implements crownstone_Driver {
 					}
 				}
 				else {
-					console.log('Show view login credentials');
+					console.log('Not logged in, show view to login');
 					try {
 						// @ts-ignore
 						await session.showView('login_credentials');
@@ -71,6 +71,9 @@ class CrownstoneDriver extends Homey.Driver implements crownstone_Driver {
 						throw e;
 					}
 				}
+			}
+			if (viewId === 'confirmation') {
+				// will show confirmation dialog
 			}
 			if (viewId === 'login') {
 				console.log('Login or logged in');

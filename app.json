@@ -78,8 +78,8 @@
           }
         ],
         "hint": {
-          "en": "When a user enters a room...",
-          "nl": "Zodra iemand een kamer binnenkomt..."
+          "en": "When a user enters a room... Note, at least four Crownstones have to be present.",
+          "nl": "Zodra iemand een kamer binnenkomt... Let op, er moeten minstens vier Crownstones aanwezig zijn."
         }
       }
     ],
@@ -143,10 +143,6 @@
         "xlarge": "/assets/images/crownstone_driver_1000x1000.png"
       },
       "pair": [
-        {
-          "id": "starting",
-          "template": "loading"
-        },
         {
           "id": "confirmation"
         },

@@ -122,7 +122,9 @@ export class Handler {
 				return;
 			};
 			this.presence[user.id] = room.id;
-			console.log('User ' + user.name + ' now at location ' + room.name);
+			const tz  = this.homey.clock.getTimezone();
+			const timestamp = new Date().toLocaleString('en-GB', { timeZone: tz });
+			console.log(timestamp + ': User ' + user.name + ' now at location ' + room.name);
 		}
 	}
 

@@ -1,20 +1,24 @@
 <html>
-<head>
-</head>
+	<head>
+	</head>
 <body>
 
 <fieldset>
-    <h3> You are currently logged in.</h3>
-    <p> <button id="logout" class="left" data-i18n="settings.logout"> </button> </p> <!-- Button translation --></p>
+	<h3 data-i18n="settings.description"></h3>
+	<p>
+		<button id="logout" class="left" data-i18n="settings.logout">
+		</button>
+	</p>
 </fieldset>
 
-
-<p> <button id="next" class="right" data-i18n="settings.next"> </button> </p> <!-- Button translation --></p>
-
+<p>
+	<button id="next" class="right" data-i18n="settings.next">
+	</button>
+</p>
 
 <script type="text/javascript">
 
-    Homey.setTitle('Crownstone confirmation');
+    Homey.setTitle(Homey.__('crownstone.confirmation'));
 
     let logoutElement = document.getElementById('logout');
     let nextElement = document.getElementById('next');
@@ -26,7 +30,6 @@
     nextElement.addEventListener('click', function (e) {
         Homey.showView('list_devices');
     });
-
 
 </script>
 
