@@ -22,6 +22,10 @@
 	},
 	"pair": [
 		{
+			"id": "starting",
+			"template": "loading"
+		},
+		{
 			"id": "confirmation"
 		},
 		{

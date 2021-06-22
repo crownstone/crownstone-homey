@@ -8,7 +8,7 @@
 			"description": "The Crownstone system is trained to recognize in which room you are. If it is allowed to combine information over a longer time period it is slower but more accurate. Increase the time to decide to improve the quality (it can also help to retrain a room in the Crownstone app)."
 		},
 		"confirmation": {
-			"title": "Crownstone confirmation",
+			"title": "Crownstone account",
 			"description": "You are currently logged in."
 		},
 		"checkboxtitle": "Select how you would want to control the Crownstones.",

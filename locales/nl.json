@@ -8,7 +8,7 @@
 			"description": "Het Crownstone systeem heb je kunnen leren in welke kamer je je bevindt. Als het over een langere tijd informatie kan gebruiken wordt het langzamer maar nauwkeuriger. Verhoog de tijd (seconden) voor een hogere nauwkeurigheid (het kan ook helpen om een kamer opnieuw te trainen in de Crownstone app)."
 		},
 		"confirmation": {
-			"title": "Crownstone account gegevens",
+			"title": "Crownstone account",
 			"description": "Je bent op dit moment ingelogd."
 		},
 		"checkboxtitle": "Kies hoe de commando's richting de Crownstones gaan.",

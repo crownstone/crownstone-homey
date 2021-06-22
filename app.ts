@@ -56,7 +56,7 @@ class CrownstoneApp extends Homey.App implements crownstone_App {
 		// get sampling repeats from settings dialog
 		this.roomSwitchTimeoutSeconds = this.homey.settings.get('samplingRepeats');
 		console.log('Set room switch timeout to ' + this.roomSwitchTimeoutSeconds);
-		
+
 		// Disable logging for the cloud (logs every request and response)
 		this.cloud.log.config.setLevel('none');
 
