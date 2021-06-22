@@ -11,5 +11,8 @@
   },
   "0.0.7": {
     "en": "Texts and descriptions"
+  },
+  "0.0.8": {
+    "en": "Option to tradeoff speed with accuracy and some bug fixes\""
   }
 }
