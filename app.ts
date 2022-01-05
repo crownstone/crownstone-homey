@@ -32,7 +32,6 @@ class CrownstoneApp extends Homey.App implements crownstone_App {
 	serverEvents: ServerEvents;
 	loggedIn: boolean;
 	pollPresenceInterval: number;
-	pollPresenceFunction: NodeJS.Timeout;
 	roomSwitchTimeoutSeconds: number;
 	roomSwitchFunction: NodeJS.Timeout;
 
@@ -80,6 +79,14 @@ class CrownstoneApp extends Homey.App implements crownstone_App {
 		await this.pollPresenceData();
 
 		//this.handler.onInit();
+	}
+
+	/**
+	 * Uninitialize app. Important for Homey cloud.
+	 */
+	async onUninit(): Promise<void> {
+		console.log('Uninitialize Crownstone app');
+		this.loggedIn = false;
 	}
 
 	/**
@@ -181,7 +188,7 @@ class CrownstoneApp extends Homey.App implements crownstone_App {
 	 * event server.
 	 */
 	async pollPresenceData() {
-		this.pollPresenceFunction = setInterval(() => {
+		this.homey.setInterval(() => {
 			this.mirror.getPresence();
 		}, 1000 * 60 * this.pollPresenceInterval);
 	}

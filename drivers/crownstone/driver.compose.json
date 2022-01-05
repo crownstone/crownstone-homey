@@ -3,7 +3,9 @@
 		"en": "Crownstone",
 		"nl": "Crownstone"
 	},
+	"platforms": ["local", "cloud"],
 	"class": "socket",
+	"connectivity": ["cloud"],
 	"capabilities": [
 		"onoff",
 		"dim"

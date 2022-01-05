@@ -10,6 +10,7 @@
     },
     "args": [
         {
+            "title": "User",
             "type": "autocomplete",
             "name": "users",
             "placeholder": {
@@ -18,6 +19,7 @@
             }
         },
         {
+            "title": "Room",
             "type": "autocomplete",
             "name": "rooms",
             "placeholder": {

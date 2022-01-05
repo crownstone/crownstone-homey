@@ -10,6 +10,7 @@
     },
     "args": [
         {
+            "title": "User",
             "type": "autocomplete",
             "name": "users",
             "placeholder": {
@@ -18,6 +19,7 @@
             }
         },
         {
+            "title": "Room",
             "type": "autocomplete",
             "name": "rooms",
             "placeholder": {
@@ -29,5 +31,6 @@
     "hint": {
         "en": "When a user enters a room... Note, at least four Crownstones have to be present.",
         "nl": "Zodra iemand een kamer binnenkomt... Let op, er moeten minstens vier Crownstones aanwezig zijn."
-    }
+    },
+    "platforms": ["local", "cloud"]
 }

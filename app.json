@@ -3,6 +3,10 @@
   "id": "rocks.crownstone",
   "version": "0.0.8",
   "compatibility": ">=5.0.0",
+  "platforms": [
+    "local",
+    "cloud"
+  ],
   "sdk": 3,
   "brandColor": "#003e52",
   "name": {
@@ -61,6 +65,7 @@
         },
         "args": [
           {
+            "title": "User",
             "type": "autocomplete",
             "name": "users",
             "placeholder": {
@@ -69,6 +74,7 @@
             }
           },
           {
+            "title": "Room",
             "type": "autocomplete",
             "name": "rooms",
             "placeholder": {
@@ -80,7 +86,11 @@
         "hint": {
           "en": "When a user enters a room... Note, at least four Crownstones have to be present.",
           "nl": "Zodra iemand een kamer binnenkomt... Let op, er moeten minstens vier Crownstones aanwezig zijn."
-        }
+        },
+        "platforms": [
+          "local",
+          "cloud"
+        ]
       }
     ],
     "conditions": [
@@ -96,6 +106,7 @@
         },
         "args": [
           {
+            "title": "User",
             "type": "autocomplete",
             "name": "users",
             "placeholder": {
@@ -104,6 +115,7 @@
             }
           },
           {
+            "title": "Room",
             "type": "autocomplete",
             "name": "rooms",
             "placeholder": {
@@ -125,7 +137,14 @@
         "en": "Crownstone",
         "nl": "Crownstone"
       },
+      "platforms": [
+        "local",
+        "cloud"
+      ],
       "class": "socket",
+      "connectivity": [
+        "cloud"
+      ],
       "capabilities": [
         "onoff",
         "dim"
