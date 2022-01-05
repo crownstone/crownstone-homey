@@ -1,8 +1,11 @@
 {
   "id": "rocks.crownstone",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "compatibility": ">=5.0.0",
-  "platforms": ["local", "cloud"],
+  "platforms": [
+    "local",
+    "cloud"
+  ],
   "sdk": 3,
   "brandColor": "#003e52",
   "name": {
