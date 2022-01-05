@@ -31,5 +31,6 @@
     "hint": {
         "en": "When a user is present in a room...",
         "nl": "Wanneer iemand zich in een kamer bevindt..."
-    }
+    },
+    "platforms": ["local", "cloud"]
 }

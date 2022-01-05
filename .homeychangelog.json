@@ -14,5 +14,8 @@
   },
   "0.0.8": {
     "en": "Option to tradeoff speed with accuracy and some bug fixes\""
+  },
+  "0.0.9": {
+    "en": "Support for both Homey and Homey Pro"
   }
 }

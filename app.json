@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "rocks.crownstone",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "compatibility": ">=5.0.0",
   "platforms": [
     "local",
@@ -127,7 +127,11 @@
         "hint": {
           "en": "When a user is present in a room...",
           "nl": "Wanneer iemand zich in een kamer bevindt..."
-        }
+        },
+        "platforms": [
+          "local",
+          "cloud"
+        ]
       }
     ]
   },
